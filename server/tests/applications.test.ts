@@ -15,12 +15,12 @@ describe('applications', () => {
 
   it('exige une session (401) sur la liste et la création', async () => {
     expect((await app.inject({ method: 'GET', url: '/api/applications' })).statusCode).toBe(401);
-    expect((await app.inject({ method: 'POST', url: '/api/applications', payload: validApplication })).statusCode).toBe(401);
+    expect((await app.inject({ method: 'POST', url: '/api/applications', payload: validApplication(app) })).statusCode).toBe(401);
   });
 
   it("un utilisateur standard ne peut pas déclarer d'application (403)", async () => {
     const cookie = await loginAs(app, ACCOUNTS.standard);
-    const response = await app.inject({ method: 'POST', url: '/api/applications', payload: validApplication, headers: { cookie } });
+    const response = await app.inject({ method: 'POST', url: '/api/applications', payload: validApplication(app), headers: { cookie } });
     expect(response.statusCode).toBe(403);
     expect(response.json().error.code).toBe('FORBIDDEN');
     expect(all(app.db, "SELECT 1 FROM applications WHERE name = 'Assistant Juridique'")).toHaveLength(0);
@@ -28,7 +28,7 @@ describe('applications', () => {
 
   it("un Application Manager crée un brouillon avec code séquentiel et ligne d'audit", async () => {
     const cookie = await loginAs(app, ACCOUNTS.appManager);
-    const response = await app.inject({ method: 'POST', url: '/api/applications', payload: validApplication, headers: { cookie } });
+    const response = await app.inject({ method: 'POST', url: '/api/applications', payload: validApplication(app), headers: { cookie } });
     expect(response.statusCode).toBe(201);
 
     const created: ApplicationDto = response.json().application;
@@ -59,7 +59,7 @@ describe('applications', () => {
   it('refuse un Process Owner inconnu', async () => {
     const cookie = await loginAs(app, ACCOUNTS.aiOfficer);
     const response = await app.inject({
-      method: 'POST', url: '/api/applications', headers: { cookie }, payload: { ...validApplication, processOwnerId: 999 },
+      method: 'POST', url: '/api/applications', headers: { cookie }, payload: { ...validApplication(app), processOwnerId: 999 },
     });
     expect(response.statusCode).toBe(400);
     expect(response.json().error.fields.processOwnerId).toBeDefined();

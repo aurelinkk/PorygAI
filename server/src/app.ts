@@ -10,8 +10,9 @@ import cookie from '@fastify/cookie';
 import fastifyStatic from '@fastify/static';
 import Fastify, { type FastifyInstance } from 'fastify';
 import { createLocalAuthProvider } from './auth/local-provider.js';
+import type { GoogleConfig } from './auth/google-sso.js';
 import type { AuthProvider } from './auth/provider.js';
-import { config } from './config.js';
+import { config, isGoogleEnabled } from './config.js';
 import { openDatabase, type Db } from './db/connection.js';
 import { runMigrations } from './db/migrate.js';
 import { HttpError } from './lib/http-errors.js';
@@ -27,6 +28,8 @@ export interface AppOptions {
   logger?: boolean;
   authProvider?: (db: Db) => AuthProvider;
   loginRateLimit?: { max: number; timeWindow: string };
+  /** Force la configuration Google (tests). Par défaut : celle de l'environnement. */
+  google?: GoogleConfig | null;
 }
 
 declare module 'fastify' {
@@ -46,7 +49,8 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
   app.decorate('db', db);
   app.addHook('onClose', async () => db.close());
 
-  await app.register(cookie);
+  // `secret` sert à signer le cookie d'état du SSO (voir modules/auth.routes.ts).
+  await app.register(cookie, { secret: config.cookieSecret });
   await registerSecurity(app);
   registerAuth(app, { db, cookieName: config.session.cookieName, ttlHours: config.session.ttlHours });
   registerErrorHandling(app);
@@ -59,6 +63,7 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
     ttlHours: config.session.ttlHours,
     secureCookie: config.isProduction,
     loginRateLimit: options.loginRateLimit ?? config.loginRateLimit,
+    google: options.google !== undefined ? options.google : isGoogleEnabled ? config.google : null,
   });
   registerUsersRoutes(app, { db });
   registerApplicationsRoutes(app, { db });

@@ -121,31 +121,55 @@ Les tables des questionnaires, évaluations et plans d'action arriveront avec le
 
 ---
 
-## Brancher un SSO (OIDC)
+## Le SSO Google
 
-L'authentification est isolée derrière l'interface `AuthProvider` (`server/src/auth/provider.ts`) :
+Implémenté dans `server/src/auth/google-sso.ts` (logique pure, testable) et branché par
+`server/src/modules/auth.routes.ts` (routes et cookies). Flux **Authorization Code + PKCE**, écrit
+à la main : `fetch` et `node:crypto` suffisent, aucune bibliothèque OAuth.
 
-```ts
-interface AuthProvider {
-  kind: 'local' | 'oidc';
-  authenticate(input: AuthInput): Promise<Identity | null>; // { email, displayName, externalId? }
-}
+```
+ Navigateur                    Poryg'AI (Fastify)                      Google
+     │  clic « Continuer avec Google »
+     ├──── GET /api/auth/google/start ──►│
+     │                                    │ tire state + nonce + code_verifier
+     │                                    │ les met dans un cookie signé (10 min)
+     │◄──── 302 vers Google ──────────────┤
+     ├──────────────────────────────────────────────────────────────►│
+     │                                    │        l'utilisateur s'authentifie
+     │◄─────────────────────────────────────── 302 avec ?code&state ─┤
+     ├──── GET /api/auth/google/callback ►│
+     │                                    │ vérifie le state (temps constant)
+     │                                    ├── POST /token (code + verifier) ─►│
+     │                                    │◄────────────────── id_token ──────┤
+     │                                    │ valide iss / aud / exp / nonce / email_verified
+     │                                    │ cherche l'utilisateur en base
+     │◄──── 302 vers / + cookie session ──┤
 ```
 
-Le provider répond « qui est cette personne ? ». **Sessions, rôle et permissions restent à Poryg'AI** :
-le rôle est stocké dans `users.role`, attribué par l'AI Officer, jamais déduit de l'IdP.
+**Trois décisions importantes :**
 
-Étapes pour passer en SSO (lot 7) :
+1. **Pas de création automatique de compte.** L'adresse doit déjà exister dans `users`, sinon retour
+   à `/login?erreur=sso_inconnu`. Sans cette règle, n'importe quel compte Google entrerait dans le
+   registre. C'est l'AI Officer qui inscrit les personnes (migration `002_comptes_equipe.sql` pour
+   l'équipe actuelle).
+2. **Le rôle ne vient jamais de Google.** Google répond seulement « qui est cette personne ? ».
+   Le rôle est lu dans `users.role`.
+3. **La signature de l'ID token n'est pas vérifiée** — et c'est correct ici : le token n'arrive pas
+   par le navigateur mais par notre propre appel HTTPS à `oauth2.googleapis.com`. La spécification
+   OIDC (§3.1.3.7, point 6) autorise explicitement à s'appuyer sur la validation TLS dans ce cas.
+   Cela évite une dépendance JWT/JWKS. Les autres contrôles (émetteur, destinataire, expiration,
+   nonce, `email_verified`) sont bien effectués.
 
-1. Créer `auth/oidc-provider.ts` avec la bibliothèque `openid-client` : `GET /api/auth/oidc/start`
-   redirige vers l'IdP ; `GET /api/auth/oidc/callback` échange le `code` et renvoie une `Identity`
-   (`externalId` = claim `sub`).
-2. Dans `auth.routes.ts`, à la réception d'une identité : chercher l'utilisateur par `external_id`
-   puis par e-mail ; le créer au besoin avec le rôle `standard` (« auto-provisioning »).
-3. Choisir le provider par configuration dans `app.ts` (`AUTH_PROVIDER=oidc`).
-4. Sur la page de connexion, remplacer le formulaire par un bouton « Se connecter avec le SSO ».
+Le cookie d'état (`poryg_sso`) est en `SameSite=Lax` — et non `Strict` — car le retour de Google est
+une navigation inter-site : en `Strict`, le navigateur ne le renverrait pas. Il est signé, `httpOnly`,
+limité au chemin `/api/auth/google` et expire en 10 minutes.
 
-Pour un test local réaliste : Keycloak en Docker (`quay.io/keycloak/keycloak start-dev`).
+### Ajouter un autre fournisseur (Microsoft, Keycloak…)
+
+Le fichier `google-sso.ts` est paramétré par les seules constantes d'endpoints et une `GoogleConfig`.
+Pour Microsoft Entra ou Keycloak, le plus simple est de copier ce fichier, changer les trois URL et
+les émetteurs acceptés, puis dupliquer les deux routes. L'interface `Identity`
+(`server/src/auth/provider.ts`) reste le point de contact commun avec le reste de l'application.
 
 ---
 

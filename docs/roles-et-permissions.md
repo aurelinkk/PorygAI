@@ -16,6 +16,27 @@ Ce document explique ; le code fait foi.
 Un utilisateur a **un seul rôle** (`users.role`). Choix de simplicité : si un besoin de cumul apparaît
 (ex. DPO + AI Officer), remplacer la colonne par une table `user_roles` et adapter `can()`.
 
+### Comptes de l'équipe
+
+Créés par la migration `002_comptes_equipe.sql`, ils se connectent **uniquement** par le SSO Google
+(`password_hash` à NULL) :
+
+| Adresse Google                 | Nom              | Rôle                |
+| ------------------------------ | ---------------- | ------------------- |
+| cleomarinmarie@gmail.com       | Cléo Marin       | AI Officer          |
+| aurelien.chiquet44@gmail.com   | Aurélien Chiquet | Application Manager |
+| chatet.maelle@gmail.com        | Maëlle Chatet    | DPO                 |
+
+Changer un rôle, ou inscrire une nouvelle personne :
+
+```sql
+UPDATE users SET role = 'auditor' WHERE email = 'chatet.maelle@gmail.com';
+INSERT INTO users (email, display_name, role) VALUES ('nouveau@gmail.com', 'Prénom Nom', 'standard');
+```
+
+Une adresse absente de cette table ne peut pas se connecter, même avec un compte Google valide
+(pas de création automatique — voir [securite.md](securite.md#sso-google)).
+
 ## Matrice
 
 | Permission                    | Standard | App Manager | Auditeur | DPO | AI Officer | Utilisée dès le lot |

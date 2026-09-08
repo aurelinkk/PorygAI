@@ -59,6 +59,31 @@
   box-shadow: none;
   background: var(--blanc);
 }
+/* Bouton SSO : fond blanc neutre, comme le veulent les recommandations Google */
+.btn--google {
+  width: 100%;
+  background: var(--blanc);
+  color: var(--encre);
+}
+.btn--google:hover {
+  color: var(--encre);
+}
+.login-separator {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 18px 0;
+  color: var(--texte-2);
+  font-size: 13px;
+}
+.login-separator::before,
+.login-separator::after {
+  content: '';
+  flex: 1;
+  height: 2px;
+  background: var(--gris-ligne);
+}
+
 .btn--small {
   min-height: 40px;
   padding: 6px 14px;

@@ -97,9 +97,11 @@ const DEMO_APPS: DemoApp[] = [
 ];
 
 export async function seedDatabase(db: Db, log: (message: string) => void = () => {}): Promise<boolean> {
-  const existing = one<{ n: number }>(db, 'SELECT COUNT(*) AS n FROM users');
+  // On teste la présence d'applications, pas d'utilisateurs : les comptes de
+  // l'équipe sont créés par la migration 002 et ne doivent pas bloquer le seed.
+  const existing = one<{ n: number }>(db, 'SELECT COUNT(*) AS n FROM applications');
   if (existing && existing.n > 0) {
-    log('[db] seed ignoré : des utilisateurs existent déjà');
+    log('[db] seed ignoré : la base contient déjà des applications');
     return false;
   }
 
@@ -111,10 +113,12 @@ export async function seedDatabase(db: Db, log: (message: string) => void = () =
     for (const user of DEMO_USERS) {
       const result = run(
         db,
-        'INSERT INTO users (email, display_name, role, password_hash) VALUES (?, ?, ?, ?)',
+        'INSERT OR IGNORE INTO users (email, display_name, role, password_hash) VALUES (?, ?, ?, ?)',
         user.email, user.displayName, user.role, passwordHash,
       );
-      userIds.set(user.email, Number(result.lastInsertRowid));
+      const id = Number(result.lastInsertRowid)
+        || one<{ id: number }>(db, 'SELECT id FROM users WHERE email = ?', user.email)!.id;
+      userIds.set(user.email, id);
     }
 
     const month = currentMonth();

@@ -8,8 +8,8 @@ et de suivre leur **usage et leurs coûts** (FinOps, dashboards).
 Rôles : AI Officer · Application Manager · DPO · Auditeur · Utilisateur standard.
 Statuts : Draft → In progress → Conforme / Non conforme (+ Deleted, suppression logique).
 
-> État actuel : **lot 1** livré — socle technique, connexion + rôles, page d'accueil, formulaire
-> de déclaration d'application. Voir la [feuille de route](#feuille-de-route).
+> État actuel : **lot 1** livré — socle technique, connexion (SSO Google + mot de passe) et rôles,
+> page d'accueil, formulaire de déclaration d'application. Voir la [feuille de route](#feuille-de-route).
 
 ---
 
@@ -24,8 +24,24 @@ npm run db:seed      # crée data/poryg.db avec 5 comptes et 8 applications de d
 npm run dev          # API sur http://127.0.0.1:3000 + front sur http://localhost:5173
 ```
 
-Puis ouvrir <http://localhost:5173>. Les comptes de démo sont proposés en un clic sur la page de
-connexion (en développement uniquement). Mot de passe commun : `Poryg2026!`
+Puis ouvrir <http://localhost:5173>.
+
+### Deux façons de se connecter
+
+**1. Comptes de l'équipe, via le SSO Google** (bouton « Continuer avec Google »).
+Nécessite d'activer le SSO, voir la section suivante.
+
+| Compte Google                  | Rôle                |
+| ------------------------------ | ------------------- |
+| cleomarinmarie@gmail.com       | AI Officer          |
+| aurelien.chiquet44@gmail.com   | Application Manager |
+| chatet.maelle@gmail.com        | DPO                 |
+
+Ces comptes n'ont **pas** de mot de passe : ils passent obligatoirement par Google.
+Pour changer un rôle : `UPDATE users SET role = 'auditor' WHERE email = '…';`
+
+**2. Comptes de démonstration, par mot de passe** — proposés en un clic sur la page de connexion
+(en développement uniquement). Mot de passe commun : `Poryg2026!`
 
 | Compte                      | Rôle                 | Ce qu'il voit / peut faire                                   |
 | --------------------------- | -------------------- | ------------------------------------------------------------ |
@@ -34,6 +50,30 @@ connexion (en développement uniquement). Mot de passe commun : `Poryg2026!`
 | david.nguyen@poryg.local    | DPO                  | Avis sur les applications à données personnelles / sensibles |
 | emma.bernard@poryg.local    | Auditeur             | Décide Conforme / Non conforme                               |
 | lucas.petit@poryg.local     | Utilisateur standard | Consultation seule                                           |
+
+### Activer la connexion Google
+
+Sans configuration, seule la connexion par mot de passe est proposée — l'application fonctionne
+normalement. Pour activer le SSO :
+
+1. Aller sur <https://console.cloud.google.com/apis/credentials> et créer (ou choisir) un projet.
+2. *Écran de consentement OAuth* → type **Externe**, renseigner un nom d'application et un e-mail
+   de contact. Tant que l'application est en mode « Test », ajouter les trois adresses de l'équipe
+   dans **Utilisateurs test**.
+3. *Identifiants* → **Créer des identifiants** → **ID client OAuth** → type **Application Web**.
+4. Dans **URI de redirection autorisés**, ajouter exactement :
+   `http://localhost:5173/api/auth/google/callback`
+5. Copier l'ID client et le code secret dans le fichier `.env` à la racine :
+
+```
+GOOGLE_CLIENT_ID=votre-id.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=votre-secret
+```
+
+6. Relancer `npm run dev`. Le bouton « Continuer avec Google » apparaît.
+
+> Une adresse Google **doit déjà exister** dans la table `users` pour pouvoir se connecter : il n'y a
+> pas de création automatique de compte. Le rôle vient de notre base, jamais de Google.
 
 ### Scripts
 
@@ -66,7 +106,7 @@ poryg-ai/
 │  │  ├─ server.ts         point d'entrée : écoute + jobs périodiques
 │  │  ├─ config.ts         variables d'environnement
 │  │  ├─ audit.ts          journal d'audit
-│  │  ├─ auth/             mots de passe (scrypt), sessions, AuthProvider (local, SSO à venir)
+│  │  ├─ auth/             mots de passe (scrypt), sessions, SSO Google (google-sso.ts)
 │  │  ├─ plugins/          security.ts (helmet, rate-limit, CSRF) · auth.ts (session, RBAC)
 │  │  ├─ modules/          une paire routes + repo par domaine métier
 │  │  ├─ jobs/             expiration annuelle des conformités
@@ -103,6 +143,7 @@ Objectif : **peu de dépendances, du code lisible, facile à reprendre.** 8 dép
 | API          | Fastify 5                               | Léger, rapide, plugins sécurité officiels, excellent support des tests (`inject`)         |
 | Base         | SQLite via `node:sqlite`                | Intégré à Node ≥ 22.13 : zéro dépendance native. SQL écrit à la main, pas d'ORM           |
 | Auth         | Sessions cookie httpOnly + scrypt       | Plus sûr qu'un JWT en localStorage ; scrypt est dans `node:crypto`                        |
+| SSO          | Google OpenID Connect, écrit à la main  | `fetch` + `node:crypto` suffisent : aucune bibliothèque OAuth à installer ni à suivre     |
 | Tests        | Vitest                                  | Rapide, config nulle                                                                      |
 
 Les alternatives écartées (ORM, NestJS, Next.js, lib de composants, JWT…) sont discutées dans
@@ -141,12 +182,13 @@ Les alternatives écartées (ORM, NestJS, Next.js, lib de composants, JWT…) so
 | --- | ------------------------------------------------------------------------------------------- | -------- |
 | 0   | Socle : monorepo, tooling, tests                                                            | ✅ livré |
 | 1   | Design system, connexion + rôles, accueil, formulaire de déclaration                        | ✅ livré |
+| 1b  | SSO Google + comptes de l'équipe                                                            | ✅ livré |
 | 2   | Inventaire complet : liste filtrable, fiche application, édition, suppression logique tracée | à faire  |
 | 3   | Référentiel de questionnaires (7 exigences UE « IA digne de confiance »), saisie, scoring    | à faire  |
 | 4   | Workflow d'audit : soumission, décision, motif, plan d'action, avis DPO                     | à faire  |
 | 5   | FinOps : saisie/import des coûts, rapport                                                   | à faire  |
 | 6   | Dashboards BI et historique                                                                 | à faire  |
-| 7   | Durcissement : SSO OIDC, polices auto-hébergées, revue sécurité, mise en production         | à faire  |
+| 7   | Durcissement : polices auto-hébergées, revue sécurité, mise en production                   | à faire  |
 
 Déjà en place pour les lots suivants : le schéma `finops_costs`, le job d'expiration annuelle des
 conformités, le journal d'audit, la matrice de permissions complète (évaluation, plans d'action,

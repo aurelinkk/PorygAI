@@ -22,6 +22,23 @@ IA, sensibilité des données, non-conformités, coûts). Menaces considérées 
 | Anti force brute | 5 tentatives / minute / IP sur `POST /api/auth/login` → 429 ; 300 req/min ailleurs | `config.ts`, `plugins/security.ts` |
 | Journal | `login`, `login_failed`, `logout` dans `audit_log` avec IP | `modules/auth.routes.ts` |
 
+### SSO Google
+
+| Mesure | Détail | Code |
+| --- | --- | --- |
+| PKCE (S256) | Le `code_verifier` ne quitte jamais le serveur ; un code intercepté est inexploitable | `auth/google-sso.ts` |
+| `state` anti-CSRF | 32 octets aléatoires, comparés en temps constant au retour | `google-sso.ts › safeEquals` |
+| `nonce` anti-rejeu | Lie l'ID token à cette demande précise ; un token réutilisé est refusé | `validateIdTokenClaims` |
+| Cookie d'état signé | `httpOnly`, `SameSite=Lax` (obligatoire pour un retour inter-site), chemin `/api/auth/google`, 10 min | `modules/auth.routes.ts` |
+| Claims validés | émetteur, destinataire (`aud`), expiration, `nonce`, `email_verified` | `validateIdTokenClaims` |
+| Pas d'auto-provisioning | Une adresse Google inconnue est refusée et journalisée : le registre ne s'ouvre pas à tout compte Google | `modules/auth.routes.ts` |
+| Rôle non délégué | Le rôle vient de `users.role`, jamais d'un claim Google | `modules/auth.routes.ts` |
+| Secret côté serveur | `client_secret` uniquement dans `.env` (ignoré par git), jamais exposé au navigateur | `config.ts`, `.gitignore` |
+
+Sur la non-vérification de la signature du JWT : voir l'explication dans
+[architecture.md](architecture.md#le-sso-google) — l'ID token est obtenu par un appel HTTPS direct au
+point de terminaison de Google, cas explicitement couvert par la spécification OIDC §3.1.3.7.
+
 ### Sessions
 
 | Mesure | Détail | Code |
@@ -83,9 +100,13 @@ autorisées explicitement), `frame-ancestors 'none'`, `X-Content-Type-Options: n
 ## Vérifier
 
 ```bash
-npm test          # 26 tests dont auth, CSRF, RBAC, rate-limit, triggers
+npm test          # 51 tests : auth, SSO, CSRF, RBAC, rate-limit, triggers
 npm audit         # vulnérabilités connues des dépendances
 ```
+
+Le parcours SSO est testé de bout en bout sans réseau (`tests/google-sso.test.ts`) : l'échange du
+code est intercepté et l'ID token fabriqué, ce qui permet de vérifier les refus (state falsifié,
+cookie altéré, token expiré, mauvais `nonce`, adresse inconnue, compte désactivé).
 
 Contrôle manuel rapide : se connecter en `lucas.petit@poryg.local` (standard), taper l'URL
 `/applications/nouvelle` → page 403 ; puis `curl -X POST http://127.0.0.1:3000/api/applications`
@@ -94,9 +115,10 @@ avec son cookie → `403 FORBIDDEN`.
 ## Reste à faire (lot 7)
 
 - HTTPS via reverse proxy + `trustProxy: true` ; HSTS.
-- SSO OIDC (voir `architecture.md`) ; conserver le rôle en base.
+- Fixer `COOKIE_SECRET` en production (sinon il est régénéré à chaque redémarrage).
+- Mettre à jour `GOOGLE_REDIRECT_URI` et l'URI autorisée dans la console Google avec le domaine réel.
 - Polices auto-hébergées (supprime `fonts.googleapis.com` de la CSP et la fuite d'IP vers Google).
-- Politique de mot de passe et rotation pour les comptes locaux résiduels (ou les supprimer après SSO).
+- Supprimer les comptes de démonstration par mot de passe une fois le SSO en place.
 - Journal des **lectures** sensibles (qui a consulté quelle fiche) si le DPO le demande.
 - Sauvegardes chiffrées de `data/poryg.db`.
 - Revue de sécurité externe / test d'intrusion avant ouverture à toute l'entreprise.

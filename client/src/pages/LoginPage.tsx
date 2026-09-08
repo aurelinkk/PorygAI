@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { Navigate, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { loginSchema } from '@poryg/shared';
 import { ApiError } from '../api/client';
+import { useApi } from '../api/useApi';
 import { useAuth } from '../auth/AuthContext';
 import { Alert } from '../components/ui/Alert';
 import { Button } from '../components/ui/Button';
 import { TextField } from '../components/ui/Fields';
+import { GoogleButton } from '../components/ui/GoogleButton';
 import { focusFirstInvalid, zodFieldErrors, type FieldErrors } from '../lib/forms';
 
 // Comptes de démonstration, affichés uniquement en développement.
@@ -19,11 +21,29 @@ const DEMO_ACCOUNTS = [
   { email: 'lucas.petit@poryg.local', label: 'Lucas · Utilisateur standard' },
 ];
 
+/** Codes renvoyés par /api/auth/google/callback dans `?erreur=`. */
+const SSO_ERRORS: Record<string, string> = {
+  sso_annule: 'Connexion Google annulée.',
+  sso_expire: 'La demande de connexion a expiré. Merci de réessayer.',
+  sso_etat: "La demande de connexion n'était pas valide. Merci de réessayer.",
+  sso_inconnu:
+    "Cette adresse Google n'est pas enregistrée dans Poryg'AI. Demandez à l'AI Officer de créer votre compte.",
+  compte_desactive: 'Votre compte a été désactivé. Contactez l’AI Officer.',
+  sso_email: "Votre adresse Google n'est pas vérifiée. Vérifiez-la puis réessayez.",
+  sso_indisponible: 'Google est injoignable pour le moment. Réessayez dans un instant.',
+  sso_echange: 'Google a refusé la connexion. Réessayez.',
+  sso_token: 'La réponse de Google n’a pas pu être validée. Réessayez.',
+  sso_erreur: 'La connexion Google a échoué. Réessayez.',
+};
+
 export function LoginPage() {
   const { user, status, login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
   const from = (location.state as { from?: string } | null)?.from ?? '/';
+
+  const providers = useApi<{ google: boolean }>('/api/auth/providers');
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -36,6 +56,15 @@ export function LoginPage() {
   useEffect(() => {
     document.title = "Connexion · Poryg'AI";
   }, []);
+
+  // Erreur revenue du SSO : on l'affiche puis on nettoie l'URL (un rafraîchissement
+  // ne doit pas ré-afficher un message périmé).
+  useEffect(() => {
+    const code = searchParams.get('erreur');
+    if (!code) return;
+    setGlobalError(SSO_ERRORS[code] ?? SSO_ERRORS.sso_erreur!);
+    navigate('/login', { replace: true });
+  }, [searchParams, navigate]);
 
   useEffect(() => {
     if (globalError) alertRef.current?.focus();
@@ -81,6 +110,16 @@ export function LoginPage() {
           </Alert>
         )}
 
+        {providers.data?.google && (
+          <>
+            {/* Vraie navigation (pas un fetch) : le navigateur doit suivre la redirection vers Google. */}
+            <GoogleButton href="/api/auth/google/start">Continuer avec Google</GoogleButton>
+            <p className="login-separator">
+              <span>ou avec un mot de passe</span>
+            </p>
+          </>
+        )}
+
         <form ref={formRef} onSubmit={handleSubmit} noValidate className="login-form">
           <TextField
             id="email"
@@ -107,9 +146,11 @@ export function LoginPage() {
           </Button>
         </form>
 
-        <p className="login-sso muted">
-          Connexion SSO d'entreprise : disponible dans une prochaine version.
-        </p>
+        {providers.data && !providers.data.google && (
+          <p className="login-sso muted">
+            Connexion Google : non configurée sur ce serveur (voir le README).
+          </p>
+        )}
 
         {import.meta.env.DEV && (
           <section className="demo-accounts" aria-labelledby="demo-title">

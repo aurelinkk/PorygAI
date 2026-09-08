@@ -4,6 +4,8 @@
  */
 import type { FastifyInstance } from 'fastify';
 import { buildApp } from '../src/app.js';
+import type { GoogleConfig } from '../src/auth/google-sso.js';
+import { one } from '../src/db/connection.js';
 import { DEMO_PASSWORD, seedDatabase } from '../src/db/seed.js';
 
 export const ACCOUNTS = {
@@ -14,15 +16,25 @@ export const ACCOUNTS = {
   standard: 'lucas.petit@poryg.local',
 } as const;
 
-export async function createTestApp(options: { loginRateLimitMax?: number } = {}): Promise<FastifyInstance> {
+export async function createTestApp(
+  options: { loginRateLimitMax?: number; google?: GoogleConfig | null } = {},
+): Promise<FastifyInstance> {
   const app = await buildApp({
     dbPath: ':memory:',
     logger: false,
     loginRateLimit: { max: options.loginRateLimitMax ?? 1000, timeWindow: '1 minute' },
+    google: options.google ?? null,
   });
   await seedDatabase(app.db);
   await app.ready();
   return app;
+}
+
+/** Identifiant d'un utilisateur par e-mail (les ids dépendent de l'ordre des migrations). */
+export function userId(app: FastifyInstance, email: string): number {
+  const row = one<{ id: number }>(app.db, 'SELECT id FROM users WHERE email = ?', email);
+  if (!row) throw new Error(`utilisateur introuvable : ${email}`);
+  return row.id;
 }
 
 /** Se connecte et renvoie l'en-tête Cookie à réutiliser dans les requêtes suivantes. */
@@ -34,11 +46,14 @@ export async function loginAs(app: FastifyInstance, email: string, password = DE
   return `${cookie.name}=${cookie.value}`;
 }
 
-export const validApplication = {
-  name: 'Assistant Juridique',
-  description: 'Analyse de contrats.',
-  businessDomain: 'juridique',
-  dataSensitivity: 'confidential',
-  aiType: 'genai',
-  processOwnerId: 2, // Camille Roux (2e utilisateur du seed)
-};
+/** Charge utile valide pour POST /api/applications (Process Owner = Camille Roux). */
+export function validApplication(app: FastifyInstance) {
+  return {
+    name: 'Assistant Juridique',
+    description: 'Analyse de contrats.',
+    businessDomain: 'juridique',
+    dataSensitivity: 'confidential',
+    aiType: 'genai',
+    processOwnerId: userId(app, ACCOUNTS.appManager),
+  };
+}
