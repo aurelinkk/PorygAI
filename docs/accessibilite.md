@@ -32,6 +32,18 @@ le code, pas en surcouche : éléments natifs, relations explicites, focus gér�
 - Messages de succès/état en `role="status"` (annonce polie), erreurs bloquantes en `role="alert"`.
 - `autocomplete` sur e-mail et mot de passe.
 
+### Tableaux triables
+
+- L'en-tête cliquable est un vrai `<button>` dans le `<th>` : atteignable au clavier, annoncé comme
+  bouton, cible de 44 px de haut.
+- Le `<th>` porte `aria-sort="ascending" | "descending" | "none"` — c'est ce que les lecteurs d'écran
+  annoncent. Une seule colonne est active à la fois.
+- La flèche (▲ ▼ ↕) n'est qu'un renfort visuel, marquée `aria-hidden` : l'information ne passe jamais
+  par le seul symbole.
+- Les dates sont dans un `<time datetime="…">` : valeur machine exacte, affichage en français.
+- Le tri par statut suit l'ordre du cycle de vie (Draft → In progress → Conforme → Non conforme →
+  Deleted), plus utile qu'un ordre alphabétique.
+
 ### Couleurs et contrastes
 
 - Le statut n'est **jamais** porté par la couleur seule : pastille décorative (`aria-hidden`) + libellé.
@@ -41,6 +53,9 @@ le code, pas en surcouche : éléments natifs, relations explicites, focus gér�
 | Texte / fond                              | Ratio | Seuil        | OK |
 | ----------------------------------------- | ----- | ------------ | -- |
 | Encre `#1A1526` / Crème `#FDF3F6`         | 16:1  | 4,5:1        | ✅ |
+| Lien `#C42F66` / Blanc                    | 5,3:1 | 4,5:1        | ✅ |
+| Lien `#C42F66` / Crème                    | 4,9:1 | 4,5:1        | ✅ |
+| Survol de lien `#12586F` / Crème          | 7,3:1 | 4,5:1        | ✅ |
 | Texte secondaire `#6B6280` / Crème        | 5,3:1 | 4,5:1        | ✅ |
 | Texte secondaire / Blanc                  | 5,8:1 | 4,5:1        | ✅ |
 | Encre / Rose `#FF6F9C` (bouton primaire)  | 6,9:1 | 4,5:1        | ✅ |
@@ -64,6 +79,8 @@ le code, pas en surcouche : éléments natifs, relations explicites, focus gér�
 
 | Charte                                   | Appliqué                                  | Pourquoi                                                   |
 | ---------------------------------------- | ----------------------------------------- | ---------------------------------------------------------- |
+| Liens en `#E24E85`, annoncé « ≥ 4,5:1 »  | `--rose-lien` `#C42F66`                   | Mesure faite : `#E24E85` ne donne que **3,71:1** sur blanc et 3,41:1 sur crème. L'affirmation de la charte est inexacte pour du texte sur fond clair. `#C42F66` tient 5,32:1 / 4,90:1. `#E24E85` reste utilisé pour les dégradés et les bordures (non textuels). |
+| Survol de lien en bleu `#1F7E9E`         | `#12586F`                                 | 4,26:1 sur crème, sous le seuil ; `#12586F` tient 7,3:1     |
 | Badge DPO : texte blanc sur violet       | Texte Encre sur violet                    | Blanc/violet = 3,4:1, insuffisant pour du texte 13 px       |
 | Dégradé rose vif → bleu vif sur les titres | Dégradé des versions foncées `#E24E85`→`#1F7E9E` | Le rose vif sur crème ne fait que 2,6:1 ; les foncés passent le seuil grand texte |
 | Astérisque « obligatoire » rouge vif      | Rouge foncé `#9E1F2F`                     | 4,2:1 → 7,8:1                                              |

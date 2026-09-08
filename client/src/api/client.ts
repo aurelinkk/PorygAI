@@ -3,6 +3,7 @@
  * (même origine). Toute erreur API devient une `ApiError` typée.
  */
 import type { ApiErrorBody } from '@poryg/shared';
+import { clearCache } from './cache';
 
 export class ApiError extends Error {
   constructor(
@@ -19,7 +20,7 @@ export class ApiError extends Error {
 /** Émis quand l'API répond 401 hors connexion : la session a expiré côté serveur. */
 export const UNAUTHENTICATED_EVENT = 'poryg:unauthenticated';
 
-async function request<T>(method: 'GET' | 'POST', url: string, body?: unknown): Promise<T> {
+async function request<T>(method: 'GET' | 'POST' | 'PUT', url: string, body?: unknown): Promise<T> {
   let response: Response;
   try {
     response = await fetch(url, {
@@ -31,6 +32,10 @@ async function request<T>(method: 'GET' | 'POST', url: string, body?: unknown): 
   } catch {
     throw new ApiError(0, 'NETWORK', "Impossible de joindre le serveur. Vérifiez qu'il est démarré.");
   }
+
+  // Toute écriture réussie rend le cache de lecture caduc : on le vide en entier.
+  // Simple et sans risque de données périmées (voir api/cache.ts).
+  if (method !== 'GET' && response.ok) clearCache();
 
   if (response.status === 204) return undefined as T;
 
@@ -48,4 +53,5 @@ async function request<T>(method: 'GET' | 'POST', url: string, body?: unknown): 
 export const api = {
   get: <T>(url: string) => request<T>('GET', url),
   post: <T>(url: string, body?: unknown) => request<T>('POST', url, body),
+  put: <T>(url: string, body?: unknown) => request<T>('PUT', url, body),
 };

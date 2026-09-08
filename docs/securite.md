@@ -63,14 +63,22 @@ En développement, Vite relaie `/api` sans `changeOrigin` pour que `Host` reste 
 
 - Matrice unique dans `shared/src/roles.ts`. Le serveur l'applique via `app.requirePermission('x:y')`
   (401 sans session, 403 sans permission). Le client n'en fait qu'un usage d'affichage.
+- **Deux niveaux** : la permission de rôle, puis la règle de propriété (`canEditApplication`,
+  `canSubmitApplication`) — un Application Manager ne modifie que ses propres applications, même
+  s'il a la permission `application:update`.
 - Règle de visibilité des brouillons appliquée **dans le SQL** (`applications.repo.ts › visibilityClause`),
-  pas seulement dans l'UI. Un brouillon d'autrui renvoie **404** (rien n'est révélé).
-- Tests : `tests/permissions.test.ts`, `tests/applications.test.ts`.
+  pas seulement dans l'UI. Un brouillon d'autrui renvoie **404** (rien n'est révélé), y compris sur
+  son historique.
+- Le champ `permissions` renvoyé par la fiche est calculé côté serveur : le client ne décide rien.
+- Tests : `tests/permissions.test.ts`, `tests/applications.test.ts`, `tests/inventory.test.ts`.
 
 ### Validation et injection
 
-- Toute entrée passe par un schéma Zod **côté serveur** (`lib/validate.ts`), même si le client a déjà validé.
+- Toute entrée passe par un schéma Zod **côté serveur** (`lib/validate.ts`), même si le client a déjà
+  validé — y compris les paramètres de filtrage de l'inventaire (une valeur inconnue → 400).
 - 100 % des requêtes SQL sont paramétrées (`?`). Aucune concaténation de valeur.
+- La recherche libre échappe `%`, `_` et `\` avant le `LIKE ... ESCAPE '\'` : un utilisateur ne peut
+  pas transformer sa recherche en joker et contourner le filtrage.
 - React échappe le contenu par défaut ; aucun `dangerouslySetInnerHTML`.
 
 ### En-têtes HTTP (`@fastify/helmet`)
@@ -100,9 +108,14 @@ autorisées explicitement), `frame-ancestors 'none'`, `X-Content-Type-Options: n
 ## Vérifier
 
 ```bash
-npm test          # 51 tests : auth, SSO, CSRF, RBAC, rate-limit, triggers
+npm test          # 95 tests : auth, SSO, CSRF, RBAC, propriété, filtres, scoring, triggers
 npm audit         # vulnérabilités connues des dépendances
 ```
+
+Le **verdict de conformité n'est jamais reçu du client** : le serveur recalcule le score à partir
+des réponses effectivement enregistrées en base (`submitEvaluation`). Une évaluation soumise est
+ensuite figée par un trigger SQL, et ni les évaluations ni les plans d'action ne peuvent être
+supprimés physiquement.
 
 Le parcours SSO est testé de bout en bout sans réseau (`tests/google-sso.test.ts`) : l'échange du
 code est intercepté et l'ID token fabriqué, ce qui permet de vérifier les refus (state falsifié,

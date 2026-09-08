@@ -6,7 +6,12 @@
 :root {
   /* Palette */
   --rose: #ff6f9c;          /* Rose Poryg — fond de bouton primaire, badges */
-  --rose-dark: #e24e85;     /* Rose foncé — liens, texte blanc dessus OK (≥ 4,5:1) */
+  --rose-dark: #e24e85;     /* Rose foncé — dégradés, bordures, accents NON textuels */
+  /* Rose des liens de texte. La charte prévoit #E24E85, qui ne donne en réalité
+     que 3,71:1 sur blanc : insuffisant pour du texte (4,5:1 requis). Cette
+     variante plus profonde tient 5,32:1 sur blanc et 4,90:1 sur crème.
+     Voir docs/accessibilite.md § « Écarts assumés ». */
+  --rose-lien: #c42f66;
   --rose-pastel: #ffe3ec;
   --rose-light: #fbe0f2;
   --bleu: #3bb7e6;          /* Bleu Data */

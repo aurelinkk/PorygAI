@@ -22,6 +22,8 @@ declare module 'fastify' {
   interface FastifyInstance {
     requireAuth: PreHandler;
     requirePermission: (permission: Permission) => PreHandler;
+    /** Test ponctuel d'une permission (pour composer une réponse, pas pour garder une route). */
+    hasPermission: (user: UserDto, permission: Permission) => boolean;
   }
 }
 
@@ -53,4 +55,6 @@ export function registerAuth(app: FastifyInstance, options: AuthOptions): void {
     if (!request.user) throw unauthenticated();
     if (!can(request.user.role, permission)) throw forbidden();
   });
+
+  app.decorate('hasPermission', (user: UserDto, permission: Permission) => can(user.role, permission));
 }

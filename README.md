@@ -8,8 +8,10 @@ et de suivre leur **usage et leurs coûts** (FinOps, dashboards).
 Rôles : AI Officer · Application Manager · DPO · Auditeur · Utilisateur standard.
 Statuts : Draft → In progress → Conforme / Non conforme (+ Deleted, suppression logique).
 
-> État actuel : **lot 1** livré — socle technique, connexion (SSO Google + mot de passe) et rôles,
-> page d'accueil, formulaire de déclaration d'application. Voir la [feuille de route](#feuille-de-route).
+> État actuel : **lots 1 à 4** livrés — connexion (SSO Google + mot de passe) et rôles, accueil,
+> inventaire complet (déclaration, recherche, fiche, édition, suppression logique tracée,
+> historique), et évaluation de conformité avec scoring automatique et plan d'action.
+> Voir la [feuille de route](#feuille-de-route).
 
 ---
 
@@ -120,7 +122,7 @@ poryg-ai/
 │     ├─ auth/             AuthContext, gardes de routes
 │     ├─ components/       composants UI accessibles (boutons, champs, badges, cartes…)
 │     ├─ layout/           AppShell (en-tête, navigation, main)
-│     ├─ pages/            Login, Home, DeclareApp, 403, 404
+│     ├─ pages/            Login, Home, Applications (liste/fiche/déclaration/édition), 403, 404
 │     ├─ styles/           tokens.css (charte) · base.css · components.css
 │     └─ lib/              formatage, aides formulaires
 ├─ docs/           Documentation (voir ci-dessous) + charte graphique d'origine
@@ -183,9 +185,9 @@ Les alternatives écartées (ORM, NestJS, Next.js, lib de composants, JWT…) so
 | 0   | Socle : monorepo, tooling, tests                                                            | ✅ livré |
 | 1   | Design system, connexion + rôles, accueil, formulaire de déclaration                        | ✅ livré |
 | 1b  | SSO Google + comptes de l'équipe                                                            | ✅ livré |
-| 2   | Inventaire complet : liste filtrable, fiche application, édition, suppression logique tracée | à faire  |
-| 3   | Référentiel de questionnaires (7 exigences UE « IA digne de confiance »), saisie, scoring    | à faire  |
-| 4   | Workflow d'audit : soumission, décision, motif, plan d'action, avis DPO                     | à faire  |
+| 2   | Inventaire filtrable, fiche application, édition, envoi à l'audit, suppression logique, historique | ✅ livré |
+| 3   | Questionnaire d'évaluation (18 pts, critères éliminatoires), scoring, verdict automatique    | ✅ livré |
+| 4   | Plan d'action généré automatiquement, suivi des actions correctives                          | ✅ livré |
 | 5   | FinOps : saisie/import des coûts, rapport                                                   | à faire  |
 | 6   | Dashboards BI et historique                                                                 | à faire  |
 | 7   | Durcissement : polices auto-hébergées, revue sécurité, mise en production                   | à faire  |

@@ -52,6 +52,12 @@ export function AppShell() {
                   Accueil
                 </NavLink>
               </li>
+              <li>
+                {/* `end` absent : le lien reste actif sur les fiches et le formulaire. */}
+                <NavLink to="/applications" className="nav__link">
+                  Inventaire
+                </NavLink>
+              </li>
               {can(user.role, 'application:create') && (
                 <li>
                   <NavLink to="/applications/nouvelle" className="nav__link">

@@ -51,7 +51,15 @@ export function resolveSession(db: Db, sessionId: string, ttlHours: number): Use
     deleteSession(db, sessionId);
     return null;
   }
-  run(db, 'UPDATE sessions SET expires_at = ? WHERE id = ?', addHours(now, ttlHours), sessionId);
+
+  // Expiration glissante, mais on n'écrit pas à CHAQUE requête : une page en
+  // charge plusieurs, et chaque écriture touche le journal WAL pour rien. On ne
+  // prolonge que lorsqu'il reste moins de la moitié de la durée de vie — le
+  // comportement pour l'utilisateur est identique.
+  const halfLife = addHours(now, ttlHours / 2);
+  if (row.expires_at < halfLife) {
+    run(db, 'UPDATE sessions SET expires_at = ? WHERE id = ?', addHours(now, ttlHours), sessionId);
+  }
 
   return { id: row.id, email: row.email, displayName: row.display_name, role: row.role };
 }

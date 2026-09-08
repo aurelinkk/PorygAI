@@ -5,6 +5,7 @@
 import type { ReactNode } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { can, type Permission } from '@poryg/shared';
+import { LoadingScreen } from '../components/ui/Loading';
 import { ForbiddenPage } from '../pages/ForbiddenPage';
 import { useAuth } from './AuthContext';
 
@@ -14,9 +15,7 @@ export function RequireAuth({ children }: { children: ReactNode }) {
 
   if (status === 'loading') {
     return (
-      <p className="loading" role="status">
-        Chargement…
-      </p>
+      <LoadingScreen message="Ouverture de votre session…" />
     );
   }
   if (!user) return <Navigate to="/login" replace state={{ from: location.pathname }} />;

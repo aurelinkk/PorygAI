@@ -9,6 +9,7 @@ import { StatusPill } from '../components/ui/Badges';
 import { ButtonLink } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { Kpi } from '../components/ui/Kpi';
+import { Loading } from '../components/ui/Loading';
 import { firstName, formatEur, formatMonth } from '../lib/format';
 
 export function HomePage() {
@@ -33,9 +34,7 @@ export function HomePage() {
 
       {flash && <Alert tone="success">{flash}</Alert>}
       {loading && (
-        <p className="loading" role="status">
-          Chargement des indicateurs…
-        </p>
+        <Loading message="Chargement des indicateurs…" />
       )}
       {error && <Alert tone="error">{error.message}</Alert>}
 

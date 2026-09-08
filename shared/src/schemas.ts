@@ -3,7 +3,9 @@
  * (feedback immédiat), le serveur revalide TOUJOURS à l'entrée (sécurité).
  */
 import { z } from 'zod';
+import { BUSINESS_CRITICALITIES } from './questionnaire.js';
 import { AI_TYPES, BUSINESS_DOMAINS, DATA_SENSITIVITIES } from './referentiels.js';
+import { APP_STATUSES } from './statuses.js';
 
 /** Transforme un référentiel en tuple de codes utilisable par z.enum(). */
 const codes = <T extends readonly { code: string }[]>(list: T) =>
@@ -26,3 +28,51 @@ export const createApplicationSchema = z.object({
   processOwnerId: z.coerce.number({ invalid_type_error: 'Désigner un Process Owner' }).int().positive('Désigner un Process Owner'),
 });
 export type CreateApplicationInput = z.infer<typeof createApplicationSchema>;
+
+/**
+ * Modification : mêmes champs que la déclaration (le formulaire d'édition les
+ * affiche tous). Schéma distinct pour pouvoir diverger sans casser la création.
+ */
+export const updateApplicationSchema = createApplicationSchema;
+export type UpdateApplicationInput = z.infer<typeof updateApplicationSchema>;
+
+/**
+ * Champs dont la modification remet une application conforme (ou non conforme)
+ * en cours d'audit : ils changent ce qui a été évalué. Un changement de nom, de
+ * description ou de Process Owner ne déclenche pas de réévaluation.
+ */
+export const REEVALUATION_FIELDS = ['businessDomain', 'dataSensitivity', 'aiType'] as const;
+
+/** Une chaîne de requête vide (`?status=`) doit valoir « non filtré ». */
+const optional = <T extends z.ZodTypeAny>(schema: T) =>
+  z.preprocess((value) => (value === '' || value === undefined ? undefined : value), schema.optional());
+
+/** Informations préliminaires (non notées) + réponses au questionnaire. */
+export const saveEvaluationSchema = z.object({
+  toolVendor: z.string().trim().max(200, '200 caractères maximum').default(''),
+  purpose: z.string().trim().max(2000, '2000 caractères maximum').default(''),
+  businessCriticality: z.enum(codes(BUSINESS_CRITICALITIES)).optional().nullable(),
+  /** code de question → 0, 1 ou 2. Une question sans réponse est simplement absente. */
+  answers: z.record(z.string(), z.union([z.literal(0), z.literal(1), z.literal(2)])).default({}),
+  comments: z.record(z.string(), z.string().trim().max(1000)).default({}),
+});
+export type SaveEvaluationInput = z.infer<typeof saveEvaluationSchema>;
+
+/** À la soumission, les informations préliminaires deviennent obligatoires. */
+export const submitEvaluationSchema = saveEvaluationSchema.extend({
+  toolVendor: z.string().trim().min(2, "Indiquer l'outil et son éditeur").max(200),
+  purpose: z.string().trim().min(10, 'Décrire la finalité précise (10 caractères minimum)').max(2000),
+  businessCriticality: z.enum(codes(BUSINESS_CRITICALITIES), {
+    errorMap: () => ({ message: 'Indiquer la criticité métier' }),
+  }),
+});
+export type SubmitEvaluationInput = z.infer<typeof submitEvaluationSchema>;
+
+export const applicationFiltersSchema = z.object({
+  /** Recherche libre sur le nom, le code et la description. */
+  q: optional(z.string().trim().max(120)),
+  status: optional(z.enum(APP_STATUSES)),
+  domain: optional(z.enum(codes(BUSINESS_DOMAINS))),
+  sensitivity: optional(z.enum(codes(DATA_SENSITIVITIES))),
+});
+export type ApplicationFilters = z.infer<typeof applicationFiltersSchema>;

@@ -5,6 +5,7 @@
  */
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import type { UserDto } from '@poryg/shared';
+import { clearCache, dedupe } from '../api/cache';
 import { api, UNAUTHENTICATED_EVENT } from '../api/client';
 
 interface AuthState {
@@ -22,8 +23,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<'loading' | 'ready'>('loading');
 
   useEffect(() => {
-    api
-      .get<{ user: UserDto }>('/api/auth/me')
+    // `dedupe` : sans lui, le double montage de StrictMode enverrait deux
+    // requêtes /me au démarrage.
+    dedupe('/api/auth/me', () => api.get<{ user: UserDto }>('/api/auth/me'))
       .then(({ user }) => setUser(user))
       .catch(() => setUser(null))
       .finally(() => setStatus('ready'));
@@ -47,6 +49,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await api.post('/api/auth/logout');
     } finally {
       setUser(null);
+      // Rien du compte précédent ne doit rester en mémoire pour le suivant.
+      clearCache();
     }
   }, []);
 

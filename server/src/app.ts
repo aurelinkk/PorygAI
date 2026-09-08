@@ -19,6 +19,7 @@ import { HttpError } from './lib/http-errors.js';
 import { registerApplicationsRoutes } from './modules/applications.routes.js';
 import { registerAuthRoutes } from './modules/auth.routes.js';
 import { registerDashboardRoutes } from './modules/dashboard.routes.js';
+import { registerEvaluationsRoutes } from './modules/evaluations.routes.js';
 import { registerUsersRoutes } from './modules/users.routes.js';
 import { registerAuth } from './plugins/auth.js';
 import { registerSecurity } from './plugins/security.js';
@@ -67,25 +68,29 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
   });
   registerUsersRoutes(app, { db });
   registerApplicationsRoutes(app, { db });
+  registerEvaluationsRoutes(app, { db });
   registerDashboardRoutes(app, { db });
 
   // En production, l'API sert aussi le front compilé (`npm run build`) : un seul processus.
-  if (config.isProduction && existsSync(config.clientDistDir)) {
+  const servesClient = config.isProduction && existsSync(config.clientDistDir);
+  if (servesClient) {
     await app.register(fastifyStatic, { root: config.clientDistDir, wildcard: false });
-    app.setNotFoundHandler(async (request, reply) => {
-      if (request.url.startsWith('/api/')) throw new HttpError(404, 'NOT_FOUND', 'Route inconnue');
-      return reply.sendFile('index.html'); // routage côté client (React Router)
-    });
   }
+
+  // Fastify n'accepte qu'UN SEUL gestionnaire de 404 par instance : il est donc
+  // enregistré ici, une fois, en tenant compte des deux cas.
+  app.setNotFoundHandler(async (request, reply) => {
+    if (servesClient && !request.url.startsWith('/api/')) {
+      return reply.sendFile('index.html'); // routage côté client (React Router)
+    }
+    throw new HttpError(404, 'NOT_FOUND', 'Route inconnue');
+  });
 
   return app;
 }
 
 /** Toutes les erreurs sortent au même format JSON ; jamais de stack trace au client. */
 function registerErrorHandling(app: FastifyInstance): void {
-  app.setNotFoundHandler(async () => {
-    throw new HttpError(404, 'NOT_FOUND', 'Route inconnue');
-  });
 
   app.setErrorHandler((error: unknown, request, reply) => {
     if (error instanceof HttpError) {

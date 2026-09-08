@@ -48,6 +48,34 @@ requête HTTP
 écoute. Les tests appellent `buildApp({ dbPath: ':memory:' })` et utilisent `app.inject()` : pas de
 port, pas de réseau, une base neuve par test.
 
+### Les routes
+
+| Méthode | Route | Permission | Règle supplémentaire |
+| --- | --- | --- | --- |
+| POST | `/api/auth/login` | — | 5 tentatives/min/IP |
+| POST | `/api/auth/logout` | connecté | |
+| GET | `/api/auth/me` | — | renvoie `user: null` si pas de session |
+| GET | `/api/auth/providers` | — | dit si le SSO Google est actif |
+| GET | `/api/auth/google/start` · `/callback` | — | voir « Le SSO Google » |
+| GET | `/api/users` | connecté | annuaire (choix du Process Owner) |
+| GET | `/api/applications` | `application:read` | filtres `?q=&status=&domain=&sensitivity=` |
+| POST | `/api/applications` | `application:create` | |
+| GET | `/api/applications/:id` | `application:read` | brouillon d'autrui → 404 |
+| PUT | `/api/applications/:id` | `application:update` | + `canEditApplication` (propriétaire) |
+| GET | `/api/applications/:id/history` | `application:history` | |
+| POST | `/api/applications/:id/submit` | `application:submit` | + brouillon + propriétaire |
+| POST | `/api/applications/:id/delete` | `application:delete` | suppression **logique** |
+| POST | `/api/applications/:id/restore` | `application:restore` | rend le statut d'avant |
+| GET | `/api/applications/:id/evaluation` | `evaluation:read` | brouillon + historique + plans d'action |
+| PUT | `/api/applications/:id/evaluation` | `evaluation:fill` | enregistre un brouillon, sans verdict |
+| POST | `/api/applications/:id/evaluation/submit` | `evaluation:decide` | score, verdict, plan d'action |
+| POST | `/api/action-plans/:id/done` | `action_plan:execute` | coche / décoche une action corrective |
+| GET | `/api/dashboard/summary` | `dashboard:read` | indicateurs adaptés au rôle |
+
+`GET /api/applications/:id` renvoie aussi un objet `permissions` (`edit`, `submit`, `delete`,
+`restore`, `history`) : le client s'en sert pour n'afficher que les actions réellement possibles,
+sans réimplémenter les règles.
+
 ### Modules
 
 Un domaine métier = deux fichiers dans `server/src/modules/` :
@@ -106,12 +134,46 @@ Les tables des questionnaires, évaluations et plans d'action arriveront avec le
 
 - **Routage** (`App.tsx`) : `/login` public ; `/` et ses enfants sous `<RequireAuth>` + `<AppShell>`.
   `<RequirePermission permission="…">` protège une page par la matrice partagée (affiche la page 403).
+  Attention à l'ordre : `applications/nouvelle` est déclarée **avant** `applications/:id`, sinon
+  « nouvelle » serait pris pour un identifiant.
+- **Filtres dans l'URL** : la page inventaire lit et écrit `?q=&status=&domain=&sensitivity=` via
+  `useSearchParams`. Une recherche est donc partageable, et le bouton « Précédent » fonctionne.
+- **Formulaire partagé** : `components/ApplicationForm.tsx` sert à la déclaration ET à la
+  modification (mêmes champs, même validation, même gestion accessible des erreurs).
 - **Authentification** (`auth/AuthContext.tsx`) : au chargement, `GET /api/auth/me` restaure la session
   (le cookie est httpOnly, le JS ne le lit jamais). `login()` / `logout()` mettent à jour `user`.
   Si l'API répond 401 en cours de navigation, un événement global remet `user` à `null` → retour au login.
-- **Appels API** (`api/client.ts`) : `api.get` / `api.post`, erreurs typées `ApiError { status, code, fields }`.
-  `useApi(url)` charge une ressource au montage (`{ data, error, loading, reload }`). Pas de cache :
-  inutile pour l'instant, à reconsidérer si les pages se multiplient.
+- **Appels API** (`api/client.ts`) : `api.get` / `api.post` / `api.put`, erreurs typées
+  `ApiError { status, code, fields }`. `useApi(url)` charge une ressource au montage
+  (`{ data, error, loading, reload }`).
+
+### Cache et parallélisme des requêtes
+
+`api/cache.ts` (une trentaine de lignes, sans dépendance) tient un cache mémoire des lectures GET.
+Il règle trois choses mesurées sur la fiche application :
+
+| | Avant | Après |
+| --- | --- | --- |
+| Requêtes API au chargement | 8 (chacune envoyée deux fois) | 4 |
+| Fenêtre du premier au dernier appel | 235 ms | 23 ms |
+| Retour arrière sur une page déjà vue | tout est refetché | 0 requête |
+
+1. **Déduplication des requêtes en vol** (`dedupe`) : deux appelants qui demandent la même URL en
+   même temps ne déclenchent qu'une requête. C'est ce qui neutralise le double montage des effets
+   par React StrictMode en développement.
+2. **Fraîcheur courte** (15 s) : revenir sur une page déjà vue l'affiche sans requête ni écran d'attente.
+3. **Invalidation simple** : toute écriture réussie (POST/PUT) vide *l'intégralité* du cache. Grossier,
+   mais impossible d'afficher une donnée périmée — à cette échelle, une invalidation plus fine
+   n'apporterait rien et introduirait des bugs.
+
+**Éviter les cascades.** Une page qui charge une ressource, puis monte des composants qui en chargent
+d'autres, enchaîne les allers-retours. `ApplicationDetailPage` appelle donc ses trois `useApi` au
+niveau de la page et passe le résultat aux sous-composants (`ApiQuery<T>` en props) : les trois
+requêtes partent ensemble. À reproduire pour toute page qui affiche plusieurs blocs de données.
+
+**Le mode développement est intrinsèquement plus lent** : Vite sert 88 modules séparés et React
+double les effets. En production, le front est un seul fichier JS (392 ko, 122 ko gzip) plus un CSS
+de 21 ko. Pour juger des performances réelles, mesurer sur `npm run build && NODE_ENV=production npm start`.
 - **Formulaires** : état React + `schema.safeParse()` du même schéma Zod que le serveur. Les erreurs sont
   affichées dans un résumé en tête de formulaire (focus déplacé dessus) et sous chaque champ.
 - **Composants UI** (`components/ui/`) : `Button`, `TextField`/`SelectField`/`TextareaField`/`RadioGroupField`,
@@ -179,6 +241,9 @@ les émetteurs acceptés, puis dupliquer les deux routes. L'interface `Identity`
 npm run build                      # client/dist
 NODE_ENV=production npm start      # Fastify sert l'API et le front (ou via .env)
 ```
+
+Un seul gestionnaire de 404 est enregistré (Fastify n'en accepte qu'un par instance) : il renvoie
+`index.html` pour les routes du front et une erreur JSON pour `/api/*`.
 
 - Mettre l'API derrière un reverse proxy HTTPS (Caddy, nginx) et passer `trustProxy: true` dans `app.ts`
   pour que `request.ip` soit la vraie adresse (rate-limit, audit).

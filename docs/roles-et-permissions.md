@@ -45,7 +45,11 @@ Une adresse absente de cette table ne peut pas se connecter, même avec un compt
 | `application:read_all_drafts` |          |             |          |     | ✅         | 1 |
 | `application:create`          |          | ✅          |          |     | ✅         | 1 |
 | `application:update`         |          | ✅ (les siennes) |     |     | ✅         | 2 |
+| `application:update_any`      |          |             |          |     | ✅         | 2 |
+| `application:submit`          |          | ✅ (les siennes) |     |     | ✅         | 2 |
 | `application:delete` (logique) |         |             |          |     | ✅         | 2 |
+| `application:restore`         |          |             |          |     | ✅         | 2 |
+| `application:history`         |          | ✅          | ✅       | ✅  | ✅         | 2 |
 | `evaluation:fill`             |          | ✅          |          |     | ✅         | 3 |
 | `evaluation:decide`           |          |             | ✅       |     | ✅         | 4 |
 | `evaluation:dpo_opinion`      |          |             |          | ✅  | ✅         | 4 |
@@ -56,12 +60,16 @@ Une adresse absente de cette table ne peut pas se connecter, même avec un compt
 | `admin:referentiels`          |          |             |          |     | ✅         | 7 |
 | `admin:users`                 |          |             |          |     | ✅         | 7 |
 
-Règles complémentaires appliquées dans le SQL (pas seulement par permission) :
+Règles complémentaires, au-delà de la simple permission de rôle :
 
 - **Brouillons** (`draft`) : visibles uniquement par leur Process Owner, leur créateur, et les rôles
-  ayant `application:read_all_drafts`. Un brouillon d'autrui renvoie 404.
-- **Modification** : un Application Manager ne modifie que les applications dont il est Process Owner
-  (à implémenter au lot 2 avec `application:update`).
+  ayant `application:read_all_drafts`. Un brouillon d'autrui renvoie 404 (pas 403 : on ne révèle
+  pas son existence). Appliqué **dans le SQL** (`applications.repo.ts › visibilityClause`).
+- **Propriété** : un Application Manager ne modifie et n'envoie à l'audit que les applications dont
+  il est Process Owner ou déclarant. `application:update_any` (AI Officer) lève cette restriction.
+  Fonctions `canEditApplication` / `canSubmitApplication` dans `shared/src/roles.ts` — utilisées par
+  le serveur (403) **et** par le client (masquage des boutons).
+- **Application supprimée** : plus aucune modification possible, quel que soit le rôle.
 
 ### Ajouter une permission
 
@@ -98,8 +106,59 @@ Règles complémentaires appliquées dans le SQL (pas seulement par permission) 
    `compliance_valid_until` est dépassé. Job `server/src/jobs/compliance-expiry.ts`, exécuté au
    démarrage puis toutes les 24 h ; chaque bascule est tracée (`audit_log`, acteur = système).
 2. **Pas de suppression physique** — statut `deleted` + traçabilité « par qui / quand ». Des triggers
-   SQL refusent tout `DELETE` sur les tables métier.
+   SQL refusent tout `DELETE` sur les tables métier. La **restauration** relit le statut d'avant dans
+   le journal d'audit (une application conforme supprimée puis restaurée redevient conforme).
 3. **Traçabilité** — toute action porte son auteur et son horodatage (`audit_log`, table immuable).
+   La fiche d'une application affiche cet historique, avec le détail des champs modifiés.
+
+### Le questionnaire d'évaluation
+
+Défini dans `shared/src/questionnaire.ts` (versionné avec le code, comme les référentiels).
+9 questions réparties en 4 piliers, **18 points** au total : Oui = 2, Partiellement = 1, Non = 0.
+
+| Pilier | Questions | Dont éliminatoires |
+| --- | --- | --- |
+| A. Sécurité & Données | A1, A2, A3 | A1 (hébergement), A2 (données sensibles) |
+| B. Transparence | B1, B2 | B1 (information des utilisateurs) |
+| C. Équité & Supervision | C1, C2 | C1 (humain dans la boucle) |
+| D. FinOps & Éco-conception | D1, D2 | — |
+
+**Scoring hybride.** L'application est *Conforme* si le score ≥ **14/18** **ET** qu'aucun critère
+éliminatoire n'a obtenu 0. Un seul « Non » sur un éliminatoire suffit à basculer en *Non conforme*,
+même avec 16/18. Le calcul est celui de `scoreEvaluation()` — la même fonction sert au client
+(affichage en direct pendant la saisie) et au serveur (calcul qui fait foi à la soumission).
+
+**Effets de la soumission :**
+
+- *Conforme* → statut `compliant` et échéance à +12 mois ; le job d'expiration annuelle prendra le relais.
+- *Non conforme* → statut `non_compliant`, échéance effacée, et **une action corrective par question
+  à 0 ou 1 point**, avec le texte de remédiation prévu pour cette question. Échéance par défaut :
+  90 jours pour un critère éliminatoire, 180 jours sinon ; responsable = le Process Owner.
+
+> La fiche d'évaluation d'origine mentionne, en cas de non-conformité, une action système
+> « l'application est bloquée ». Point tranché avec le métier : **cela désigne le statut
+> `non_compliant` lui-même**, pas un mécanisme supplémentaire. Poryg'AI est un registre et n'a
+> aucune prise technique sur les applications inventoriées — il n'y a donc rien à implémenter de plus.
+
+> L'échéance de conformité est posée à **+12 mois** (date anniversaire) plutôt qu'à 365 jours fixes :
+> cela colle à la règle de gestion « conforme pendant un an » et ne dérive pas les années bissextiles.
+
+**Qui fait quoi :** `evaluation:fill` (AI Officer, Application Manager, Auditeur) permet de saisir et
+d'enregistrer un brouillon ; `evaluation:decide` (AI Officer, Auditeur) permet de **soumettre**, ce
+qui déclenche le verdict. Le DPO consulte. Une évaluation soumise est figée en base (trigger SQL) :
+c'est la preuve de l'audit. Une nouvelle soumission crée une nouvelle évaluation, l'historique reste.
+
+### Règle ajoutée au lot 2 : réévaluation après modification
+
+Modifier le **domaine métier**, la **sensibilité des données** ou le **type d'IA** d'une application
+déjà décidée (Conforme ou Non conforme) la replace en `in_progress` et efface son échéance : ce qui
+a été audité ne correspondrait plus à ce qui est déclaré.
+
+Les autres champs (nom, description, Process Owner) ne déclenchent pas de réévaluation. La liste est
+dans `REEVALUATION_FIELDS` (`shared/src/schemas.ts`), et l'utilisateur est prévenu avant d'enregistrer.
+
+Cette règle ne figure pas explicitement dans le brief : elle en découle (« conforme pendant un an
+puis ré-évaluer toutes les évolutions »). À confirmer avec le métier.
 
 ## Ce que chaque rôle voit sur l'accueil (lot 1)
 
