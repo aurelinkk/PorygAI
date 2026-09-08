@@ -1,0 +1,27 @@
+{
+  "name": "poryg-ai",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Poryg'AI — registre des applications IA : inventaire, évaluation éthique, conformité, FinOps",
+  "type": "module",
+  "engines": {
+    "node": ">=22.13"
+  },
+  "workspaces": [
+    "shared",
+    "server",
+    "client"
+  ],
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "dev:server": "npm run dev -w server",
+    "dev:client": "npm run dev -w client",
+    "db:migrate": "npm run db:migrate -w server",
+    "db:seed": "npm run db:seed -w server",
+    "db:reset": "npm run db:reset -w server",
+    "test": "npm run test -w server",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "build": "npm run build -w client",
+    "start": "npm run start -w server"
+  }
+}

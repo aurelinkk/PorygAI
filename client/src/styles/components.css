@@ -1,0 +1,679 @@
+/* ============================================================================
+   Composants — rendu "croustillant" de la charte : contour noir, ombre dure,
+   rayons généreux. Classes en BEM léger (bloc__element--modificateur).
+   ============================================================================ */
+
+/* --- Boutons ---------------------------------------------------------------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: var(--tap-target);
+  padding: 10px 20px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 16px;
+  line-height: 1.2;
+  text-decoration: none;
+  border: var(--border-thick);
+  border-radius: var(--radius-btn);
+  box-shadow: var(--shadow-md);
+  cursor: pointer;
+  transition: transform 0.12s, box-shadow 0.12s;
+}
+.btn:hover,
+.btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0 var(--encre);
+}
+.btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+  transform: none;
+  box-shadow: var(--shadow-md);
+}
+.btn--primary {
+  background: var(--rose);
+  color: var(--encre);
+}
+.btn--primary:hover {
+  color: var(--encre);
+}
+.btn--secondary {
+  background: var(--bleu-pastel);
+  color: var(--bleu-text);
+}
+.btn--secondary:hover {
+  color: var(--bleu-text);
+}
+.btn--ghost {
+  background: transparent;
+  color: var(--encre);
+  border-style: dashed;
+  box-shadow: none;
+}
+.btn--ghost:hover {
+  color: var(--encre);
+  transform: none;
+  box-shadow: none;
+  background: var(--blanc);
+}
+.btn--small {
+  min-height: 40px;
+  padding: 6px 14px;
+  font-size: 14px;
+  border-width: 2px;
+  box-shadow: var(--shadow-sm);
+}
+.btn--small:hover {
+  box-shadow: 1px 1px 0 var(--encre);
+}
+.btn--ghost.btn--small:hover {
+  box-shadow: none;
+}
+
+/* --- Cartes ----------------------------------------------------------------- */
+.card {
+  background: var(--blanc);
+  border: var(--border-thick);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-lg);
+  padding: 24px;
+}
+.card__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.card__title {
+  font-size: 22px;
+}
+.message-card {
+  max-width: 560px;
+  margin: 40px auto;
+}
+.message-card .page-title {
+  margin-bottom: 12px;
+}
+
+/* --- Indicateurs (KPI) ------------------------------------------------------ */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--gutter);
+  margin: 0 0 var(--gutter);
+}
+.kpi {
+  background: var(--blanc);
+  border: var(--border-thick);
+  border-radius: 20px;
+  box-shadow: var(--shadow-md);
+  padding: 18px 22px;
+}
+.kpi--success {
+  background: var(--vert-pastel);
+}
+.kpi--accent {
+  background: var(--bleu-pastel);
+}
+.kpi__label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--texte-3);
+}
+.kpi__body {
+  margin: 0;
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+}
+.kpi__value {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 44px;
+  line-height: 1;
+}
+.kpi__hint {
+  color: var(--texte-2);
+  font-size: 12px;
+}
+
+/* --- Formulaires ------------------------------------------------------------ */
+.field {
+  margin-bottom: 18px;
+  min-width: 0;
+}
+.field--group {
+  border: 0;
+  padding: 0;
+  margin-inline: 0;
+}
+.field__label {
+  display: block;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+legend.field__label {
+  padding: 0;
+}
+.field__required {
+  color: var(--rouge-dark); /* 7,8:1 sur blanc (le rouge vif ne fait que 4,2:1) */
+}
+.field__hint {
+  margin: 0 0 8px;
+  font-size: 14px;
+  color: var(--texte-2);
+}
+.field__error {
+  margin: 8px 0 0;
+  padding: 8px 12px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--rouge-dark);
+  background: var(--rouge-pastel);
+  border: 2px solid var(--rouge);
+  border-radius: var(--radius-field);
+}
+
+.input {
+  display: block;
+  width: 100%;
+  min-height: var(--tap-target);
+  padding: 10px 14px;
+  background: var(--blanc);
+  border: var(--border-thin);
+  border-radius: var(--radius-field);
+  font-size: 15px;
+  transition: border-color 0.12s, box-shadow 0.12s;
+}
+.input:focus {
+  outline: none;
+  border-color: var(--bleu);
+  box-shadow: 0 0 0 4px var(--bleu-pastel); /* "champ actif" de la charte */
+}
+.input:focus-visible {
+  outline: none; /* l'état focus est déjà rendu par la bordure + halo */
+}
+.input[aria-invalid='true'] {
+  border-color: var(--rouge);
+}
+.input--textarea {
+  resize: vertical;
+  min-height: 110px;
+}
+.input--select {
+  appearance: none;
+  padding-right: 42px;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='10' viewBox='0 0 16 10'><path d='M1 1l7 7 7-7' fill='none' stroke='%231A1526' stroke-width='2.5' stroke-linecap='round'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+}
+
+.radio-list {
+  display: grid;
+  gap: 8px;
+}
+.radio {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-height: var(--tap-target);
+  padding: 8px 12px;
+  border: var(--border-thin);
+  border-radius: var(--radius-field);
+  background: var(--blanc);
+  cursor: pointer;
+}
+.radio:has(input:checked) {
+  background: var(--rose-pastel);
+}
+.radio:has(input:focus-visible) {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+.radio input {
+  width: 22px;
+  height: 22px;
+  margin: 3px 0 0;
+  accent-color: var(--rose-dark);
+  flex: none;
+}
+.radio input:focus-visible {
+  outline: none;
+}
+.radio__text {
+  display: flex;
+  flex-direction: column;
+}
+.radio__label {
+  font-weight: 700;
+}
+.radio__hint {
+  font-size: 13px;
+  color: var(--texte-2);
+}
+
+.form-card {
+  max-width: 860px;
+}
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 var(--gutter);
+}
+.form-grid__full {
+  grid-column: 1 / -1;
+}
+.form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+/* --- Messages --------------------------------------------------------------- */
+.alert {
+  padding: 12px 16px;
+  border: var(--border-thin);
+  border-radius: var(--radius-field);
+  margin-bottom: 20px;
+  font-weight: 500;
+}
+.alert p:last-child,
+.alert ul:last-child {
+  margin-bottom: 0;
+}
+.alert__title {
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+.alert__list {
+  margin: 0;
+  padding-left: 20px;
+}
+.alert__list a {
+  color: inherit;
+}
+.alert--error {
+  background: var(--rouge-pastel);
+  border-color: var(--rouge);
+  color: var(--rouge-dark);
+}
+.alert--success {
+  background: var(--vert-pastel);
+  border-color: var(--vert-dark);
+  color: var(--vert-dark);
+}
+.alert--warning {
+  background: var(--rose-pastel);
+  border-color: var(--rose-dark);
+  color: var(--encre);
+}
+.alert--info {
+  background: var(--bleu-pastel);
+  border-color: var(--bleu-dark);
+  color: var(--bleu-text);
+}
+.notice {
+  margin: -6px 0 18px;
+  padding: 10px 13px;
+  border-radius: var(--radius-field);
+  font-size: 14px;
+  font-weight: 700;
+}
+.notice--warning {
+  background: var(--rose-pastel);
+  border: 2px solid var(--rose-dark);
+  color: var(--encre);
+}
+
+/* --- Badges & statuts ------------------------------------------------------- */
+.role-badge {
+  display: inline-block;
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 700;
+  border: var(--border-thin);
+  border-radius: 10px;
+  box-shadow: var(--shadow-sm);
+  white-space: nowrap;
+}
+.role-badge--ai_officer {
+  background: var(--rose);
+  color: var(--encre);
+}
+.role-badge--app_manager {
+  background: var(--bleu);
+  color: var(--encre);
+}
+.role-badge--dpo {
+  /* La charte prévoit du blanc sur violet (3,4:1) : insuffisant pour du texte 13 px.
+     Encre sur violet = 5,2:1 (voir docs/accessibilite.md, "Écarts assumés"). */
+  background: var(--violet);
+  color: var(--encre);
+}
+.role-badge--auditor {
+  background: var(--rose-pastel);
+  color: var(--encre);
+}
+.role-badge--standard {
+  background: var(--blanc);
+  color: var(--encre);
+}
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px 4px 10px;
+  font-size: 13px;
+  font-weight: 700;
+  background: var(--blanc);
+  border: var(--border-thin);
+  border-radius: var(--radius-badge);
+  white-space: nowrap;
+}
+.status__dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.status--draft .status__dot {
+  background: var(--violet);
+}
+.status--in_progress .status__dot {
+  background: var(--bleu);
+}
+.status--compliant .status__dot {
+  background: var(--vert);
+}
+.status--non_compliant .status__dot {
+  background: var(--rouge);
+}
+.status--deleted {
+  color: var(--gris-deleted);
+  border-color: var(--gris-deleted);
+}
+.status--deleted .status__dot {
+  background: var(--gris-deleted);
+}
+
+/* --- Tableau ---------------------------------------------------------------- */
+.table-wrap {
+  overflow-x: auto;
+  margin: 0 -8px;
+}
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 520px;
+}
+.table th,
+.table td {
+  text-align: left;
+  vertical-align: top;
+  padding: 12px 8px;
+  border-bottom: 2px solid var(--gris-ligne);
+}
+.table thead th {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--texte-2);
+  border-bottom: var(--border-thin);
+}
+.table tbody th {
+  font-weight: 700;
+}
+.table tbody tr:last-child th,
+.table tbody tr:last-child td {
+  border-bottom: 0;
+}
+.table__name {
+  display: block;
+}
+.table__meta {
+  display: block;
+  color: var(--texte-2);
+  font-size: 12px;
+  margin-top: 4px;
+}
+.table td .status + .table__meta {
+  margin-top: 6px;
+}
+/* Supprimé = grisé et barré. Grisé par la couleur (5,8:1), pas par une opacité
+   qui ferait passer le texte secondaire sous 3:1. */
+.table .is-deleted th,
+.table .is-deleted td {
+  color: var(--texte-2);
+}
+.table .is-deleted .table__name {
+  text-decoration: line-through;
+}
+
+/* --- En-tête de l'application ---------------------------------------------- */
+.app-header {
+  background: var(--blanc);
+  border-bottom: var(--border-thick);
+}
+.app-header__inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px var(--gutter);
+  min-height: 72px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: var(--encre);
+}
+.brand:hover {
+  color: var(--encre);
+}
+.brand__logo {
+  border-radius: 50%;
+}
+.brand__name {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 24px;
+}
+.nav {
+  display: flex;
+  gap: 6px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.nav__link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 6px 14px;
+  border-radius: 10px;
+  color: var(--encre);
+  text-decoration: none;
+  font-weight: 700;
+}
+.nav__link:hover {
+  background: var(--creme);
+  color: var(--encre);
+}
+.nav__link.active {
+  background: var(--rose-pastel);
+  border: var(--border-thin);
+  box-shadow: 2px 2px 0 var(--encre);
+}
+.user-menu {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+}
+.user-menu__name {
+  font-weight: 700;
+}
+
+/* --- Accueil ---------------------------------------------------------------- */
+.home-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  gap: var(--gutter);
+  align-items: start;
+}
+.eval-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+.eval-list__item {
+  display: grid;
+  gap: 4px;
+  padding: 12px 14px;
+  border: var(--border-thin);
+  border-radius: var(--radius-field);
+  background: var(--creme);
+}
+.eval-list__name {
+  font-weight: 700;
+}
+.eval-list__hint {
+  color: var(--texte-2);
+  font-size: 12px;
+}
+.eval-list__item .status {
+  justify-self: start;
+  margin-top: 4px;
+}
+
+/* --- Connexion -------------------------------------------------------------- */
+.login-layout {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 32px var(--margin);
+  background: var(--degrade-fond);
+}
+.login-card {
+  width: 100%;
+  max-width: 460px;
+  padding: 32px 28px;
+}
+.login-logo {
+  margin: -8px auto 12px;
+  border-radius: 50%;
+  border: var(--border-thick);
+  box-shadow: var(--shadow-md);
+  animation: pg-float 6s ease-in-out infinite;
+}
+@keyframes pg-float {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-2deg);
+  }
+  50% {
+    transform: translateY(-8px) rotate(2deg);
+  }
+}
+.login-card .eyebrow {
+  text-align: center;
+}
+.login-title {
+  text-align: center;
+  font-size: 32px;
+  margin-bottom: 20px;
+}
+.login-submit {
+  width: 100%;
+  margin-top: 4px;
+}
+.login-sso {
+  margin: 18px 0 0;
+  font-size: 13px;
+  text-align: center;
+}
+.demo-accounts {
+  margin-top: 22px;
+  padding-top: 16px;
+  border-top: 2px dashed var(--gris-ligne);
+}
+.demo-accounts__title {
+  font-size: 12px;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: var(--texte-2);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 10px;
+}
+.demo-accounts__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.demo-accounts__button {
+  min-height: 36px;
+  padding: 4px 12px;
+  font-size: 13px;
+  font-weight: 700;
+  background: var(--creme);
+  border: var(--border-thin);
+  border-radius: var(--radius-badge);
+  cursor: pointer;
+}
+.demo-accounts__button:hover {
+  background: var(--bleu-pastel);
+}
+
+/* --- Responsive : 8 colonnes en tablette, 4 en mobile ----------------------- */
+@media (max-width: 1023px) {
+  .kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .home-grid {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 767px) {
+  .kpi-grid,
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+  .card {
+    padding: 18px;
+    box-shadow: var(--shadow-md);
+  }
+  .kpi__value {
+    font-size: 36px;
+  }
+  .app-header__inner {
+    padding-top: 12px;
+    padding-bottom: 12px;
+  }
+  .user-menu {
+    margin-left: 0;
+    width: 100%;
+  }
+  .user-menu__name {
+    display: none;
+  }
+}

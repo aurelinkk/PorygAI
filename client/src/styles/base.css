@@ -1,0 +1,185 @@
+/* ============================================================================
+   Base : reset léger, typographie, focus, utilitaires, mise en page générale.
+   ============================================================================ */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--creme);
+  color: var(--encre);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+a {
+  color: var(--rose-dark);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+a:hover {
+  color: var(--bleu-dark);
+}
+
+/* Titres : Baloo 2, poids 600–800 (H1 44 / H2 30 / H3 22) */
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  line-height: 1.15;
+  margin: 0;
+}
+h1 {
+  font-size: clamp(32px, 4vw, 44px);
+  font-weight: 800;
+}
+h2 {
+  font-size: 30px;
+  font-weight: 700;
+}
+h3 {
+  font-size: 22px;
+  font-weight: 700;
+}
+p {
+  margin: 0 0 1em;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+/* Focus visible renforcé, identique partout (clavier) */
+:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+/* <main tabIndex=-1> reçoit le focus programmatique : pas d'anneau visuel nécessaire */
+main:focus {
+  outline: none;
+}
+
+/* Lien d'évitement : visible uniquement au focus */
+.skip-link {
+  position: absolute;
+  top: -100px;
+  left: var(--margin);
+  z-index: 100;
+  padding: 10px 16px;
+  background: var(--encre);
+  color: var(--blanc);
+  border-radius: var(--radius-btn);
+  font-weight: 700;
+}
+.skip-link:focus {
+  top: 12px;
+  color: var(--blanc);
+}
+
+/* Respect de la préférence "moins d'animations" */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* --- Utilitaires ------------------------------------------------------------ */
+.container {
+  width: 100%;
+  max-width: var(--container);
+  margin: 0 auto;
+  padding-left: var(--margin);
+  padding-right: var(--margin);
+}
+.mono {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+}
+.muted {
+  color: var(--texte-2);
+}
+.eyebrow {
+  color: var(--texte-2);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 12px;
+  margin: 0 0 6px;
+}
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+.loading {
+  color: var(--texte-2);
+  padding: 24px 0;
+}
+
+/* --- Structure des pages ---------------------------------------------------- */
+.app-main {
+  padding-top: 32px;
+  padding-bottom: 64px;
+}
+.app-footer {
+  padding: 16px var(--margin) 32px;
+  color: var(--texte-2);
+  font-size: 13px;
+}
+
+.page-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px var(--gutter);
+  margin-bottom: 28px;
+}
+/* Titre de page : le seul endroit où le dégradé porte du texte (charte §06) */
+.page-title {
+  background: var(--degrade);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  padding-right: 4px; /* évite la coupe des glyphes en italique/serif */
+}
+@media (forced-colors: active) {
+  .page-title {
+    background: none;
+    color: CanvasText;
+  }
+}
+.brand-text {
+  background: var(--degrade);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}

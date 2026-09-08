@@ -1,0 +1,63 @@
+/* ============================================================================
+   Design tokens — transcription de la charte graphique Poryg'AI v1.0
+   (docs/charte/). Ne pas coder de couleur ou de rayon en dur ailleurs :
+   utiliser ces variables.
+   ============================================================================ */
+:root {
+  /* Palette */
+  --rose: #ff6f9c;          /* Rose Poryg — fond de bouton primaire, badges */
+  --rose-dark: #e24e85;     /* Rose foncé — liens, texte blanc dessus OK (≥ 4,5:1) */
+  --rose-pastel: #ffe3ec;
+  --rose-light: #fbe0f2;
+  --bleu: #3bb7e6;          /* Bleu Data */
+  --bleu-dark: #1f7e9e;
+  --bleu-text: #12586f;     /* texte sur bleu pastel */
+  --bleu-pastel: #d9f1fb;
+  --violet: #8b7be8;        /* Violet Lien — focus, statut Draft */
+  --encre: #1a1526;         /* Encre — texte, contours, ombres */
+  --texte-2: #6b6280;       /* texte secondaire (4,6:1 sur crème) */
+  --texte-3: #3a3050;
+  --creme: #fdf3f6;         /* Crème Rosée — fond de page */
+  --blanc: #ffffff;
+  --vert: #1fb287;
+  --vert-dark: #0f6b4f;
+  --vert-pastel: #d6f5e8;
+  --rouge: #e5384f;
+  --rouge-dark: #9e1f2f;
+  --rouge-pastel: #ffe0e0;
+  --gris-ligne: #f0e7ee;
+  --gris-fond: #edebef;
+  --gris-deleted: #6b6280;
+
+  /* Dégradé Poryg (96°) : réservé aux titres de page, barres de progression, courbes.
+     Version foncée pour rester lisible sur crème (≥ 3:1 en grand texte). */
+  --degrade: linear-gradient(96deg, var(--rose-dark) 0%, var(--bleu-dark) 100%);
+  --degrade-fond: linear-gradient(115deg, #ffe3ec 0%, #fbe0f2 42%, #d9f1fb 100%);
+
+  /* Typographie */
+  --font-display: 'Baloo 2', 'Trebuchet MS', system-ui, sans-serif;
+  --font-body: 'DM Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'Space Mono', 'Courier New', monospace;
+
+  /* Rayons : 12 champs · 14 boutons · 20–24 cartes · 999 badges */
+  --radius-field: 12px;
+  --radius-btn: 14px;
+  --radius-card: 22px;
+  --radius-badge: 999px;
+
+  /* Contours : 2 px petits éléments, 3 px cartes. Ombres dures, jamais floues. */
+  --border-thin: 2px solid var(--encre);
+  --border-thick: 3px solid var(--encre);
+  --shadow-sm: 3px 3px 0 var(--encre);
+  --shadow-md: 4px 4px 0 var(--encre);
+  --shadow-lg: 6px 6px 0 var(--encre);
+
+  /* Accessibilité */
+  --focus-ring: 3px solid var(--violet);
+  --tap-target: 44px;
+
+  /* Grille : 12 colonnes ≥ 1024, gouttière 24, marge 20 */
+  --container: 1180px;
+  --gutter: 24px;
+  --margin: 20px;
+}

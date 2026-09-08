@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#FDF3F6;color:#1A1526;font-family:"DM Sans",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+*{box-sizing:border-box}
+a{color:#E24E85;text-decoration:none}
+a:hover{color:#1F7E9E}
+@keyframes pg-float{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-10px) rotate(2deg)}}
+@keyframes pg-dash{to{background-position:60px 0}}
+</style>
+</helmet>
+
+<div style="max-width:1180px;margin:0 auto;padding:28px 20px 90px">
+
+  <div style="display:flex;flex-wrap:wrap;gap:26px;align-items:center;background:linear-gradient(115deg,#FFE3EC 0%,#FBE0F2 42%,#D9F1FB 100%);border:3px solid #1A1526;border-radius:28px;box-shadow:10px 10px 0 #1A1526;padding:34px 30px;position:relative;overflow:hidden">
+    <div style="position:absolute;inset:0;opacity:.16;pointer-events:none;background-image:url(&quot;data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/></filter><rect width='140' height='140' filter='url(%23n)'/></svg>&quot;)"></div>
+    <img src="uploads/e%20(1).png" alt="Logo Poryg'AI" style="width:190px;height:190px;object-fit:contain;flex:none;filter:drop-shadow(6px 6px 0 rgba(26,21,38,.18));animation:pg-float 6s ease-in-out infinite;position:relative">
+    <div style="flex:1 1 360px;min-width:260px;position:relative">
+      <div style="display:inline-block;font:700 11px/1 'Space Mono',monospace;letter-spacing:.16em;text-transform:uppercase;background:#1A1526;color:#FFE3EC;padding:7px 12px;border-radius:999px">Charte graphique · v1.0</div>
+      <h1 style="font-family:'Baloo 2',cursive;font-weight:800;font-size:clamp(38px,6vw,68px);line-height:.98;margin:14px 0 10px;background:linear-gradient(96deg,#3BB7E6 0%,#8B7BE8 48%,#FF6F9C 100%);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:none">Poryg'AI</h1>
+      <p style="margin:0 0 18px;font-size:17px;line-height:1.5;max-width:46ch;color:#3A3050">Registre des applications IA de l'entreprise : inventaire, évaluation éthique, conformité et FinOps. Une DA rose &amp; bleue, contrastée, arrondie, un peu croustillante.</p>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">
+        <span style="font:700 12px 'Space Mono',monospace;background:#FFFFFF;border:2px solid #1A1526;border-radius:999px;padding:6px 12px;box-shadow:3px 3px 0 #1A1526">SSO &amp; rôles</span>
+        <span style="font:700 12px 'Space Mono',monospace;background:#FFFFFF;border:2px solid #1A1526;border-radius:999px;padding:6px 12px;box-shadow:3px 3px 0 #1A1526">Questionnaires</span>
+        <span style="font:700 12px 'Space Mono',monospace;background:#FFFFFF;border:2px solid #1A1526;border-radius:999px;padding:6px 12px;box-shadow:3px 3px 0 #1A1526">Statuts &amp; audit</span>
+        <span style="font:700 12px 'Space Mono',monospace;background:#FFFFFF;border:2px solid #1A1526;border-radius:999px;padding:6px 12px;box-shadow:3px 3px 0 #1A1526">Dashboards BI</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 01 COULEURS -->
+  <div style="display:flex;align-items:baseline;gap:12px;margin:56px 0 18px">
+    <span style="font:700 12px 'Space Mono',monospace;color:#E24E85">01</span>
+    <h2 style="font-family:'Baloo 2',cursive;font-weight:700;font-size:30px;margin:0">Palette</h2>
+    <span style="flex:1;height:3px;background:repeating-linear-gradient(90deg,#1A1526 0 10px,transparent 10px 20px);opacity:.25;border-radius:2px"></span>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px">
+    <div style="border:3px solid #1A1526;border-radius:20px;overflow:hidden;box-shadow:5px 5px 0 #1A1526;background:#fff">
+      <div style="height:104px;background:#FF6F9C"></div>
+      <div style="padding:12px 14px"><div style="font-family:'Baloo 2',cursive;font-weight:700;font-size:17px">Rose Poryg</div><div style="font:400 12px 'Space Mono',monospace;color:#6B6280">#FF6F9C · primaire</div></div>
+    </div>
+    <div style="border:3px solid #1A1526;border-radius:20px;overflow:hidden;box-shadow:5px 5px 0 #1A1526;background:#fff">
+      <div style="height:104px;background:#3BB7E6"></div>
+      <div style="padding:12px 14px"><div style="font-family:'Baloo 2',cursive;font-weight:700;font-size:17px">Bleu Data</div><div style="font:400 12px 'Space Mono',monospace;color:#6B6280">#3BB7E6 · primaire</div></div>
+    </div>
+    <div style="border:3px solid #1A1526;border-radius:20px;overflow:hidden;box-shadow:5px 5px 0 #1A1526;background:#fff">
+      <div style="height:104px;background:#8B7BE8"></div>
+      <div style="padding:12px 14px"><div style="font-family:'Baloo 2',cursive;font-weight:700;font-size:17px">Violet Lien</div><div style="font:400 12px 'Space Mono',monospace;color:#6B6280">#8B7BE8 · accent</div></div>
+    </div>
+    <div style="border:3px solid #1A1526;border-radius:20px;overflow:hidden;box-shadow:5px 5px 0 #1A1526;background:#fff">
+      <div style="height:104px;background:#1A1526"></div>
+      <div style="padding:12px 14px"><div style="font-family:'Baloo 2',cursive;font-weight:700;font-size:17px">Encre</div><div style="font:400 12px 'Space Mono',monospace;color:#6B6280">#1A1526 · texte, contours</div></div>
+    </div>
+    <div style="border:3px solid #1A1526;border-radius:20px;overflow:hidden;box-shadow:5px 5px 0 #1A1526;background:#fff">
+      <div style="height:104px;background:#FDF3F6"></div>
+      <div style="padding:12px 14px"><div style="font-family:'Baloo 2',cursive;font-weight:700;font-size:17px">Crème Rosée</div><div style="font:400 12px 'Space Mono',monospace;color:#6B6280">#FDF3F6 · fond</div></div>
+    </div>
+    <div style="border:3px solid #1A1526;border-radius:20px;overflow:hidden;box-shadow:5px 5px 0 #1A1526;background:#fff">
+      <div style="height:104px;background:linear-gradient(96deg,#3BB7E6,#8B7BE8 50%,#FF6F9C)"></div>
+      <div style="padding:12px 14px"><div style="font-family:'Baloo 2',cursive;font-weight:700;font-size:17px">Dégradé Poryg</div><div style="font:400 12px 'Space Mono',monospace;color:#6B6280">96° · titres, courbes</div></div>
+    </div>
+  </div>
+
+  <div style="margin-top:16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px">
+    <div style="background:#fff;border:2px solid #1A1526;border-radius:14px;padding:10px 12px;display:flex;align-items:center;gap:10px"><span style="width:26px;height:26px;border-radius:8px;background:#FFE3EC;border:2px solid #1A1526;flex:none"></span><span style="font:400 12px 'Space Mono',monospace">#FFE3EC</span></div>
+    <div style="background:#fff;border:2px solid #1A1526;border-radius:14px;padding:10px 12px;display:flex;align-items:center;gap:10px"><span style="width:26px;height:26px;border-radius:8px;background:#D9F1FB;border:2px solid #1A1526;flex:none"></span><span style="font:400 12px 'Space Mono',monospace">#D9F1FB</span></div>
+    <div style="background:#fff;border:2px solid #1A1526;border-radius:14px;padding:10px 12px;display:flex;align-items:center;gap:10px"><span style="width:26px;height:26px;border-radius:8px;background:#1F7E9E;border:2px solid #1A1526;flex:none"></span><span style="font:400 12px 'Space Mono',monospace">#1F7E9E</span></div>
+    <div style="background:#fff;border:2px solid #1A1526;border-radius:14px;padding:10px 12px;display:flex;align-items:center;gap:10px"><span style="width:26px;height:26px;border-radius:8px;background:#E24E85;border:2px solid #1A1526;flex:none"></span><span style="font:400 12px 'Space Mono',monospace">#E24E85</span></div>
+    <div style="background:#fff;border:2px solid #1A1526;border-radius:14px;padding:10px 12px;display:flex;align-items:center;gap:10px"><span style="width:26px;height:26px;border-radius:8px;background:#6B6280;border:2px solid #1A1526;flex:none"></span><span style="font:400 12px 'Space Mono',monospace">#6B6280</span></div>
+  </div>
+  <p style="margin:14px 0 0;font-size:14px;color:#6B6280;max-width:70ch">Texte courant toujours en Encre sur Crème ou Blanc. Le rose et le bleu vifs ne portent jamais de texte long : on écrit en Encre dessus, ou en blanc sur #E24E85 / #1F7E9E (versions foncées, ratio ≥ 4,5:1).</p>
+
+  <!-- 02 TYPO -->
+  <div style="display:flex;align-items:baseline;gap:12px;margin:56px 0 18px">
+    <span style="font:700 12px 'Space Mono',monospace;color:#E24E85">02</span>
+    <h2 style="font-family:'Baloo 2',cursive;font-weight:700;font-size:30px;margin:0">Typographie</h2>
+    <span style="flex:1;height:3px;background:repeating-linear-gradient(90deg,#1A1526 0 10px,transparent 10px 20px);opacity:.25;border-radius:2px"></span>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px">
+    <div style="background:#fff;border:3px solid #1A1526;border-radius:22px;box-shadow:6px 6px 0 #1A1526;padding:24px">
+      <div style="font:700 11px 'Space Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:#E24E85;margin-bottom:10px">Display — Baloo 2</div>
+      <div style="font-family:'Baloo 2',cursive;font-weight:800;font-size:52px;line-height:1;margin-bottom:6px">Conformité</div>
+      <div style="font-family:'Baloo 2',cursive;font-weight:600;font-size:28px;line-height:1.1;color:#3A3050">Titres, KPI, boutons</div>
+      <div style="margin-top:14px;font:400 12px 'Space Mono',monospace;color:#6B6280">H1 44–68 / H2 30 / H3 22 · poids 600–800</div>
+    </div>
+    <div style="background:#fff;border:3px solid #1A1526;border-radius:22px;box-shadow:6px 6px 0 #1A1526;padding:24px">
+      <div style="font:700 11px 'Space Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:#1F7E9E;margin-bottom:10px">Texte — DM Sans</div>
+      <p style="margin:0 0 10px;font-size:17px;line-height:1.55">Chaque application déclarée est évaluée sur l'ensemble des domaines de l'IA éthique et responsable, puis reçoit un statut visible par tous les rôles.</p>
+      <p style="margin:0;font-size:14px;line-height:1.5;color:#6B6280">Secondaire 14 px · Corps 16–17 px · Légende 12 px. Interlignage 1,5 sur les paragraphes.</p>
+      <div style="margin-top:14px;font:400 12px 'Space Mono',monospace;color:#6B6280">Space Mono : ids, dates, montants, tags</div>
+    </div>
+  </div>
+
+  <!-- 03 STATUTS -->
+  <div style="display:flex;align-items:baseline;gap:12px;margin:56px 0 18px">
+    <span style="font:700 12px 'Space Mono',monospace;color:#E24E85">03</span>
+    <h2 style="font-family:'Baloo 2',cursive;font-weight:700;font-size:30px;margin:0">Statuts &amp; rôles</h2>
+    <span style="flex:1;height:3px;background:repeating-linear-gradient(90deg,#1A1526 0 10px,transparent 10px 20px);opacity:.25;border-radius:2px"></span>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px">
+    <div style="background:#fff;border:3px solid #1A1526;border-radius:20px;box-shadow:5px 5px 0 #1A1526;padding:18px">
+      <span style="display:inline-flex;align-items:center;gap:7px;font:700 13px 'Space Mono',monospace;background:#EFEAF7;color:#4A4266;border:2px solid #1A1526;border-radius:999px;padding:6px 12px"><span style="width:9px;height:9px;border-radius:50%;background:#8B7BE8"></span>Draft</span>
+      <p style="margin:12px 0 0;font-size:14px;line-height:1.5;color:#3A3050">En cours de saisie. Modifiable par le Process Owner, invisible des tableaux de conformité.</p>
+    </div>
+    <div style="background:#fff;border:3px solid #1A1526;border-radius:20px;box-shadow:5px 5px 0 #1A1526;padding:18px">
+      <span style="display:inline-flex;align-items:center;gap:7px;font:700 13px 'Space Mono',monospace;background:#D9F1FB;color:#12586F;border:2px solid #1A1526;border-radius:999px;padding:6px 12px"><span style="width:9px;height:9px;border-radius:50%;background:#3BB7E6"></span>In progress</span>
+      <p style="margin:12px 0 0;font-size:14px;line-height:1.5;color:#3A3050">En cours d'audit. Statut automatique un an après la mise en conformité.</p>
+    </div>
+    <div style="background:#fff;border:3px solid #1A1526;border-radius:20px;box-shadow:5px 5px 0 #1A1526;padding:18px">
+      <span style="display:inline-flex;align-items:center;gap:7px;font:700 13px 'Space Mono',monospace;background:#D6F5E8;color:#0F6B4F;border:2px solid #1A1526;border-radius:999px;padding:6px 12px"><span style="width:9px;height:9px;border-radius:50%;background:#1FB287"></span>Conforme</span>
+      <p style="margin:12px 0 0;font-size:14px;line-height:1.5;color:#3A3050">Toutes les exigences sont satisfaites. Valable 12 mois, date d'échéance affichée.</p>
+    </div>
+    <div style="background:#fff;border:3px solid #1A1526;border-radius:20px;box-shadow:5px 5px 0 #1A1526;padding:18px">
+      <span style="display:inline-flex;align-items:center;gap:7px;font:700 13px 'Space Mono',monospace;background:#FFE0E0;color:#9E1F2F;border:2px solid #1A1526;border-radius:999px;padding:6px 12px"><span style="width:9px;height:9px;border-radius:50%;background:#E5384F"></span>Non conforme</span>
+      <p style="margin:12px 0 0;font-size:14px;line-height:1.5;color:#3A3050">Motif obligatoire et plan d'action suggéré, avec échéance et responsable.</p>
+    </div>
+    <div style="background:#fff;border:3px solid #1A1526;border-radius:20px;box-shadow:5px 5px 0 #1A1526;padding:18px">
+      <span style="display:inline-flex;align-items:center;gap:7px;font:700 13px 'Space Mono',monospace;background:#EDEBEF;color:#4A4655;border:2px solid #1A1526;border-radius:999px;padding:6px 12px;text-decoration:line-through"><span style="width:9px;height:9px;border-radius:50%;background:#6B6280"></span>Deleted</span>
+      <p style="margin:12px 0 0;font-size:14px;line-height:1.5;color:#3A3050">Suppression logique uniquement. Carte grisée, traçabilité « par qui / quand » conservée.</p>
+    </div>
+  </div>
+
+  <div style="margin-top:16px;display:flex;flex-wrap:wrap;gap:10px">
+    <span style="font:700 13px 'DM Sans',sans-serif;background:#FF6F9C;color:#1A1526;border:2px solid #1A1526;border-radius:10px;padding:8px 13px;box-shadow:3px 3px 0 #1A1526">AI Officer</span>
+    <span style="font:700 13px 'DM Sans',sans-serif;background:#3BB7E6;color:#1A1526;border:2px solid #1A1526;border-radius:10px;padding:8px 13px;box-shadow:3px 3px 0 #1A1526">Application Manager</span>
+    <span style="font:700 13px 'DM Sans',sans-serif;background:#8B7BE8;color:#FFFFFF;border:2px solid #1A1526;border-radius:10px;padding:8px 13px;box-shadow:3px 3px 0 #1A1526">DPO</span>
+    <span style="font:700 13px 'DM Sans',sans-serif;background:#FFE3EC;color:#1A1526;border:2px solid #1A1526;border-radius:10px;padding:8px 13px;box-shadow:3px 3px 0 #1A1526">Auditeur</span>
+    <span style="font:700 13px 'DM Sans',sans-serif;background:#FFFFFF;color:#1A1526;border:2px solid #1A1526;border-radius:10px;padding:8px 13px;box-shadow:3px 3px 0 #1A1526">Utilisateur standard</span>
+  </div>
+
+  <!-- 04 COMPOSANTS -->
+  <div style="display:flex;align-items:baseline;gap:12px;margin:56px 0 18px">
+    <span style="font:700 12px 'Space Mono',monospace;color:#E24E85">04</span>
+    <h2 style="font-family:'Baloo 2',cursive;font-weight:700;font-size:30px;margin:0">Composants</h2>
+    <span style="flex:1;height:3px;background:repeating-linear-gradient(90deg,#1A1526 0 10px,transparent 10px 20px);opacity:.25;border-radius:2px"></span>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:18px">
+
+    <div style="background:#fff;border:3px solid #1A1526;border-radius:22px;box-shadow:6px 6px 0 #1A1526;padding:22px">
+      <div style="font:700 11px 'Space Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:#6B6280;margin-bottom:14px">Boutons</div>
+      <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center">
+        <button style="font-family:'Baloo 2',cursive;font-weight:700;font-size:16px;background:#FF6F9C;color:#1A1526;border:3px solid #1A1526;border-radius:14px;padding:11px 20px;box-shadow:4px 4px 0 #1A1526;cursor:pointer;transition:.12s" style-hover="transform:translate(2px,2px);box-shadow:2px 2px 0 #1A1526">Déclarer une app</button>
+        <button style="font-family:'Baloo 2',cursive;font-weight:700;font-size:16px;background:#D9F1FB;color:#12586F;border:3px solid #1A1526;border-radius:14px;padding:11px 20px;box-shadow:4px 4px 0 #1A1526;cursor:pointer;transition:.12s" style-hover="transform:translate(2px,2px);box-shadow:2px 2px 0 #1A1526">Lancer l'audit</button>
+        <button style="font-family:'Baloo 2',cursive;font-weight:700;font-size:16px;background:transparent;color:#1A1526;border:3px dashed #1A1526;border-radius:14px;padding:11px 20px;cursor:pointer">Annuler</button>
+      </div>
+      <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap">
+        <span style="font:700 12px 'Space Mono',monospace;background:#FFFFFF;border:2px solid #1A1526;border-radius:999px;padding:5px 11px">RH</span>
+        <span style="font:700 12px 'Space Mono',monospace;background:#FFFFFF;border:2px solid #1A1526;border-radius:999px;padding:5px 11px">Données sensibles</span>
+        <span style="font:700 12px 'Space Mono',monospace;background:#1A1526;color:#FFE3EC;border:2px solid #1A1526;border-radius:999px;padding:5px 11px">GenAI ×</span>
+      </div>
+    </div>
+
+    <div style="background:#fff;border:3px solid #1A1526;border-radius:22px;box-shadow:6px 6px 0 #1A1526;padding:22px">
+      <div style="font:700 11px 'Space Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:#6B6280;margin-bottom:14px">Formulaire</div>
+      <label style="display:block;font-weight:700;font-size:13px;margin-bottom:6px">Domaine métier</label>
+      <div style="width:100%;border:3px solid #1A1526;border-radius:12px;padding:11px 14px;font-size:15px;background:#FDF3F6;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center"><span>Ressources humaines</span><span style="color:#6B6280">▾</span></div>
+      <label style="display:block;font-weight:700;font-size:13px;margin-bottom:6px">Process Owner</label>
+      <div style="width:100%;border:3px solid #3BB7E6;border-radius:12px;padding:11px 14px;font-size:15px;background:#fff;box-shadow:0 0 0 4px #D9F1FB;margin-bottom:8px">camille.roux@entreprise.fr</div>
+      <div style="font:400 12px 'Space Mono',monospace;color:#1F7E9E">↳ champ actif</div>
+      <div style="margin-top:14px;background:#FFE0E0;border:2px solid #E5384F;border-radius:12px;padding:10px 13px;font-size:13px;color:#9E1F2F;font-weight:700">Sensibilité des données requise</div>
+    </div>
+
+    <div style="background:#fff;border:3px solid #1A1526;border-radius:22px;box-shadow:6px 6px 0 #1A1526;padding:22px">
+      <div style="font:700 11px 'Space Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:#6B6280;margin-bottom:14px">Carte application</div>
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
+        <div>
+          <div style="font-family:'Baloo 2',cursive;font-weight:700;font-size:21px;line-height:1.15">Assistant Recrutement</div>
+          <div style="font:400 12px 'Space Mono',monospace;color:#6B6280">APP-0142 · RH · GenAI</div>
+        </div>
+        <span style="flex:none;font:700 12px 'Space Mono',monospace;background:#D6F5E8;color:#0F6B4F;border:2px solid #1A1526;border-radius:999px;padding:5px 11px">Conforme</span>
+      </div>
+      <div style="margin-top:16px;height:14px;border:2px solid #1A1526;border-radius:999px;background:#FDF3F6;overflow:hidden">
+        <div style="width:82%;height:100%;background:linear-gradient(90deg,#3BB7E6,#8B7BE8 55%,#FF6F9C)"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:8px;font:400 12px 'Space Mono',monospace;color:#6B6280"><span>Score éthique 82/100</span><span>expire 04/2027</span></div>
+      <div style="margin-top:14px;display:flex;gap:8px;align-items:center;border-top:2px dashed #E3DCEA;padding-top:12px">
+        <span style="width:28px;height:28px;border-radius:50%;background:#FFE3EC;border:2px solid #1A1526;display:inline-flex;align-items:center;justify-content:center;font:700 11px 'Space Mono',monospace">CR</span>
+        <span style="font-size:13px;color:#6B6280">Validé par C. Roux · 12/04/2026</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 05 ÉCRAN -->
+  <div style="display:flex;align-items:baseline;gap:12px;margin:56px 0 18px">
+    <span style="font:700 12px 'Space Mono',monospace;color:#E24E85">05</span>
+    <h2 style="font-family:'Baloo 2',cursive;font-weight:700;font-size:30px;margin:0">Application en situation</h2>
+    <span style="flex:1;height:3px;background:repeating-linear-gradient(90deg,#1A1526 0 10px,transparent 10px 20px);opacity:.25;border-radius:2px"></span>
+  </div>
+
+  <div style="display:flex;flex-wrap:wrap;gap:22px;align-items:flex-start">
+    <div style="flex:1 1 520px;min-width:280px;background:#fff;border:3px solid #1A1526;border-radius:24px;box-shadow:8px 8px 0 #1A1526;overflow:hidden">
+      <div style="display:flex;align-items:center;gap:12px;padding:14px 18px;background:linear-gradient(96deg,#FFE3EC,#D9F1FB);border-bottom:3px solid #1A1526">
+        <img src="uploads/e%20(1).png" alt="" style="width:34px;height:34px;object-fit:contain">
+        <span style="font-family:'Baloo 2',cursive;font-weight:800;font-size:19px">Poryg'AI</span>
+        <span style="flex:1"></span>
+        <span style="font:700 12px 'Space Mono',monospace;background:#fff;border:2px solid #1A1526;border-radius:999px;padding:5px 11px">AI Officer</span>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:12px;padding:18px">
+        <div style="flex:1 1 150px;border:3px solid #1A1526;border-radius:18px;padding:14px;background:#FFE3EC">
+          <div style="font:700 11px 'Space Mono',monospace;color:#8A2A50">Applications</div>
+          <div style="font-family:'Baloo 2',cursive;font-weight:800;font-size:40px;line-height:1.05">148</div>
+        </div>
+        <div style="flex:1 1 150px;border:3px solid #1A1526;border-radius:18px;padding:14px;background:#D6F5E8">
+          <div style="font:700 11px 'Space Mono',monospace;color:#0F6B4F">Conformes</div>
+          <div style="font-family:'Baloo 2',cursive;font-weight:800;font-size:40px;line-height:1.05">96</div>
+        </div>
+        <div style="flex:1 1 150px;border:3px solid #1A1526;border-radius:18px;padding:14px;background:#D9F1FB">
+          <div style="font:700 11px 'Space Mono',monospace;color:#12586F">Coût IA / mois</div>
+          <div style="font-family:'Baloo 2',cursive;font-weight:800;font-size:40px;line-height:1.05">62 k€</div>
+        </div>
+      </div>
+      <div style="padding:0 18px 18px">
+        <div style="border:3px solid #1A1526;border-radius:18px;overflow:hidden">
+          <div style="display:flex;gap:10px;padding:10px 14px;background:#1A1526;color:#FFE3EC;font:700 11px 'Space Mono',monospace;letter-spacing:.08em">
+            <span style="flex:2">APPLICATION</span><span style="flex:1">DOMAINE</span><span style="flex:1;text-align:right">STATUT</span>
+          </div>
+          <div style="display:flex;gap:10px;padding:12px 14px;align-items:center;border-bottom:2px solid #F0E7EE;font-size:14px"><span style="flex:2;font-weight:700">Assistant Recrutement</span><span style="flex:1;color:#6B6280">RH</span><span style="flex:1;text-align:right"><span style="font:700 11px 'Space Mono',monospace;background:#D6F5E8;color:#0F6B4F;border:2px solid #1A1526;border-radius:999px;padding:3px 9px">Conforme</span></span></div>
+          <div style="display:flex;gap:10px;padding:12px 14px;align-items:center;border-bottom:2px solid #F0E7EE;font-size:14px"><span style="flex:2;font-weight:700">Scoring Crédit</span><span style="flex:1;color:#6B6280">Finance</span><span style="flex:1;text-align:right"><span style="font:700 11px 'Space Mono',monospace;background:#FFE0E0;color:#9E1F2F;border:2px solid #1A1526;border-radius:999px;padding:3px 9px">Non conforme</span></span></div>
+          <div style="display:flex;gap:10px;padding:12px 14px;align-items:center;border-bottom:2px solid #F0E7EE;font-size:14px"><span style="flex:2;font-weight:700">Chatbot Support</span><span style="flex:1;color:#6B6280">Client</span><span style="flex:1;text-align:right"><span style="font:700 11px 'Space Mono',monospace;background:#D9F1FB;color:#12586F;border:2px solid #1A1526;border-radius:999px;padding:3px 9px">In progress</span></span></div>
+          <div style="display:flex;gap:10px;padding:12px 14px;align-items:center;font-size:14px;opacity:.5"><span style="flex:2;font-weight:700;text-decoration:line-through">Prévision Stock v1</span><span style="flex:1;color:#6B6280">Supply</span><span style="flex:1;text-align:right"><span style="font:700 11px 'Space Mono',monospace;background:#EDEBEF;color:#4A4655;border:2px solid #1A1526;border-radius:999px;padding:3px 9px">Deleted</span></span></div>
+        </div>
+      </div>
+    </div>
+
+    <div style="flex:0 1 300px;min-width:240px;background:#1A1526;border:3px solid #1A1526;border-radius:34px;box-shadow:8px 8px 0 #8B7BE8;padding:10px">
+      <div style="background:#FDF3F6;border-radius:26px;overflow:hidden">
+        <div style="padding:14px 16px;background:linear-gradient(96deg,#D9F1FB,#FFE3EC);display:flex;align-items:center;gap:10px;border-bottom:3px solid #1A1526">
+          <img src="uploads/e%20(1).png" alt="" style="width:28px;height:28px;object-fit:contain">
+          <span style="font-family:'Baloo 2',cursive;font-weight:800;font-size:16px">Mes évaluations</span>
+        </div>
+        <div style="padding:14px;display:flex;flex-direction:column;gap:10px">
+          <div style="border:3px solid #1A1526;border-radius:16px;background:#fff;padding:12px">
+            <div style="font-family:'Baloo 2',cursive;font-weight:700;font-size:16px">Chatbot Support</div>
+            <div style="font:400 11px 'Space Mono',monospace;color:#6B6280;margin-bottom:8px">Questionnaire 3/6</div>
+            <div style="height:11px;border:2px solid #1A1526;border-radius:999px;background:#FDF3F6;overflow:hidden"><div style="width:50%;height:100%;background:#3BB7E6"></div></div>
+          </div>
+          <div style="border:3px solid #1A1526;border-radius:16px;background:#fff;padding:12px">
+            <div style="font-family:'Baloo 2',cursive;font-weight:700;font-size:16px">Scoring Crédit</div>
+            <div style="font:400 11px 'Space Mono',monospace;color:#9E1F2F;margin-bottom:8px">Plan d'action · 2 actions</div>
+            <div style="height:11px;border:2px solid #1A1526;border-radius:999px;background:#FDF3F6;overflow:hidden"><div style="width:24%;height:100%;background:#E5384F"></div></div>
+          </div>
+          <button style="font-family:'Baloo 2',cursive;font-weight:700;font-size:15px;background:#FF6F9C;color:#1A1526;border:3px solid #1A1526;border-radius:14px;padding:11px;box-shadow:4px 4px 0 #1A1526;cursor:pointer;width:100%">Déclarer une app</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 06 REGLES -->
+  <div style="display:flex;align-items:baseline;gap:12px;margin:56px 0 18px">
+    <span style="font:700 12px 'Space Mono',monospace;color:#E24E85">06</span>
+    <h2 style="font-family:'Baloo 2',cursive;font-weight:700;font-size:30px;margin:0">Principes d'usage</h2>
+    <span style="flex:1;height:3px;background:repeating-linear-gradient(90deg,#1A1526 0 10px,transparent 10px 20px);opacity:.25;border-radius:2px"></span>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px">
+    <div style="background:#fff;border:3px solid #1A1526;border-radius:20px;padding:18px;box-shadow:5px 5px 0 #FF6F9C"><div style="font-family:'Baloo 2',cursive;font-weight:700;font-size:19px;margin-bottom:6px">Contour noir partout</div><p style="margin:0;font-size:14px;line-height:1.5;color:#3A3050">2 px sur les petits éléments, 3 px sur les cartes. Ombre portée dure, jamais floue : 4 à 8 px, sans transparence.</p></div>
+    <div style="background:#fff;border:3px solid #1A1526;border-radius:20px;padding:18px;box-shadow:5px 5px 0 #3BB7E6"><div style="font-family:'Baloo 2',cursive;font-weight:700;font-size:19px;margin-bottom:6px">Rayons généreux</div><p style="margin:0;font-size:14px;line-height:1.5;color:#3A3050">12 px champs · 14 px boutons · 20–24 px cartes · 999 px badges. Rien d'angulaire.</p></div>
+    <div style="background:#fff;border:3px solid #1A1526;border-radius:20px;padding:18px;box-shadow:5px 5px 0 #8B7BE8"><div style="font-family:'Baloo 2',cursive;font-weight:700;font-size:19px;margin-bottom:6px">Grille responsive</div><p style="margin:0;font-size:14px;line-height:1.5;color:#3A3050">12 colonnes ≥ 1024 px, 8 colonnes en tablette, 4 en mobile. Gouttière 24 px, marge 20 px. Cibles tactiles ≥ 44 px.</p></div>
+    <div style="background:#fff;border:3px solid #1A1526;border-radius:20px;padding:18px;box-shadow:5px 5px 0 #1FB287"><div style="font-family:'Baloo 2',cursive;font-weight:700;font-size:19px;margin-bottom:6px">Traçabilité visible</div><p style="margin:0;font-size:14px;line-height:1.5;color:#3A3050">Toute action porte son auteur et son horodatage en Space Mono. Un enregistrement supprimé reste affiché, grisé et barré.</p></div>
+    <div style="background:#fff;border:3px solid #1A1526;border-radius:20px;padding:18px;box-shadow:5px 5px 0 #FFB3CB"><div style="font-family:'Baloo 2',cursive;font-weight:700;font-size:19px;margin-bottom:6px">Logo</div><p style="margin:0;font-size:14px;line-height:1.5;color:#3A3050">Zone de respiration = hauteur du cercle ÷ 4. Taille mini 28 px. Sur fond coloré, uniquement sur crème, blanc ou pastel — jamais sur rose ou bleu saturé.</p></div>
+    <div style="background:#fff;border:3px solid #1A1526;border-radius:20px;padding:18px;box-shadow:5px 5px 0 #6B6280"><div style="font-family:'Baloo 2',cursive;font-weight:700;font-size:19px;margin-bottom:6px">Le dégradé, avec parcimonie</div><p style="margin:0;font-size:14px;line-height:1.5;color:#3A3050">Réservé au titre de page, aux barres de progression et aux courbes BI. Jamais en fond de bloc de texte.</p></div>
+  </div>
+
+  <p style="margin:44px 0 0;font-size:13px;color:#6B6280;font-family:'Space Mono',monospace">Poryg'AI · charte v1.0 · prochaine étape possible : maquettes complètes des écrans (inventaire, questionnaire, dashboard FinOps).</p>
+</div>
+
+</x-dc>
+</body>
+</html>
