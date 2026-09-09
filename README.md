@@ -8,10 +8,13 @@ et de suivre leur **usage et leurs coûts** (FinOps, dashboards).
 Rôles : AI Officer · Application Manager · DPO · Auditeur · Utilisateur standard.
 Statuts : Draft → In progress → Conforme / Partiellement conforme / Non conforme (+ Deleted, suppression logique).
 
-> État actuel : **lots 1 à 5** livrés — connexion (SSO Google + mot de passe) et rôles, accueil,
-> inventaire complet (déclaration, recherche, fiche, édition, suppression logique tracée,
-> historique), évaluation de conformité avec scoring automatique et plan d'action, et rapport
-> FinOps. Voir la [feuille de route](#feuille-de-route).
+> **État actuel : lots 0 à 5 livrés.** Connexion (SSO Google + mot de passe) et rôles, accueil,
+> inventaire complet, questionnaire d'évaluation v2 avec verdict automatique et plan d'action,
+> rapport FinOps global et par application. Restent les dashboards BI et le durcissement pour la
+> production — voir la [feuille de route](#feuille-de-route).
+>
+> 🤖 **Vous reprenez le projet avec Claude Code ?** Lisez d'abord **[CLAUDE.md](CLAUDE.md)** :
+> conventions, pièges déjà rencontrés et décisions déjà tranchées.
 
 ---
 
@@ -100,29 +103,33 @@ Configuration : copier `.env.example` en `.env` si besoin (ports, chemin de la b
 
 ```
 poryg-ai/
+├─ CLAUDE.md       Instructions pour Claude Code (conventions, pièges, décisions)
 ├─ shared/         Code partagé front/back (TypeScript pur, importé tel quel)
-│  └─ src/         rôles & permissions, statuts, référentiels, schémas Zod, types DTO
+│  └─ src/         roles · statuses · referentiels · questionnaire · schemas (Zod) · types (DTO)
 ├─ server/         API Fastify
 │  ├─ src/
 │  │  ├─ app.ts            assemblage de l'application (utilisé par server.ts et les tests)
 │  │  ├─ server.ts         point d'entrée : écoute + jobs périodiques
-│  │  ├─ config.ts         variables d'environnement
+│  │  ├─ config.ts         variables d'environnement (helper `read` : le vide vaut « absent »)
 │  │  ├─ audit.ts          journal d'audit
 │  │  ├─ auth/             mots de passe (scrypt), sessions, SSO Google (google-sso.ts)
 │  │  ├─ plugins/          security.ts (helmet, rate-limit, CSRF) · auth.ts (session, RBAC)
-│  │  ├─ modules/          une paire routes + repo par domaine métier
+│  │  ├─ modules/          applications · evaluations · finops · auth · users · dashboard
+│  │  │                    (une paire `.routes.ts` + `.repo.ts` par domaine)
 │  │  ├─ jobs/             expiration annuelle des conformités
 │  │  ├─ db/               connexion node:sqlite, migrations SQL, seed, CLI
 │  │  └─ lib/              erreurs HTTP, validation, dates
-│  └─ tests/               Vitest
+│  └─ tests/               Vitest — 129 tests
 ├─ client/         Front React + Vite
 │  └─ src/
 │     ├─ App.tsx           routes
-│     ├─ api/              client fetch + hook useApi
+│     ├─ api/              client fetch · cache mémoire · hook useApi
 │     ├─ auth/             AuthContext, gardes de routes
-│     ├─ components/       composants UI accessibles (boutons, champs, badges, cartes…)
+│     ├─ components/       ApplicationForm · ApplicationsTable · QuestionCard · CostEntry ·
+│     │  └─ ui/            EvaluationSummary · BreakdownBars · MonthlyBars    + briques UI
 │     ├─ layout/           AppShell (en-tête, navigation, main)
-│     ├─ pages/            Login, Home, Applications (liste/fiche/déclaration/édition), 403, 404
+│     ├─ pages/            Login · Home · Applications (liste/fiche/déclaration/édition) ·
+│     │                    Evaluation · Finops · ApplicationFinops · 403 · 404
 │     ├─ styles/           tokens.css (charte) · base.css · components.css
 │     └─ lib/              formatage, aides formulaires
 ├─ docs/           Documentation (voir ci-dessous) + charte graphique d'origine
@@ -134,7 +141,7 @@ poryg-ai/
 
 ## Stack technique et choix
 
-Objectif : **peu de dépendances, du code lisible, facile à reprendre.** 8 dépendances d'exécution.
+Objectif : **peu de dépendances, du code lisible, facile à reprendre.** 9 dépendances d'exécution.
 
 | Couche       | Choix                                   | Pourquoi                                                                                  |
 | ------------ | --------------------------------------- | ----------------------------------------------------------------------------------------- |
@@ -162,6 +169,7 @@ Les alternatives écartées (ORM, NestJS, Next.js, lib de composants, JWT…) so
 | [docs/accessibilite.md](docs/accessibilite.md)           | Règles appliquées (WCAG 2.2 AA), contrastes vérifiés, checklist de test |
 | [docs/roles-et-permissions.md](docs/roles-et-permissions.md) | Matrice des rôles, cycle de vie des statuts, règles de gestion |
 | [docs/questionnaire-v2.md](docs/questionnaire-v2.md)       | Conception du questionnaire : arbre de décision, barème, toutes les questions et recommandations |
+| `docs/questionnaire-v2.excalidraw`                        | Schéma logique du questionnaire, éditable sur [excalidraw.com](https://excalidraw.com) (aperçu : le `.svg` à côté) |
 | [docs/charte/](docs/charte/)                             | Charte graphique d'origine (HTML) — source des tokens CSS       |
 
 ---
@@ -176,6 +184,11 @@ Les alternatives écartées (ORM, NestJS, Next.js, lib de composants, JWT…) so
 - **Migrations additives** : un nouveau fichier `server/src/db/migrations/NNN_nom.sql`, jamais modifier un fichier déjà appliqué.
 - **CSS** : variables de `tokens.css` uniquement, classes BEM légères, aucune couleur codée en dur.
 - Un module API = `modules/<domaine>.routes.ts` (HTTP) + `modules/<domaine>.repo.ts` (SQL).
+- **Accessibilité WCAG 2.2 AA**, vérifiée avec axe : objectif 0 violation sur chaque page.
+
+Les conventions détaillées, les pièges déjà rencontrés et les décisions techniques déjà tranchées
+sont dans **[CLAUDE.md](CLAUDE.md)** — à lire avant de modifier le code, que ce soit à la main ou
+avec un assistant.
 
 ---
 
@@ -192,6 +205,16 @@ Les alternatives écartées (ORM, NestJS, Next.js, lib de composants, JWT…) so
 | 5   | FinOps : saisie des coûts, rapport global et rapport par application                         | ✅ livré |
 | 6   | Dashboards BI et historique                                                                 | à faire  |
 | 7   | Durcissement : polices auto-hébergées, revue sécurité, mise en production                   | à faire  |
+
+**Prochaines étapes identifiées**
+
+- **Biais cognitifs** : des questions sur les biais cognitifs doivent rejoindre le thème
+  « Équité & biais » du questionnaire (`section: 'E'` dans `shared/src/questionnaire.ts`). La
+  structure `showIf` permet de les conditionner au type d'usage ; rien d'autre n'est à toucher.
+- **Validation juridique** du contenu réglementaire du questionnaire (AI Act, RGPD, lois d'État
+  américaines, mesures chinoises) — rédigé sans conseil et à dater.
+- **Import de coûts** FinOps (CSV, facture cloud) : la colonne `finops_costs.source` est déjà là
+  pour ça, la saisie est aujourd'hui unitaire.
 
 Déjà en place pour les lots suivants : le schéma `finops_costs`, le job d'expiration annuelle des
 conformités, le journal d'audit, la matrice de permissions complète (évaluation, plans d'action,
