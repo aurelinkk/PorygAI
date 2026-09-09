@@ -47,6 +47,9 @@ le code, pas en surcouche : éléments natifs, relations explicites, focus gér�
 ### Couleurs et contrastes
 
 - Le statut n'est **jamais** porté par la couleur seule : pastille décorative (`aria-hidden`) + libellé.
+- Même règle dans la liste d'étapes du questionnaire : la coche « ✓ » est décorative, l'état est
+  doublé d'un texte `visually-hidden` (« — étape terminée ») ; `aria-current="step"` marque l'étape
+  affichée, indépendamment de son achèvement.
 - Application supprimée : grisée **par la couleur** (pas par une opacité) et barrée.
 - Contrastes vérifiés (formule WCAG, arrondis) :
 

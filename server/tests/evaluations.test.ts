@@ -141,7 +141,8 @@ describe('questionnaire v2 : scoring', () => {
 
   it('des réponses partielles donnent un verdict partiel', () => {
     const partial = answerAll(FRAMING, '2', {
-      N2: '1', N3: '1', D2: '1', T2: '1', S3: '1', S4: '1', F1: '1', F2: '1', F3: '1', F4: '1', F5: '1',
+      N2: '1', N3: '1', N4: '1', N5: '1', N6: '1', N7: '1',
+      D2: '1', T2: '1', S3: '1', S4: '1', F1: '1', F2: '1', F3: '1', F4: '1', F5: '1',
     });
     const result = scoreEvaluation(partial);
     expect(result.score).toBeGreaterThanOrEqual(PARTIAL_MIN);
@@ -183,6 +184,27 @@ describe('questionnaire v2 : scoring', () => {
     expect(d1.pointsRecoverable).toBe(4);
     expect(d1.critical).toBe(true);
     expect(d1.remediation).toMatch(/DPO/);
+  });
+
+  it('utilité et ROI : le bloc « nécessité » est posé sur tous les parcours', () => {
+    const minimal: Answers = { C1: ['other'], C2: 'no', C3: ['none'], C4: 'no', C5: 'none', C6: 'internal' };
+    const codes = applicableQuestions(minimal).map((q) => q.code);
+    expect(codes).toEqual(expect.arrayContaining(['N1', 'N4', 'N5', 'N6', 'N7']));
+    // N6 (ROI) coûte des points s'il n'est pas estimé, et propose une action chiffrée.
+    const sansRoi = scoreEvaluation(answerAll(minimal, '2', { N6: '0' }));
+    const reco = sansRoi.recommendations.find((r) => r.code === 'N6')!;
+    expect(reco.pointsRecoverable).toBe(2);
+    expect(reco.remediation).toMatch(/FinOps/);
+  });
+
+  it('le score est un pourcentage des points applicables, pas un total de points', () => {
+    // Le formulaire affiche « 4 pt » sur N1 : sur un parcours court, ces 4 points
+    // pèsent bien plus de 4 au score. Les deux unités ne doivent jamais être confondues.
+    const minimal: Answers = { C1: ['other'], C2: 'no', C3: ['none'], C4: 'no', C5: 'none', C6: 'internal' };
+    const result = scoreEvaluation({ ...minimal, N1: '2' });
+    expect(result.pointsObtained).toBe(4);
+    expect(result.score).toBe(Math.round((4 / result.pointsApplicable) * 100));
+    expect(result.score).toBeGreaterThan(4);
   });
 
   it('signale les questions sans réponse et estime la durée', () => {
@@ -249,7 +271,8 @@ describe('évaluation v2 : parcours', () => {
   it('partiellement conforme : statut dédié, SANS échéance, plan d’action généré', async () => {
     const cookie = await loginAs(app, ACCOUNTS.auditor);
     const partial = answerAll(FRAMING, '2', {
-      N2: '1', N3: '1', D2: '1', T2: '1', S3: '1', S4: '1', F1: '1', F2: '1', F3: '1', F4: '1', F5: '1',
+      N2: '1', N3: '1', N4: '1', N5: '1', N6: '1', N7: '1',
+      D2: '1', T2: '1', S3: '1', S4: '1', F1: '1', F2: '1', F3: '1', F4: '1', F5: '1',
     });
     const response = await submit(cookie, partial);
     expect(response.statusCode).toBe(200);
@@ -260,7 +283,7 @@ describe('évaluation v2 : parcours', () => {
     expect(application.complianceValidUntil).toBeNull(); // pas de délai : reste en test jusqu'à réévaluation
 
     const plans: ActionPlanDto[] = response.json().actionPlans;
-    expect(plans.length).toBe(11);
+    expect(plans.length).toBe(15); // une action par réponse « Partiellement »
     expect(plans.every((plan) => plan.owner?.displayName === 'Camille Roux')).toBe(true);
   });
 
@@ -334,7 +357,8 @@ describe('évaluation v2 : parcours', () => {
   it('modifier un champ évalué d’une application partiellement conforme la remet en audit', async () => {
     const auditor = await loginAs(app, ACCOUNTS.auditor);
     await submit(auditor, answerAll(FRAMING, '2', {
-      N2: '1', N3: '1', D2: '1', T2: '1', S3: '1', S4: '1', F1: '1', F2: '1', F3: '1', F4: '1', F5: '1',
+      N2: '1', N3: '1', N4: '1', N5: '1', N6: '1', N7: '1',
+      D2: '1', T2: '1', S3: '1', S4: '1', F1: '1', F2: '1', F3: '1', F4: '1', F5: '1',
     }));
     expect(one<{ status: string }>(app.db, 'SELECT status FROM applications WHERE id = ?', target)?.status)
       .toBe('partially_compliant');

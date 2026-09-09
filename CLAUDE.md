@@ -29,7 +29,7 @@ savoir pour *modifier* le code sans casser les règles du projet.
 
 ```bash
 npm run dev          # API (127.0.0.1:3000) + front (localhost:5173)
-npm test             # 129 tests Vitest, base SQLite en mémoire
+npm test             # 131 tests Vitest, base SQLite en mémoire
 npm run typecheck    # les 3 workspaces
 npm run db:reset     # base neuve + jeu de démo (interdit en production)
 ```

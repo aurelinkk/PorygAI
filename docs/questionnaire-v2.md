@@ -32,13 +32,20 @@ ni au numérateur ni au dénominateur — un outil interne simple a moins d'obli
 à haut risque, et c'est normal. Les sous-scores par thème et par pays se calculent de la même
 façon sur leur périmètre.
 
+> **Le barème ne s'affiche pas.** Les poids ci-dessus servent au calcul, pas à la saisie : le
+> formulaire ne met plus de pastille « 4 pt » sur les réponses. Deux raisons — la personne qui
+> répond n'a pas à viser la note plutôt qu'à décrire la réalité, et les points bruts se
+> contredisaient visuellement avec le score (une réponse à 4 pt fait monter un parcours de 48
+> points de 8, pas de 4). L'interface ne parle donc que d'une seule échelle, celle sur 100 :
+> score global, pourcentages par thème et par pays, et gains des recommandations.
+
 ### Exemple de parcours
 
 | Cas | Questions vues | Points max |
 | --- | --- | --- |
-| Outil interne, pas de données perso, non génératif, UE seule | ≈ 20 | ≈ 45 |
-| Chatbot client GenAI, données perso, UE + US | ≈ 34 | ≈ 78 |
-| Tri de CV (emploi = haut risque), données sensibles, UE + US + Chine | ≈ 45 | ≈ 106 |
+| Outil interne, pas de données perso, non génératif, UE seule | 24 | 48 |
+| Chatbot client GenAI, données perso, UE + US | 36 | 74 |
+| Tri de CV (emploi = haut risque), données sensibles, UE + US + Chine | 49 | 109 |
 
 Le formulaire annonce la durée estimée dès le cadrage terminé.
 
@@ -99,6 +106,15 @@ Légende : **●** critique (4 pts, plafond 60 si Non) · ○ standard (2 pts) �
 | N1 | ● | **Un algorithme d'IA est-il vraiment nécessaire ?** Une approche plus simple (règles métier, statistiques classiques, processus humain) a-t-elle été comparée ? *Oui, l'IA est justifiée après comparaison / Partiellement, sans comparaison formelle / Non, une solution plus simple suffirait* | Documenter la comparaison avec une solution non-IA ; si elle est équivalente, la privilégier : moins de risque, de coût et d'empreinte. |
 | N2 | ○ | Le modèle est-il proportionné au besoin ? (pas de LLM massif pour une classification simple) `← D2` | Comparer à des alternatives plus légères à qualité équivalente et documenter le choix. |
 | N3 | ○ | La finalité est-elle précise, écrite et limitée — l'usage réel ne dérive pas de l'usage déclaré ? | Rédiger une finalité limitative et prévoir une revue à chaque évolution d'usage. |
+| N4 | ○ | La tâche présente-t-elle les caractéristiques qui rendent une IA pertinente : volume important, données non structurées, grande variabilité des cas, absence de règles explicites ? *Au moins deux, écrites / une seule ou non documentée / la tâche se décrit en règles* | Décrire la tâche par des chiffres (volume mensuel, nature des données, part de cas atypiques) et vérifier qu'une règle métier ne suffirait pas. |
+| N5 | ○ | Le gain attendu est-il chiffré, avec une mesure de référence prise avant l'IA (temps passé, taux d'erreur, volume traité) ? *Référence et cible chiffrées / gain annoncé sans référence / non chiffré* | Mesurer la situation actuelle sur un échantillon représentatif et fixer une cible chiffrée avant le déploiement. |
+| N6 | ○ | **ROI** — coûts de mise en œuvre et coûts récurrents (licences, appels d'API, infrastructure, supervision, maintenance) comparés aux gains chiffrés ? *Coûts complets et horizon de rentabilité / estimation partielle / aucune* | Poser un calcul sur 12 à 24 mois : coûts (repris du suivi FinOps) face aux gains mesurés, et à partir de quand l'application devient rentable. |
+| N7 | · | Le bénéfice réel sera-t-il mesuré après mise en production, avec une décision explicite (poursuivre, corriger, arrêter) si la cible n'est pas atteinte ? | Programmer une revue à trois ou six mois : comparer les gains mesurés à la cible et acter la suite. |
+
+> **Utilité et ROI (N4–N7).** N1 seul répondait « oui/non » à une question qui n'est pas binaire.
+> Les quatre questions suivantes la décomposent : la tâche relève-t-elle vraiment de l'IA (N4),
+> le gain est-il mesuré avant (N5), le coût complet est-il rapproché du gain (N6), et le bilan
+> sera-t-il fait après (N7). N6 se lit avec le module FinOps, qui porte les coûts réels mensuels.
 
 ### Thème 2 — Données et vie privée
 
@@ -161,8 +177,8 @@ Légende : **●** critique (4 pts, plafond 60 si Non) · ○ standard (2 pts) �
 
 ### Thème 8 — Réglementation par pays
 
-Un sous-bloc par pays coché en C1. Chaque sous-bloc a **sa barre d'avancement** (points obtenus / points
-applicables) et **ses recommandations**. Pour le score global, le thème compte comme les autres (ses
+Un sous-bloc par pays coché en C1. Chaque sous-bloc a **sa barre d'avancement** (en pourcentage de son
+périmètre) et **ses recommandations**. Pour le score global, le thème compte comme les autres (ses
 points s'ajoutent), et un pays faible se voit immédiatement.
 
 > ⚠️ Contenu réglementaire à **faire valider par un juriste** et à dater : les obligations évoluent
@@ -230,8 +246,9 @@ Un blocage (C2, UE1) donne le verdict « Refusé » avec le motif ; le score n'e
 
 - **Par question** : chaque réponse en dessous du maximum porte sa recommandation (colonne de droite
   des tableaux) ; elle devient une action corrective, assignée au Process Owner.
-- **Synthèse classée** : « Pour gagner N points » — les actions triées par points récupérables, les
-  critiques d'abord. Les cinq premières sont mises en avant sur la fiche, toutes sont dans le plan.
+- **Synthèse classée** : « Pour gagner des points » — les actions triées par gain, les critiques
+  d'abord ; le gain est annoncé sur l'échelle du score (« +8 pts »). Les cinq premières sont mises
+  en avant sur la fiche, toutes sont dans le plan.
 - **Par pays** : sous chaque barre de pays, les recommandations de ce bloc uniquement.
 
 ### Ce qui change pour le reste de l'application
@@ -248,8 +265,11 @@ Un blocage (C2, UE1) donne le verdict « Refusé » avec le motif ; le score n'e
 
 Un **assistant par étapes** (une étape par thème), et non plus une page unique :
 
-- **Cadrage d'abord**, puis annonce : « 27 questions vous concernent, environ 15 minutes ».
-- Une **liste d'étapes** à gauche : faites, en cours, à venir — les blocs masqués n'y figurent pas.
+- **Cadrage d'abord** ; le nombre de questions retenues et la durée estimée s'affichent dans la
+  colonne de droite (« 27 questions vous concernent, environ 15 minutes »), recalculés à chaque réponse.
+- Une **liste d'étapes** à gauche : faites (✓), en cours, à venir — les blocs masqués n'y figurent
+  pas. Une étape complète garde sa coche même quand on s'y trouve : en reprenant un brouillon on
+  retombe sur le cadrage, déjà rempli.
 - **Une question à la fois** visuellement (carte), réponses en gros boutons, « Pourquoi cette question ? »
   dépliable, commentaire facultatif.
 - **Enregistrement automatique** à chaque changement d'étape : on peut s'interrompre et reprendre.

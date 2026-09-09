@@ -25,11 +25,15 @@ pas de base à installer, pas de compilation native (SQLite est intégré à Nod
 
 ```bash
 npm install
-npm run db:seed      # crée data/poryg.db avec 5 comptes et 8 applications de démo
 npm run dev          # API sur http://127.0.0.1:3000 + front sur http://localhost:5173
 ```
 
 Puis ouvrir <http://localhost:5173>.
+
+Au démarrage, l'API crée `data/poryg.db` si besoin, applique les migrations et — **en développement
+seulement, et si la base ne contient aucune application** — insère le jeu de démo : 5 comptes et
+8 applications. Sans lui, les comptes proposés sur la page de connexion n'existeraient pas et la
+connexion par mot de passe échouerait. `npm run db:seed` fait la même chose à la main.
 
 ### Deux façons de se connecter
 
@@ -119,7 +123,7 @@ poryg-ai/
 │  │  ├─ jobs/             expiration annuelle des conformités
 │  │  ├─ db/               connexion node:sqlite, migrations SQL, seed, CLI
 │  │  └─ lib/              erreurs HTTP, validation, dates
-│  └─ tests/               Vitest — 129 tests
+│  └─ tests/               Vitest — 131 tests
 ├─ client/         Front React + Vite
 │  └─ src/
 │     ├─ App.tsx           routes

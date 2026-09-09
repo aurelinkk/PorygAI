@@ -993,10 +993,6 @@ legend.field__label {
 .choice input:focus-visible {
   outline: none;
 }
-.choice__points {
-  color: var(--texte-2);
-  font-size: 11px;
-}
 .notice--danger {
   background: var(--rouge-pastel);
   border: 2px solid var(--rouge);
@@ -1515,6 +1511,9 @@ legend.field__label {
 }
 .stepper__item--done {
   background: var(--vert-pastel);
+}
+.stepper__item--done.stepper__item--current {
+  background: var(--rose-pastel);
 }
 .stepper__index {
   display: inline-grid;
