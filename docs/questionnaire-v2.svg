@@ -1,137 +1,524 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1580" height="1485" viewBox="20 -40 1580 1485" font-family="Segoe UI, Helvetica, Arial, sans-serif">
-<rect x="20" y="-40" width="1580" height="1485" fill="#fdf3f6"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="2840" height="3595" viewBox="20 -40 2840 3595" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+<rect x="20" y="-40" width="2840" height="3595" fill="#fdf3f6"/>
 <defs><marker id="fleche" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto"><path d="M0,0 L9,3.5 L0,7" fill="none" stroke="context-stroke" stroke-width="1.5"/></marker></defs>
-<rect x="60" y="150" width="1500" height="190" rx="12" fill="#f0e7ee" stroke="#6b6280" stroke-width="1" stroke-dasharray="9 7"/>
-<rect x="90" y="180" width="230" height="130" rx="12" fill="#ffffff" stroke="#1a1526" stroke-width="2"/>
-<rect x="332" y="180" width="230" height="130" rx="12" fill="#ffe0e0" stroke="#1a1526" stroke-width="2"/>
-<rect x="574" y="180" width="230" height="130" rx="12" fill="#ffffff" stroke="#1a1526" stroke-width="2"/>
-<rect x="816" y="180" width="230" height="130" rx="12" fill="#ffffff" stroke="#1a1526" stroke-width="2"/>
-<rect x="1058" y="180" width="230" height="130" rx="12" fill="#ffffff" stroke="#1a1526" stroke-width="2"/>
-<rect x="1300" y="180" width="230" height="130" rx="12" fill="#ffffff" stroke="#1a1526" stroke-width="2"/>
-<rect x="1210" y="400" width="350" height="150" rx="12" fill="#ffe0e0" stroke="#e5384f" stroke-width="2"/>
-<rect x="60" y="420" width="1110" height="330" rx="12" fill="#d9f1fb" stroke="#6b6280" stroke-width="1" stroke-dasharray="9 7"/>
-<rect x="90" y="448" width="340" height="92" rx="12" fill="#ffffff" stroke="#1a1526" stroke-width="2"/>
-<rect x="445" y="448" width="340" height="92" rx="12" fill="#ffffff" stroke="#1a1526" stroke-width="2"/>
-<rect x="800" y="448" width="340" height="92" rx="12" fill="#ffffff" stroke="#1a1526" stroke-width="2"/>
-<rect x="90" y="555" width="340" height="92" rx="12" fill="#ffffff" stroke="#1a1526" stroke-width="2"/>
-<rect x="445" y="555" width="340" height="92" rx="12" fill="#ffffff" stroke="#1a1526" stroke-width="2"/>
-<rect x="800" y="555" width="340" height="92" rx="12" fill="#ffffff" stroke="#1a1526" stroke-width="2"/>
-<rect x="90" y="662" width="340" height="92" rx="12" fill="#ffffff" stroke="#1a1526" stroke-width="2"/>
-<rect x="60" y="790" width="1500" height="150" rx="12" fill="#ffe3ec" stroke="#6b6280" stroke-width="1" stroke-dasharray="9 7"/>
-<rect x="90" y="818" width="355" height="100" rx="12" fill="#ffffff" stroke="#1a1526" stroke-width="2"/>
-<rect x="457" y="818" width="355" height="100" rx="12" fill="#ffffff" stroke="#1a1526" stroke-width="2"/>
-<rect x="824" y="818" width="355" height="100" rx="12" fill="#ffffff" stroke="#1a1526" stroke-width="2"/>
-<rect x="1191" y="818" width="355" height="100" rx="12" fill="#ffffff" stroke="#1a1526" stroke-width="2"/>
-<rect x="400" y="1000" width="820" height="118" rx="12" fill="#ffffff" stroke="#1a1526" stroke-width="3"/>
-<rect x="210" y="1190" width="400" height="120" rx="12" fill="#d6f5e8" stroke="#1a1526" stroke-width="3"/>
-<rect x="640" y="1190" width="400" height="120" rx="12" fill="#ffe3ec" stroke="#1a1526" stroke-width="3"/>
-<rect x="1070" y="1190" width="400" height="120" rx="12" fill="#ffe0e0" stroke="#1a1526" stroke-width="3"/>
-<line x1="320" y1="315" x2="1270" y2="394" stroke="#e5384f" stroke-width="2" marker-end="url(#fleche)"/>
-<line x1="615" y1="725" x2="615" y2="782" stroke="#1a1526" stroke-width="2" marker-end="url(#fleche)"/>
-<line x1="810" y1="942" x2="810" y2="992" stroke="#1a1526" stroke-width="2" marker-end="url(#fleche)"/>
-<line x1="810" y1="1124" x2="410" y2="1184" stroke="#1a1526" stroke-width="2" marker-end="url(#fleche)"/>
-<line x1="810" y1="1124" x2="840" y2="1184" stroke="#1a1526" stroke-width="2" marker-end="url(#fleche)"/>
-<line x1="810" y1="1124" x2="1270" y2="1184" stroke="#1a1526" stroke-width="2" marker-end="url(#fleche)"/>
-<line x1="1385" y1="556" x2="1270" y2="1184" stroke="#e5384f" stroke-width="2" stroke-dasharray="8 6" marker-end="url(#fleche)"/>
-<text x="60" y="32.8" font-size="32" fill="#1a1526" text-anchor="start" font-weight="700">Questionnaire d'évaluation Poryg'AI — v2</text>
-<text x="60" y="62.3" font-size="14" fill="#6b6280" text-anchor="start" font-weight="400">Arbre de décision : le cadrage détermine les questions posées, donc le score et le verdict.</text>
-<text x="60" y="79.8" font-size="14" fill="#6b6280" text-anchor="start" font-weight="400">● = question critique (un « Non » plafonne le score à 60)     ⛔ = question bloquante (évaluation refusée)</text>
-<text x="76" y="141.4" font-size="17" fill="#1a1526" text-anchor="start" font-weight="700">①  CADRAGE — 6 questions, non notées</text>
-<text x="205" y="227.3" font-size="12" fill="#1a1526" text-anchor="middle" font-weight="400">C1 · Pays de déploiement</text>
-<text x="205" y="242.3" font-size="12" fill="#1a1526" text-anchor="middle" font-weight="400"></text>
-<text x="205" y="257.3" font-size="12" fill="#1a1526" text-anchor="middle" font-weight="400">UE · US · Chine · Autre</text>
-<text x="205" y="272.3" font-size="12" fill="#1a1526" text-anchor="middle" font-weight="400">(choix multiple)</text>
-<text x="447" y="227.3" font-size="12" fill="#1a1526" text-anchor="middle" font-weight="400">C2 · Usage militaire,</text>
-<text x="447" y="242.3" font-size="12" fill="#1a1526" text-anchor="middle" font-weight="400">défense, sécurité nat. ?   ⛔</text>
-<text x="447" y="257.3" font-size="12" fill="#1a1526" text-anchor="middle" font-weight="400"></text>
-<text x="447" y="272.3" font-size="12" fill="#1a1526" text-anchor="middle" font-weight="400">Oui → refus immédiat</text>
-<text x="689" y="227.3" font-size="12" fill="#1a1526" text-anchor="middle" font-weight="400">C3 · Domaine à fort enjeu ?</text>
-<text x="689" y="242.3" font-size="12" fill="#1a1526" text-anchor="middle" font-weight="400"></text>
-<text x="689" y="257.3" font-size="12" fill="#1a1526" text-anchor="middle" font-weight="400">santé · biométrie · emploi</text>
-<text x="689" y="272.3" font-size="12" fill="#1a1526" text-anchor="middle" font-weight="400">éducation · crédit · justice</text>
-<text x="931" y="227.3" font-size="12" fill="#1a1526" text-anchor="middle" font-weight="400">C4 · Données</text>
-<text x="931" y="242.3" font-size="12" fill="#1a1526" text-anchor="middle" font-weight="400">personnelles ?</text>
-<text x="931" y="257.3" font-size="12" fill="#1a1526" text-anchor="middle" font-weight="400"></text>
-<text x="931" y="272.3" font-size="12" fill="#1a1526" text-anchor="middle" font-weight="400">Oui / Non</text>
-<text x="1173" y="227.3" font-size="12" fill="#1a1526" text-anchor="middle" font-weight="400">C5 · Génère du contenu</text>
-<text x="1173" y="242.3" font-size="12" fill="#1a1526" text-anchor="middle" font-weight="400">ou interagit ?</text>
-<text x="1173" y="257.3" font-size="12" fill="#1a1526" text-anchor="middle" font-weight="400"></text>
-<text x="1173" y="272.3" font-size="12" fill="#1a1526" text-anchor="middle" font-weight="400">génère · interagit · les deux</text>
-<text x="1415" y="227.3" font-size="12" fill="#1a1526" text-anchor="middle" font-weight="400">C6 · Origine du modèle</text>
-<text x="1415" y="242.3" font-size="12" fill="#1a1526" text-anchor="middle" font-weight="400"></text>
-<text x="1415" y="257.3" font-size="12" fill="#1a1526" text-anchor="middle" font-weight="400">interne · fine-tuné</text>
-<text x="1415" y="272.3" font-size="12" fill="#1a1526" text-anchor="middle" font-weight="400">API tierce · poids ouverts</text>
-<text x="90" y="363.3" font-size="13" fill="#6b6280" text-anchor="start" font-weight="400">Chaque réponse active ou masque des questions (`showIf`). Une question masquée ne compte ni dans les points obtenus, ni dans les points applicables.</text>
-<text x="1385" y="415.2" font-size="13" fill="#1a1526" text-anchor="middle" font-weight="400">⛔  SORTIES IMMÉDIATES</text>
-<text x="1385" y="431.4" font-size="13" fill="#1a1526" text-anchor="middle" font-weight="400"></text>
-<text x="1385" y="447.7" font-size="13" fill="#1a1526" text-anchor="middle" font-weight="400">C2 = Oui  →  REFUSÉE</text>
-<text x="1385" y="463.9" font-size="13" fill="#1a1526" text-anchor="middle" font-weight="400">hors périmètre de la politique IA</text>
-<text x="1385" y="480.2" font-size="13" fill="#1a1526" text-anchor="middle" font-weight="400"></text>
-<text x="1385" y="496.4" font-size="13" fill="#1a1526" text-anchor="middle" font-weight="400">UE1 = Oui  →  REFUSÉE</text>
-<text x="1385" y="512.7" font-size="13" fill="#1a1526" text-anchor="middle" font-weight="400">pratique interdite (AI Act art. 5)</text>
-<text x="1385" y="529.0" font-size="13" fill="#1a1526" text-anchor="middle" font-weight="400"></text>
-<text x="1385" y="545.2" font-size="13" fill="#1a1526" text-anchor="middle" font-weight="400">Aucun score n'est calculé.</text>
-<text x="803" y="356.8" font-size="12" fill="#e5384f" text-anchor="start" font-weight="400">Oui</text>
-<text x="76" y="411.4" font-size="17" fill="#1a1526" text-anchor="start" font-weight="700">②  THÈMES NOTÉS</text>
-<text x="260" y="483.8" font-size="12" fill="#1a1526" text-anchor="middle" font-weight="400">① Nécessité &amp; proportionnalité</text>
-<text x="260" y="498.8" font-size="12" fill="#1a1526" text-anchor="middle" font-weight="400">N1● N2 N3   —   8 pts</text>
-<text x="260" y="513.8" font-size="12" fill="#1a1526" text-anchor="middle" font-weight="400">toujours posé</text>
-<text x="615" y="483.8" font-size="12" fill="#1a1526" text-anchor="middle" font-weight="400">② Données &amp; vie privée</text>
-<text x="615" y="498.8" font-size="12" fill="#1a1526" text-anchor="middle" font-weight="400">D1● D2 D3 D4● D5 D6   —   15 pts</text>
-<text x="615" y="513.8" font-size="12" fill="#1a1526" text-anchor="middle" font-weight="400">5 questions sur 6 selon C4 / C3 / C6</text>
-<text x="970" y="483.8" font-size="12" fill="#1a1526" text-anchor="middle" font-weight="400">③ Transparence &amp; explicabilité</text>
-<text x="970" y="498.8" font-size="12" fill="#1a1526" text-anchor="middle" font-weight="400">T1● T2 T3 T4   —   9 pts</text>
-<text x="970" y="513.8" font-size="12" fill="#1a1526" text-anchor="middle" font-weight="400">T1 · T3 si C5</text>
-<text x="260" y="590.8" font-size="12" fill="#1a1526" text-anchor="middle" font-weight="400">④ Supervision &amp; robustesse</text>
-<text x="260" y="605.8" font-size="12" fill="#1a1526" text-anchor="middle" font-weight="400">S1● S2 S3 S4 S5   —   12 pts</text>
-<text x="260" y="620.8" font-size="12" fill="#1a1526" text-anchor="middle" font-weight="400">S2 · S5 si C3</text>
-<text x="615" y="590.8" font-size="12" fill="#1a1526" text-anchor="middle" font-weight="400">⑤ Équité &amp; biais</text>
-<text x="615" y="605.8" font-size="12" fill="#1a1526" text-anchor="middle" font-weight="400">E1 E2 E3   —   5 pts</text>
-<text x="615" y="620.8" font-size="12" fill="#1a1526" text-anchor="middle" font-weight="400">E2 si C3 — biais cognitifs à venir ici</text>
-<text x="970" y="590.8" font-size="12" fill="#1a1526" text-anchor="middle" font-weight="400">⑥ Sécurité</text>
-<text x="970" y="605.8" font-size="12" fill="#1a1526" text-anchor="middle" font-weight="400">SE1 SE2 SE3   —   6 pts</text>
-<text x="970" y="620.8" font-size="12" fill="#1a1526" text-anchor="middle" font-weight="400">SE2 si C5 · SE3 si C6 = API</text>
-<text x="260" y="697.8" font-size="12" fill="#1a1526" text-anchor="middle" font-weight="400">⑦ Frugalité &amp; FinOps</text>
-<text x="260" y="712.8" font-size="12" fill="#1a1526" text-anchor="middle" font-weight="400">F1 F2 F3 F4 F5   —   8 pts</text>
-<text x="260" y="727.8" font-size="12" fill="#1a1526" text-anchor="middle" font-weight="400">toujours posé</text>
-<text x="76" y="781.4" font-size="17" fill="#1a1526" text-anchor="start" font-weight="700">③  RÉGLEMENTATION — un bloc par pays coché en C1, avec sa propre barre d'avancement</text>
-<text x="268" y="850.3" font-size="12" fill="#1a1526" text-anchor="middle" font-weight="400">Union européenne   —   14 pts</text>
-<text x="268" y="865.3" font-size="12" fill="#1a1526" text-anchor="middle" font-weight="400">UE1⛔ UE2 UE3● UE4</text>
-<text x="268" y="880.3" font-size="12" fill="#1a1526" text-anchor="middle" font-weight="400">UE5 UE6 UE7 UE8</text>
-<text x="268" y="895.3" font-size="12" fill="#1a1526" text-anchor="middle" font-weight="400">AI Act · RGPD</text>
-<text x="634" y="850.3" font-size="12" fill="#1a1526" text-anchor="middle" font-weight="400">États-Unis   —   20 pts</text>
-<text x="634" y="865.3" font-size="12" fill="#1a1526" text-anchor="middle" font-weight="400">US1● US2● US3● US4</text>
-<text x="634" y="880.3" font-size="12" fill="#1a1526" text-anchor="middle" font-weight="400">US5 US6 US7</text>
-<text x="634" y="895.3" font-size="12" fill="#1a1526" text-anchor="middle" font-weight="400">sectoriel · lois d'État · FTC</text>
-<text x="1002" y="850.3" font-size="12" fill="#1a1526" text-anchor="middle" font-weight="400">Chine   —   18 pts</text>
-<text x="1002" y="865.3" font-size="12" fill="#1a1526" text-anchor="middle" font-weight="400">CN1● CN2 CN3 CN4●</text>
-<text x="1002" y="880.3" font-size="12" fill="#1a1526" text-anchor="middle" font-weight="400">CN5 CN6 CN7</text>
-<text x="1002" y="895.3" font-size="12" fill="#1a1526" text-anchor="middle" font-weight="400">CAC · marquage · PIPL</text>
-<text x="1368" y="857.8" font-size="12" fill="#1a1526" text-anchor="middle" font-weight="400">Autres pays   —   2 pts</text>
-<text x="1368" y="872.8" font-size="12" fill="#1a1526" text-anchor="middle" font-weight="400">AU1</text>
-<text x="1368" y="887.8" font-size="12" fill="#1a1526" text-anchor="middle" font-weight="400">revue juridique locale</text>
-<text x="810" y="1038.3" font-size="14" fill="#1a1526" text-anchor="middle" font-weight="400">④   Score  =  100 × points obtenus ÷ points applicables</text>
-<text x="810" y="1055.8" font-size="14" fill="#1a1526" text-anchor="middle" font-weight="400"></text>
-<text x="810" y="1073.3" font-size="14" fill="#1a1526" text-anchor="middle" font-weight="400">Poids :  critique ● 4 pts    ·    standard 2 pts    ·    mineur 1 pt</text>
-<text x="810" y="1090.8" font-size="14" fill="#1a1526" text-anchor="middle" font-weight="400">Une question critique ● répondue « Non »  →  score plafonné à 60</text>
-<text x="410" y="1222.7" font-size="13" fill="#1a1526" text-anchor="middle" font-weight="400">≥ 86    CONFORME</text>
-<text x="410" y="1239.0" font-size="13" fill="#1a1526" text-anchor="middle" font-weight="400"></text>
-<text x="410" y="1255.2" font-size="13" fill="#1a1526" text-anchor="middle" font-weight="400">Déployable en production</text>
-<text x="410" y="1271.5" font-size="13" fill="#1a1526" text-anchor="middle" font-weight="400">Échéance : 12 mois</text>
-<text x="410" y="1287.7" font-size="13" fill="#1a1526" text-anchor="middle" font-weight="400">puis retour en audit</text>
-<text x="840" y="1222.7" font-size="13" fill="#1a1526" text-anchor="middle" font-weight="400">61 – 85    PARTIELLEMENT CONFORME</text>
-<text x="840" y="1239.0" font-size="13" fill="#1a1526" text-anchor="middle" font-weight="400"></text>
-<text x="840" y="1255.2" font-size="13" fill="#1a1526" text-anchor="middle" font-weight="400">Autorisée en test / pilote</text>
-<text x="840" y="1271.5" font-size="13" fill="#1a1526" text-anchor="middle" font-weight="400">Sans échéance :</text>
-<text x="840" y="1287.7" font-size="13" fill="#1a1526" text-anchor="middle" font-weight="400">jusqu'à réévaluation</text>
-<text x="1270" y="1222.7" font-size="13" fill="#1a1526" text-anchor="middle" font-weight="400">≤ 60    NON CONFORME</text>
-<text x="1270" y="1239.0" font-size="13" fill="#1a1526" text-anchor="middle" font-weight="400"></text>
-<text x="1270" y="1255.2" font-size="13" fill="#1a1526" text-anchor="middle" font-weight="400">Non déployable</text>
-<text x="1270" y="1271.5" font-size="13" fill="#1a1526" text-anchor="middle" font-weight="400">Plan d'action généré</text>
-<text x="1270" y="1287.7" font-size="13" fill="#1a1526" text-anchor="middle" font-weight="400">(une action par point perdu)</text>
-<text x="1336" y="872.3" font-size="12" fill="#e5384f" text-anchor="start" font-weight="400">refus</text>
-<text x="210" y="1353.3" font-size="13" fill="#6b6280" text-anchor="start" font-weight="400">Recommandations : chaque réponse en dessous du maximum produit une action corrective, classée par points récupérables (critiques d'abord).</text>
-<text x="210" y="1369.6" font-size="13" fill="#6b6280" text-anchor="start" font-weight="400">Elles alimentent le plan d'action de l'application, sauf si le verdict est « Conforme ».</text>
-<text x="210" y="1385.8" font-size="13" fill="#6b6280" text-anchor="start" font-weight="400"></text>
-<text x="210" y="1402.1" font-size="13" fill="#6b6280" text-anchor="start" font-weight="400">Source de vérité : shared/src/questionnaire.ts  —  conception détaillée : docs/questionnaire-v2.md</text>
+<rect x="60" y="150" width="400" height="56" rx="12" fill="#8b7be8" stroke="#1a1526" stroke-width="3"/>
+<rect x="60" y="280" width="2372" height="259" rx="12" fill="#f0e7ee" stroke="#6b6280" stroke-width="1" stroke-dasharray="9 7"/>
+<rect x="90" y="310" width="372" height="199" rx="12" fill="#ffffff" stroke="#1a1526" stroke-width="2"/>
+<rect x="478" y="310" width="372" height="199" rx="12" fill="#ffe0e0" stroke="#e5384f" stroke-width="2"/>
+<rect x="866" y="310" width="372" height="199" rx="12" fill="#ffffff" stroke="#1a1526" stroke-width="2"/>
+<rect x="1254" y="310" width="372" height="199" rx="12" fill="#ffffff" stroke="#1a1526" stroke-width="2"/>
+<rect x="1642" y="310" width="372" height="199" rx="12" fill="#ffffff" stroke="#1a1526" stroke-width="2"/>
+<rect x="2030" y="310" width="372" height="199" rx="12" fill="#ffffff" stroke="#1a1526" stroke-width="2"/>
+<rect x="620" y="599" width="760" height="159" rx="12" fill="#ffe0e0" stroke="#e5384f" stroke-width="3"/>
+<rect x="90" y="894" width="372" height="50" rx="12" fill="#d9f1fb" stroke="#1a1526" stroke-width="3"/>
+<rect x="90" y="956" width="372" height="89" rx="12" fill="#ffe3ec" stroke="#1a1526" stroke-width="3"/>
+<rect x="90" y="1055" width="372" height="75" rx="12" fill="#ffffff" stroke="#1a1526" stroke-width="2"/>
+<rect x="90" y="1140" width="372" height="75" rx="12" fill="#ffffff" stroke="#1a1526" stroke-width="2"/>
+<rect x="478" y="894" width="372" height="50" rx="12" fill="#d9f1fb" stroke="#1a1526" stroke-width="3"/>
+<rect x="478" y="956" width="372" height="116" rx="12" fill="#ffe3ec" stroke="#1a1526" stroke-width="3"/>
+<rect x="478" y="1082" width="372" height="116" rx="12" fill="#ffffff" stroke="#6b6280" stroke-width="2"/>
+<rect x="478" y="1209" width="372" height="116" rx="12" fill="#ffffff" stroke="#6b6280" stroke-width="2"/>
+<rect x="478" y="1335" width="372" height="75" rx="12" fill="#ffe3ec" stroke="#1a1526" stroke-width="3"/>
+<rect x="478" y="1420" width="372" height="102" rx="12" fill="#ffffff" stroke="#6b6280" stroke-width="2"/>
+<rect x="478" y="1532" width="372" height="116" rx="12" fill="#ffffff" stroke="#6b6280" stroke-width="2"/>
+<rect x="866" y="894" width="372" height="50" rx="12" fill="#d9f1fb" stroke="#1a1526" stroke-width="3"/>
+<rect x="866" y="956" width="372" height="116" rx="12" fill="#ffe3ec" stroke="#1a1526" stroke-width="3"/>
+<rect x="866" y="1082" width="372" height="75" rx="12" fill="#ffffff" stroke="#1a1526" stroke-width="2"/>
+<rect x="866" y="1168" width="372" height="102" rx="12" fill="#ffffff" stroke="#6b6280" stroke-width="2"/>
+<rect x="866" y="1280" width="372" height="75" rx="12" fill="#ffffff" stroke="#1a1526" stroke-width="2"/>
+<rect x="1254" y="894" width="372" height="50" rx="12" fill="#d9f1fb" stroke="#1a1526" stroke-width="3"/>
+<rect x="1254" y="956" width="372" height="75" rx="12" fill="#ffe3ec" stroke="#1a1526" stroke-width="3"/>
+<rect x="1254" y="1041" width="372" height="116" rx="12" fill="#ffffff" stroke="#6b6280" stroke-width="2"/>
+<rect x="1254" y="1168" width="372" height="75" rx="12" fill="#ffffff" stroke="#1a1526" stroke-width="2"/>
+<rect x="1254" y="1252" width="372" height="75" rx="12" fill="#ffffff" stroke="#1a1526" stroke-width="2"/>
+<rect x="1254" y="1338" width="372" height="116" rx="12" fill="#ffffff" stroke="#6b6280" stroke-width="2"/>
+<rect x="1642" y="894" width="372" height="50" rx="12" fill="#d9f1fb" stroke="#1a1526" stroke-width="3"/>
+<rect x="1642" y="956" width="372" height="75" rx="12" fill="#ffffff" stroke="#1a1526" stroke-width="2"/>
+<rect x="1642" y="1041" width="372" height="102" rx="12" fill="#ffffff" stroke="#6b6280" stroke-width="2"/>
+<rect x="1642" y="1154" width="372" height="75" rx="12" fill="#ffffff" stroke="#1a1526" stroke-width="2"/>
+<rect x="2030" y="894" width="372" height="50" rx="12" fill="#d9f1fb" stroke="#1a1526" stroke-width="3"/>
+<rect x="2030" y="956" width="372" height="75" rx="12" fill="#ffffff" stroke="#1a1526" stroke-width="2"/>
+<rect x="2030" y="1041" width="372" height="116" rx="12" fill="#ffffff" stroke="#6b6280" stroke-width="2"/>
+<rect x="2030" y="1168" width="372" height="116" rx="12" fill="#ffffff" stroke="#6b6280" stroke-width="2"/>
+<rect x="2418" y="894" width="372" height="50" rx="12" fill="#d9f1fb" stroke="#1a1526" stroke-width="3"/>
+<rect x="2418" y="956" width="372" height="75" rx="12" fill="#ffffff" stroke="#1a1526" stroke-width="2"/>
+<rect x="2418" y="1041" width="372" height="75" rx="12" fill="#ffffff" stroke="#1a1526" stroke-width="2"/>
+<rect x="2418" y="1126" width="372" height="61" rx="12" fill="#ffffff" stroke="#1a1526" stroke-width="2"/>
+<rect x="2418" y="1198" width="372" height="89" rx="12" fill="#ffffff" stroke="#1a1526" stroke-width="2"/>
+<rect x="2418" y="1296" width="372" height="75" rx="12" fill="#ffffff" stroke="#1a1526" stroke-width="2"/>
+<rect x="60" y="864" width="2760" height="825" rx="12" fill="#d9f1fb" stroke="#6b6280" stroke-width="1" stroke-dasharray="9 7"/>
+<rect x="90" y="1789" width="372" height="50" rx="12" fill="#ffe3ec" stroke="#1a1526" stroke-width="3"/>
+<rect x="90" y="1851" width="372" height="171" rx="12" fill="#ffe0e0" stroke="#e5384f" stroke-width="2"/>
+<rect x="90" y="2032" width="372" height="102" rx="12" fill="#ffffff" stroke="#6b6280" stroke-width="2"/>
+<rect x="90" y="2145" width="372" height="144" rx="12" fill="#ffe3ec" stroke="#1a1526" stroke-width="3"/>
+<rect x="90" y="2299" width="372" height="130" rx="12" fill="#ffffff" stroke="#6b6280" stroke-width="2"/>
+<rect x="90" y="2439" width="372" height="102" rx="12" fill="#ffffff" stroke="#6b6280" stroke-width="2"/>
+<rect x="90" y="2551" width="372" height="102" rx="12" fill="#ffffff" stroke="#6b6280" stroke-width="2"/>
+<rect x="90" y="2664" width="372" height="130" rx="12" fill="#ffffff" stroke="#6b6280" stroke-width="2"/>
+<rect x="90" y="2804" width="372" height="102" rx="12" fill="#ffffff" stroke="#6b6280" stroke-width="2"/>
+<rect x="478" y="1789" width="372" height="50" rx="12" fill="#ffe3ec" stroke="#1a1526" stroke-width="3"/>
+<rect x="478" y="1851" width="372" height="130" rx="12" fill="#ffe3ec" stroke="#1a1526" stroke-width="3"/>
+<rect x="478" y="1991" width="372" height="130" rx="12" fill="#ffe3ec" stroke="#1a1526" stroke-width="3"/>
+<rect x="478" y="2131" width="372" height="102" rx="12" fill="#ffe3ec" stroke="#1a1526" stroke-width="3"/>
+<rect x="478" y="2244" width="372" height="116" rx="12" fill="#ffffff" stroke="#6b6280" stroke-width="2"/>
+<rect x="478" y="2370" width="372" height="130" rx="12" fill="#ffffff" stroke="#6b6280" stroke-width="2"/>
+<rect x="478" y="2510" width="372" height="102" rx="12" fill="#ffffff" stroke="#6b6280" stroke-width="2"/>
+<rect x="478" y="2622" width="372" height="116" rx="12" fill="#ffffff" stroke="#6b6280" stroke-width="2"/>
+<rect x="866" y="1789" width="372" height="50" rx="12" fill="#ffe3ec" stroke="#1a1526" stroke-width="3"/>
+<rect x="866" y="1851" width="372" height="130" rx="12" fill="#ffe3ec" stroke="#1a1526" stroke-width="3"/>
+<rect x="866" y="1991" width="372" height="116" rx="12" fill="#ffffff" stroke="#6b6280" stroke-width="2"/>
+<rect x="866" y="2118" width="372" height="102" rx="12" fill="#ffffff" stroke="#6b6280" stroke-width="2"/>
+<rect x="866" y="2230" width="372" height="116" rx="12" fill="#ffe3ec" stroke="#1a1526" stroke-width="3"/>
+<rect x="866" y="2356" width="372" height="130" rx="12" fill="#ffffff" stroke="#6b6280" stroke-width="2"/>
+<rect x="866" y="2496" width="372" height="102" rx="12" fill="#ffffff" stroke="#6b6280" stroke-width="2"/>
+<rect x="866" y="2609" width="372" height="102" rx="12" fill="#ffffff" stroke="#6b6280" stroke-width="2"/>
+<rect x="1254" y="1789" width="372" height="50" rx="12" fill="#ffe3ec" stroke="#1a1526" stroke-width="3"/>
+<rect x="1254" y="1851" width="372" height="116" rx="12" fill="#ffffff" stroke="#6b6280" stroke-width="2"/>
+<rect x="60" y="1759" width="2760" height="1188" rx="12" fill="#ffe3ec" stroke="#6b6280" stroke-width="1" stroke-dasharray="9 7"/>
+<rect x="90" y="3016" width="1148" height="140" rx="12" fill="#ffffff" stroke="#1a1526" stroke-width="3"/>
+<rect x="90" y="3270" width="372" height="107" rx="12" fill="#d6f5e8" stroke="#1a1526" stroke-width="3"/>
+<rect x="478" y="3270" width="372" height="107" rx="12" fill="#ffe3ec" stroke="#1a1526" stroke-width="3"/>
+<rect x="866" y="3270" width="372" height="107" rx="12" fill="#ffe0e0" stroke="#1a1526" stroke-width="3"/>
+<line x1="260" y1="208" x2="260" y2="274" stroke="#1a1526" stroke-width="2" marker-end="url(#fleche)"/>
+<line x1="664" y1="509" x2="820" y2="593" stroke="#e5384f" stroke-width="2" marker-end="url(#fleche)"/>
+<line x1="260" y1="509" x2="260" y2="858" stroke="#1a1526" stroke-width="2" marker-end="url(#fleche)"/>
+<line x1="260" y1="1659" x2="260" y2="1753" stroke="#1a1526" stroke-width="2" marker-end="url(#fleche)"/>
+<line x1="260" y1="2916" x2="260" y2="3010" stroke="#1a1526" stroke-width="2" marker-end="url(#fleche)"/>
+<line x1="400" y1="3156" x2="276" y2="3264" stroke="#1a1526" stroke-width="2" marker-end="url(#fleche)"/>
+<line x1="400" y1="3156" x2="664" y2="3264" stroke="#1a1526" stroke-width="2" marker-end="url(#fleche)"/>
+<line x1="400" y1="3156" x2="1052" y2="3264" stroke="#1a1526" stroke-width="2" marker-end="url(#fleche)"/>
+<text x="60" y="34.9" font-size="34" fill="#1a1526" text-anchor="start" font-weight="700">Questionnaire d'évaluation Poryg'AI — arbre complet</text>
+<text x="60" y="66.3" font-size="14" fill="#6b6280" text-anchor="start" font-weight="400">Toutes les questions du formulaire, dans leur formulation exacte (source : shared/src/questionnaire.ts).</text>
+<text x="60" y="83.8" font-size="14" fill="#6b6280" text-anchor="start" font-weight="400">●  question critique : un « Non » plafonne le score à 60          ⛔  question bloquante : l'évaluation est refusée</text>
+<text x="60" y="101.3" font-size="14" fill="#6b6280" text-anchor="start" font-weight="400">Un encadré gris clair n'est posé que si sa condition est remplie ; une question non posée ne compte pas dans le score.</text>
+<text x="260" y="184.0" font-size="15" fill="#1a1526" text-anchor="middle" font-weight="400">ÉVALUATION D'UNE APPLICATION</text>
+<text x="78" y="269.5" font-size="19" fill="#1a1526" text-anchor="start" font-weight="700">①  CADRAGE — 6 questions posées à tout le monde, non notées : elles décident de la suite</text>
+<text x="100" y="358.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">C1</text>
+<text x="100" y="372.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="100" y="386.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">Dans quels pays ou zones l'application sera-t-elle</text>
+<text x="100" y="400.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">déployée ou utilisée ?</text>
+<text x="100" y="413.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="100" y="427.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">•  Union européenne</text>
+<text x="100" y="441.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">•  États-Unis</text>
+<text x="100" y="455.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">•  Chine</text>
+<text x="100" y="468.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">•  Autre pays</text>
+<text x="488" y="372.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">C2  ⛔</text>
+<text x="488" y="386.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="488" y="400.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">L'application est-elle exclusivement destinée à un usage</text>
+<text x="488" y="413.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">militaire, de défense ou de sécurité nationale ?</text>
+<text x="488" y="427.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="488" y="441.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">•  Non</text>
+<text x="488" y="455.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">•  Oui</text>
+<text x="876" y="331.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">C3</text>
+<text x="876" y="345.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="876" y="358.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">L'application intervient-elle dans un domaine à fort</text>
+<text x="876" y="372.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">enjeu pour les personnes ?</text>
+<text x="876" y="386.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="876" y="400.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">•  Santé</text>
+<text x="876" y="413.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">•  Biométrie, identification des personnes</text>
+<text x="876" y="427.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">•  Emploi, RH, recrutement</text>
+<text x="876" y="441.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">•  Éducation, examens</text>
+<text x="876" y="455.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">•  Crédit, assurance, accès à des services essentiels</text>
+<text x="876" y="468.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">•  Justice, forces de l’ordre, migration</text>
+<text x="876" y="482.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">•  Infrastructures critiques</text>
+<text x="876" y="496.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">•  Aucun de ces domaines</text>
+<text x="1264" y="372.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">C4</text>
+<text x="1264" y="386.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="1264" y="400.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">L'application traite-t-elle des données personnelles,</text>
+<text x="1264" y="413.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">directement ou via ses données d'entraînement ?</text>
+<text x="1264" y="427.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="1264" y="441.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">•  Oui</text>
+<text x="1264" y="455.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">•  Non</text>
+<text x="1652" y="351.9" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">C5</text>
+<text x="1652" y="365.6" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="1652" y="379.4" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">L'application génère-t-elle du contenu (texte, image,</text>
+<text x="1652" y="393.1" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">audio, vidéo) ou interagit-elle directement avec des</text>
+<text x="1652" y="406.9" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">personnes ?</text>
+<text x="1652" y="420.6" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="1652" y="434.4" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">•  Elle génère du contenu</text>
+<text x="1652" y="448.1" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">•  Elle interagit avec des personnes (assistant, chatbot)</text>
+<text x="1652" y="461.9" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">•  Les deux</text>
+<text x="1652" y="475.6" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">•  Ni l'un ni l'autre</text>
+<text x="2040" y="365.6" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">C6</text>
+<text x="2040" y="379.4" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="2040" y="393.1" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">D'où vient le modèle d'IA ?</text>
+<text x="2040" y="406.9" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="2040" y="420.6" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">•  Développé en interne</text>
+<text x="2040" y="434.4" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">•  Modèle tiers ajusté par nos soins (fine-tuning)</text>
+<text x="2040" y="448.1" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">•  API d'un fournisseur (OpenAI, Mistral, Anthropic…)</text>
+<text x="2040" y="461.9" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">•  Modèle ouvert hébergé par nous</text>
+<text x="630" y="623.0" font-size="12" fill="#1a1526" text-anchor="start" font-weight="400">⛔  BRANCHE « REFUS »</text>
+<text x="630" y="638.0" font-size="12" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="630" y="653.0" font-size="12" fill="#1a1526" text-anchor="start" font-weight="400">C2 = Oui  →  usage exclusivement militaire, de défense ou de sécurité nationale :</text>
+<text x="630" y="668.0" font-size="12" fill="#1a1526" text-anchor="start" font-weight="400">hors périmètre de la politique IA de l'entreprise.</text>
+<text x="630" y="683.0" font-size="12" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="630" y="698.0" font-size="12" fill="#1a1526" text-anchor="start" font-weight="400">UE1 = Oui  →  pratique interdite par l'article 5 de l'AI Act.</text>
+<text x="630" y="713.0" font-size="12" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="630" y="728.0" font-size="12" fill="#1a1526" text-anchor="start" font-weight="400">L'évaluation s'arrête : aucun score n'est calculé, l'application passe « Non conforme »</text>
+<text x="630" y="743.0" font-size="12" fill="#1a1526" text-anchor="start" font-weight="400">et une action portant le motif du refus est créée.</text>
+<text x="276" y="916.1" font-size="13" fill="#1a1526" text-anchor="middle" font-weight="400">① Nécessité &amp; proportionnalité</text>
+<text x="276" y="932.3" font-size="13" fill="#1a1526" text-anchor="middle" font-weight="400">N   ·   8 pts</text>
+<text x="100" y="977.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">N1  ●   ·   4 pts</text>
+<text x="100" y="991.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="100" y="1005.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">Un algorithme d'IA est-il vraiment nécessaire ? Une</text>
+<text x="100" y="1018.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">approche plus simple (règles métier, statistiques</text>
+<text x="100" y="1032.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">classiques, processus humain) a-t-elle été comparée ?</text>
+<text x="100" y="1076.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">N2   ·   2 pts</text>
+<text x="100" y="1090.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="100" y="1103.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">Le modèle est-il proportionné au besoin (pas de LLM</text>
+<text x="100" y="1117.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">massif pour une simple classification de texte) ?</text>
+<text x="100" y="1161.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">N3   ·   2 pts</text>
+<text x="100" y="1175.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="100" y="1188.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">La finalité est-elle précise, écrite et limitée —</text>
+<text x="100" y="1202.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">l'usage réel ne dérive pas de l'usage déclaré ?</text>
+<text x="664" y="916.1" font-size="13" fill="#1a1526" text-anchor="middle" font-weight="400">② Données &amp; vie privée</text>
+<text x="664" y="932.3" font-size="13" fill="#1a1526" text-anchor="middle" font-weight="400">D   ·   15 pts</text>
+<text x="488" y="977.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">D1  ●   ·   4 pts</text>
+<text x="488" y="991.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="488" y="1005.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">L'application est-elle exempte de traitement de données</text>
+<text x="488" y="1018.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">sensibles (santé, opinions, biométrie…) sans accord</text>
+<text x="488" y="1032.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">explicite du DPO ?</text>
+<text x="488" y="1046.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="488" y="1060.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">→ posée si : données personnelles</text>
+<text x="488" y="1103.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">D2   ·   2 pts</text>
+<text x="488" y="1117.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="488" y="1131.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">La base légale du traitement est-elle identifiée et la</text>
+<text x="488" y="1145.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">minimisation appliquée (on ne collecte que le</text>
+<text x="488" y="1158.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">nécessaire) ?</text>
+<text x="488" y="1172.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="488" y="1186.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">→ posée si : données personnelles</text>
+<text x="488" y="1230.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">D3   ·   2 pts</text>
+<text x="488" y="1243.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="488" y="1257.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">Une analyse d'impact sur la protection des données (AIPD</text>
+<text x="488" y="1271.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">/ DPIA) a-t-elle été réalisée ?</text>
+<text x="488" y="1285.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="488" y="1298.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">→ posée si : données personnelles ET domaine à fort</text>
+<text x="488" y="1312.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">enjeu OU D1 répondue Non ou Partiellement</text>
+<text x="488" y="1356.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">D4  ●   ·   4 pts</text>
+<text x="488" y="1370.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="488" y="1383.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">Les données traitées par l'IA sont-elles hébergées dans</text>
+<text x="488" y="1397.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">une zone validée par l'entreprise (ex: UE) ?</text>
+<text x="488" y="1441.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">D5   ·   2 pts</text>
+<text x="488" y="1455.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="488" y="1468.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">Données d'entraînement : provenance licite, droits</text>
+<text x="488" y="1482.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">d'usage vérifiés et documentation disponible ?</text>
+<text x="488" y="1496.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="488" y="1510.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">→ posée si : modèle ≠ api d'un fournisseur</text>
+<text x="488" y="1553.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">D6   ·   1 pt</text>
+<text x="488" y="1567.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="488" y="1581.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">Une durée de conservation est-elle définie et les droits</text>
+<text x="488" y="1595.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">des personnes (accès, effacement, opposition) sont-ils</text>
+<text x="488" y="1608.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">opérationnels ?</text>
+<text x="488" y="1622.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="488" y="1636.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">→ posée si : données personnelles</text>
+<text x="1052" y="916.1" font-size="13" fill="#1a1526" text-anchor="middle" font-weight="400">③ Transparence &amp; explicabilité</text>
+<text x="1052" y="932.3" font-size="13" fill="#1a1526" text-anchor="middle" font-weight="400">T   ·   9 pts</text>
+<text x="876" y="977.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">T1  ●   ·   4 pts</text>
+<text x="876" y="991.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="876" y="1005.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">Les utilisateurs finaux sont-ils informés qu'ils</text>
+<text x="876" y="1018.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">interagissent avec ou reçoivent des résultats générés</text>
+<text x="876" y="1032.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">par une IA ?</text>
+<text x="876" y="1046.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="876" y="1060.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">→ posée si : génère du contenu ou interagit</text>
+<text x="876" y="1103.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">T2   ·   2 pts</text>
+<text x="876" y="1117.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="876" y="1131.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">Le Process Owner est-il capable d'expliquer globalement</text>
+<text x="876" y="1145.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">comment l'IA produit ses résultats (explicabilité) ?</text>
+<text x="876" y="1188.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">T3   ·   2 pts</text>
+<text x="876" y="1202.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="876" y="1216.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">Les contenus générés sont-ils marqués (filigrane,</text>
+<text x="876" y="1230.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">métadonnées, mention explicite) ?</text>
+<text x="876" y="1243.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="876" y="1257.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">→ posée si : génère du contenu</text>
+<text x="876" y="1301.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">T4   ·   1 pt</text>
+<text x="876" y="1315.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="876" y="1328.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">Une documentation technique existe-t-elle (fiche modèle,</text>
+<text x="876" y="1342.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">performances mesurées, limites connues) ?</text>
+<text x="1440" y="916.1" font-size="13" fill="#1a1526" text-anchor="middle" font-weight="400">④ Supervision &amp; robustesse</text>
+<text x="1440" y="932.3" font-size="13" fill="#1a1526" text-anchor="middle" font-weight="400">S   ·   12 pts</text>
+<text x="1264" y="977.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">S1  ●   ·   4 pts</text>
+<text x="1264" y="991.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="1264" y="1005.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">Y a-t-il un "Humain dans la boucle" (Human in the loop)</text>
+<text x="1264" y="1018.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">pour valider les décisions critiques prises par l'IA ?</text>
+<text x="1264" y="1062.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">S2   ·   2 pts</text>
+<text x="1264" y="1076.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="1264" y="1090.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">Les personnes concernées disposent-elles d’un recours :</text>
+<text x="1264" y="1103.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">contester une décision, obtenir une explication, parler</text>
+<text x="1264" y="1117.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">à un humain ?</text>
+<text x="1264" y="1131.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="1264" y="1145.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">→ posée si : domaine à fort enjeu</text>
+<text x="1264" y="1188.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">S3   ·   2 pts</text>
+<text x="1264" y="1202.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="1264" y="1216.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">Des tests de robustesse ont-ils été menés (cas limites,</text>
+<text x="1264" y="1230.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">entrées inattendues, dérive dans le temps) ?</text>
+<text x="1264" y="1273.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">S4   ·   2 pts</text>
+<text x="1264" y="1287.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="1264" y="1301.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">Les décisions et sorties de l'IA sont-elles journalisées</text>
+<text x="1264" y="1315.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">de façon à permettre un audit a posteriori ?</text>
+<text x="1264" y="1358.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">S5   ·   2 pts</text>
+<text x="1264" y="1372.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="1264" y="1386.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">Un plan existe-t-il en cas d'erreur ou d'indisponibilité</text>
+<text x="1264" y="1400.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">de l'IA (procédure dégradée, correction, communication)</text>
+<text x="1264" y="1413.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">?</text>
+<text x="1264" y="1427.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="1264" y="1441.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">→ posée si : domaine à fort enjeu</text>
+<text x="1828" y="916.1" font-size="13" fill="#1a1526" text-anchor="middle" font-weight="400">⑤ Équité &amp; biais</text>
+<text x="1828" y="932.3" font-size="13" fill="#1a1526" text-anchor="middle" font-weight="400">E   ·   5 pts</text>
+<text x="1652" y="977.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">E1   ·   2 pts</text>
+<text x="1652" y="991.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="1652" y="1005.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">Des tests ont-ils été réalisés pour s'assurer que l'IA</text>
+<text x="1652" y="1018.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">ne reproduit pas de biais discriminatoires ?</text>
+<text x="1652" y="1062.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">E2   ·   2 pts</text>
+<text x="1652" y="1076.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="1652" y="1090.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">Les populations affectées et les critères d'équité</text>
+<text x="1652" y="1103.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">retenus sont-ils définis par écrit ?</text>
+<text x="1652" y="1117.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="1652" y="1131.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">→ posée si : domaine à fort enjeu</text>
+<text x="1652" y="1175.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">E3   ·   1 pt</text>
+<text x="1652" y="1188.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="1652" y="1202.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">Les utilisateurs sont-ils formés aux limites de l'IA</text>
+<text x="1652" y="1216.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">pour éviter une confiance excessive ?</text>
+<text x="2216" y="916.1" font-size="13" fill="#1a1526" text-anchor="middle" font-weight="400">⑥ Sécurité</text>
+<text x="2216" y="932.3" font-size="13" fill="#1a1526" text-anchor="middle" font-weight="400">SE   ·   6 pts</text>
+<text x="2040" y="977.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">SE1   ·   2 pts</text>
+<text x="2040" y="991.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="2040" y="1005.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">L'accès à l'outil est-il restreint par le SSO avec une</text>
+<text x="2040" y="1018.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">gestion stricte des permissions ?</text>
+<text x="2040" y="1062.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">SE2   ·   2 pts</text>
+<text x="2040" y="1076.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="2040" y="1090.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">L'application est-elle protégée contre les attaques</text>
+<text x="2040" y="1103.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">propres à l'IA (injection de prompt, extraction de</text>
+<text x="2040" y="1117.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">données, contournement des consignes) ?</text>
+<text x="2040" y="1131.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="2040" y="1145.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">→ posée si : génère du contenu ou interagit</text>
+<text x="2040" y="1188.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">SE3   ·   2 pts</text>
+<text x="2040" y="1202.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="2040" y="1216.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">Le contrat avec le fournisseur interdit-il l'usage de</text>
+<text x="2040" y="1230.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">nos données pour entraîner ses modèles et couvre-t-il la</text>
+<text x="2040" y="1243.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">confidentialité ?</text>
+<text x="2040" y="1257.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="2040" y="1271.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">→ posée si : modèle : api d'un fournisseur</text>
+<text x="2604" y="916.1" font-size="13" fill="#1a1526" text-anchor="middle" font-weight="400">⑦ Frugalité &amp; FinOps</text>
+<text x="2604" y="932.3" font-size="13" fill="#1a1526" text-anchor="middle" font-weight="400">F   ·   8 pts</text>
+<text x="2428" y="977.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">F1   ·   2 pts</text>
+<text x="2428" y="991.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="2428" y="1005.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">Les coûts d'utilisation (licences, requêtes API,</text>
+<text x="2428" y="1018.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">compute) sont-ils monitorés et plafonnés ?</text>
+<text x="2428" y="1062.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">F2   ·   2 pts</text>
+<text x="2428" y="1076.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="2428" y="1090.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">L'empreinte carbone (entraînement + inférence) a-t-elle</text>
+<text x="2428" y="1103.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">été estimée ?</text>
+<text x="2428" y="1147.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">F3   ·   2 pts</text>
+<text x="2428" y="1161.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="2428" y="1175.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">Où tourne l'IA ?</text>
+<text x="2428" y="1218.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">F4   ·   1 pt</text>
+<text x="2428" y="1232.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="2428" y="1246.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">Des optimisations réduisent-elles la consommation (cache</text>
+<text x="2428" y="1260.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">des réponses, traitement par lots, modèle distillé ou</text>
+<text x="2428" y="1273.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">quantifié) ?</text>
+<text x="2428" y="1317.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">F5   ·   1 pt</text>
+<text x="2428" y="1331.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="2428" y="1345.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">Le volume d'appels est-il maîtrisé (pas d'appels</text>
+<text x="2428" y="1358.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">redondants ou inutiles) ?</text>
+<text x="78" y="853.2" font-size="19" fill="#1a1526" text-anchor="start" font-weight="700">②  QUESTIONS NOTÉES — sept thèmes, toujours parcourus (certaines questions restent masquées)</text>
+<text x="276" y="1811.1" font-size="13" fill="#1a1526" text-anchor="middle" font-weight="400">Union européenne</text>
+<text x="276" y="1827.3" font-size="13" fill="#1a1526" text-anchor="middle" font-weight="400">si UE cochée en C1   ·   14 pts</text>
+<text x="100" y="1872.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">UE1  ⛔</text>
+<text x="100" y="1886.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="100" y="1900.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">L'application met-elle en œuvre une pratique interdite</text>
+<text x="100" y="1913.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">par l'AI Act (art. 5) : notation sociale, manipulation</text>
+<text x="100" y="1927.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">ou exploitation de vulnérabilités, catégorisation</text>
+<text x="100" y="1941.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">biométrique par attributs sensibles, reconnaissance des</text>
+<text x="100" y="1955.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">émotions au travail ou en formation, identification</text>
+<text x="100" y="1968.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">biométrique à distance en temps réel dans l'espace</text>
+<text x="100" y="1982.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">public, constitution de bases faciales par moissonnage ?</text>
+<text x="100" y="1996.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="100" y="2010.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">→ posée si : déployé en UE</text>
+<text x="100" y="2053.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">UE2   ·   2 pts</text>
+<text x="100" y="2067.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="100" y="2081.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">La classification de risque AI Act a-t-elle été réalisée</text>
+<text x="100" y="2095.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">et documentée (inacceptable / haut / limité / minimal) ?</text>
+<text x="100" y="2108.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="100" y="2122.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">→ posée si : déployé en UE</text>
+<text x="100" y="2166.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">UE3  ●   ·   4 pts</text>
+<text x="100" y="2180.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="100" y="2193.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">Système probablement à haut risque (annexe III) : les</text>
+<text x="100" y="2207.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">obligations sont-elles couvertes — gestion des risques,</text>
+<text x="100" y="2221.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">gouvernance des données, documentation technique,</text>
+<text x="100" y="2235.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">enregistrement dans la base européenne, évaluation de</text>
+<text x="100" y="2248.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">conformité ?</text>
+<text x="100" y="2262.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="100" y="2276.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">→ posée si : déployé en UE ET domaine à fort enjeu</text>
+<text x="100" y="2320.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">UE4   ·   2 pts</text>
+<text x="100" y="2333.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="100" y="2347.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">Obligations de transparence (art. 50) : information des</text>
+<text x="100" y="2361.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">personnes, marquage des contenus synthétiques et des</text>
+<text x="100" y="2375.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">hypertrucages ?</text>
+<text x="100" y="2388.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="100" y="2402.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">→ posée si : déployé en UE ET génère du contenu ou</text>
+<text x="100" y="2416.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">interagit</text>
+<text x="100" y="2460.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">UE5   ·   2 pts</text>
+<text x="100" y="2473.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="100" y="2487.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">RGPD : traitement inscrit au registre, base légale, AIPD</text>
+<text x="100" y="2501.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">si requise, DPO consulté ?</text>
+<text x="100" y="2515.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="100" y="2528.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">→ posée si : déployé en UE ET données personnelles</text>
+<text x="100" y="2572.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">UE6   ·   2 pts</text>
+<text x="100" y="2586.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="100" y="2600.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">Les transferts de données hors UE sont-ils encadrés</text>
+<text x="100" y="2613.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">(décision d'adéquation, clauses contractuelles types) ?</text>
+<text x="100" y="2627.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="100" y="2641.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">→ posée si : déployé en UE ET données personnelles</text>
+<text x="100" y="2685.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">UE7   ·   1 pt</text>
+<text x="100" y="2698.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="100" y="2712.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">Le fournisseur du modèle général respecte-t-il ses</text>
+<text x="100" y="2726.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">obligations GPAI (documentation, politique droits</text>
+<text x="100" y="2740.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">d'auteur, résumé des données d'entraînement) ?</text>
+<text x="100" y="2753.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="100" y="2767.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">→ posée si : déployé en UE ET modèle : api d'un</text>
+<text x="100" y="2781.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">fournisseur, modèle ouvert hébergé par nous</text>
+<text x="100" y="2825.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">UE8   ·   1 pt</text>
+<text x="100" y="2838.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="100" y="2852.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">Le personnel qui utilise ou supervise l'IA a-t-il reçu</text>
+<text x="100" y="2866.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">une formation adaptée (maîtrise de l'IA, art. 4) ?</text>
+<text x="100" y="2880.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="100" y="2893.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">→ posée si : déployé en UE</text>
+<text x="664" y="1811.1" font-size="13" fill="#1a1526" text-anchor="middle" font-weight="400">États-Unis</text>
+<text x="664" y="1827.3" font-size="13" fill="#1a1526" text-anchor="middle" font-weight="400">si US cochés en C1   ·   20 pts</text>
+<text x="488" y="1872.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">US1  ●   ·   4 pts</text>
+<text x="488" y="1886.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="488" y="1900.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">Outil de décision d'emploi automatisé : audit de biais</text>
+<text x="488" y="1913.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">indépendant annuel et notification des candidats (NYC</text>
+<text x="488" y="1927.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">Local Law 144 et lois similaires) ?</text>
+<text x="488" y="1941.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="488" y="1955.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">→ posée si : déployé en États-Unis ET domaine : emploi,</text>
+<text x="488" y="1968.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">rh, recrutement</text>
+<text x="488" y="2012.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">US2  ●   ·   4 pts</text>
+<text x="488" y="2026.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="488" y="2040.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">Consentement écrit préalable et politique de</text>
+<text x="488" y="2053.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">conservation pour les données biométriques (Illinois</text>
+<text x="488" y="2067.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">BIPA, Texas, Washington) ?</text>
+<text x="488" y="2081.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="488" y="2095.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">→ posée si : déployé en États-Unis ET domaine :</text>
+<text x="488" y="2108.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">biométrie, identification des personnes</text>
+<text x="488" y="2152.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">US3  ●   ·   4 pts</text>
+<text x="488" y="2166.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="488" y="2180.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">Données de santé protégées : conformité HIPAA (accords</text>
+<text x="488" y="2193.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">de sous-traitance, sécurité, usage minimal) ?</text>
+<text x="488" y="2207.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="488" y="2221.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">→ posée si : déployé en États-Unis ET domaine : santé</text>
+<text x="488" y="2265.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">US4   ·   2 pts</text>
+<text x="488" y="2278.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="488" y="2292.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">Décisions de crédit ou d'assurance : motifs de refus</text>
+<text x="488" y="2306.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">explicables et non-discrimination (FCRA, ECOA) ?</text>
+<text x="488" y="2320.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="488" y="2333.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">→ posée si : déployé en États-Unis ET domaine : crédit,</text>
+<text x="488" y="2347.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">assurance, accès à des services essentiels</text>
+<text x="488" y="2391.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">US5   ·   2 pts</text>
+<text x="488" y="2405.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="488" y="2418.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">Lois d'État sur l'IA à haut risque (Colorado AI Act…) :</text>
+<text x="488" y="2432.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">analyse d'impact, notification des personnes, prévention</text>
+<text x="488" y="2446.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">de la discrimination algorithmique ?</text>
+<text x="488" y="2460.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="488" y="2473.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">→ posée si : déployé en États-Unis ET domaine à fort</text>
+<text x="488" y="2487.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">enjeu</text>
+<text x="488" y="2531.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">US6   ·   2 pts</text>
+<text x="488" y="2545.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="488" y="2558.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">La communication sur les capacités de l'IA est-elle</text>
+<text x="488" y="2572.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">exacte et non trompeuse (FTC Act §5) ?</text>
+<text x="488" y="2586.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="488" y="2600.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">→ posée si : déployé en États-Unis</text>
+<text x="488" y="2643.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">US7   ·   2 pts</text>
+<text x="488" y="2657.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="488" y="2671.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">Droits des consommateurs (CCPA/CPRA et lois d'État) :</text>
+<text x="488" y="2685.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">opt-out des décisions automatisées, accès, suppression ?</text>
+<text x="488" y="2698.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="488" y="2712.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">→ posée si : déployé en États-Unis ET données</text>
+<text x="488" y="2726.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">personnelles</text>
+<text x="1052" y="1811.1" font-size="13" fill="#1a1526" text-anchor="middle" font-weight="400">Chine</text>
+<text x="1052" y="1827.3" font-size="13" fill="#1a1526" text-anchor="middle" font-weight="400">si Chine cochée en C1   ·   18 pts</text>
+<text x="876" y="1872.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">CN1  ●   ·   4 pts</text>
+<text x="876" y="1886.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="876" y="1900.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">Service accessible au public : enregistrement de</text>
+<text x="876" y="1913.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">l'algorithme auprès de la CAC et évaluation de sécurité</text>
+<text x="876" y="1927.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">réalisés (mesures provisoires sur l'IA générative) ?</text>
+<text x="876" y="1941.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="876" y="1955.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">→ posée si : déployé en Chine ET génère du contenu ou</text>
+<text x="876" y="1968.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">interagit</text>
+<text x="876" y="2012.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">CN2   ·   2 pts</text>
+<text x="876" y="2026.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="876" y="2040.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">Marquage explicite et implicite des contenus</text>
+<text x="876" y="2053.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">synthétiques (mesures d'étiquetage 2025, dispositions</text>
+<text x="876" y="2067.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">deep synthesis) ?</text>
+<text x="876" y="2081.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="876" y="2095.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">→ posée si : déployé en Chine ET génère du contenu</text>
+<text x="876" y="2138.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">CN3   ·   2 pts</text>
+<text x="876" y="2152.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="876" y="2166.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">PIPL : consentement séparé pour les données sensibles,</text>
+<text x="876" y="2180.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">analyse d'impact, désignation d'un responsable ?</text>
+<text x="876" y="2193.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="876" y="2207.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">→ posée si : déployé en Chine ET données personnelles</text>
+<text x="876" y="2251.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">CN4  ●   ·   4 pts</text>
+<text x="876" y="2265.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="876" y="2278.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">Localisation des données et transfert transfrontalier</text>
+<text x="876" y="2292.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">autorisé (évaluation de sécurité CAC, contrat standard</text>
+<text x="876" y="2306.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">ou certification) ?</text>
+<text x="876" y="2320.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="876" y="2333.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">→ posée si : déployé en Chine ET données personnelles</text>
+<text x="876" y="2377.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">CN5   ·   2 pts</text>
+<text x="876" y="2391.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="876" y="2405.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">Si l'application recommande ou classe des contenus :</text>
+<text x="876" y="2418.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">enregistrement de l'algorithme et possibilité pour</text>
+<text x="876" y="2432.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">l'utilisateur de désactiver la personnalisation ?</text>
+<text x="876" y="2446.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">(répondre « Oui » si non concerné)</text>
+<text x="876" y="2460.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="876" y="2473.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">→ posée si : déployé en Chine</text>
+<text x="876" y="2517.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">CN6   ·   2 pts</text>
+<text x="876" y="2531.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="876" y="2545.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">Modération : mécanismes de contrôle des contenus générés</text>
+<text x="876" y="2558.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">conformes aux exigences locales ?</text>
+<text x="876" y="2572.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="876" y="2586.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">→ posée si : déployé en Chine ET génère du contenu</text>
+<text x="876" y="2630.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">CN7   ·   2 pts</text>
+<text x="876" y="2643.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="876" y="2657.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">Données d'entraînement : licéité et respect de la</text>
+<text x="876" y="2671.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">propriété intellectuelle documentés ?</text>
+<text x="876" y="2685.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="876" y="2698.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">→ posée si : déployé en Chine</text>
+<text x="1440" y="1811.1" font-size="13" fill="#1a1526" text-anchor="middle" font-weight="400">Autres pays</text>
+<text x="1440" y="1827.3" font-size="13" fill="#1a1526" text-anchor="middle" font-weight="400">si « Autre » coché en C1   ·   2 pts</text>
+<text x="1264" y="1872.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">AU1   ·   2 pts</text>
+<text x="1264" y="1886.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="1264" y="1900.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">Une revue juridique locale (protection des données, IA,</text>
+<text x="1264" y="1913.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">secteur) a-t-elle été menée pour chaque autre pays</text>
+<text x="1264" y="1927.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">concerné ?</text>
+<text x="1264" y="1941.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="1264" y="1955.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">→ posée si : déployé en autre pays</text>
+<text x="78" y="1748.2" font-size="19" fill="#1a1526" text-anchor="start" font-weight="700">③  RÉGLEMENTATION — un bloc par pays coché en C1, chacun avec sa propre barre d'avancement</text>
+<text x="100" y="3042.6" font-size="13" fill="#1a1526" text-anchor="start" font-weight="400">④   SCORE  =  100  ×  points obtenus  ÷  points applicables</text>
+<text x="100" y="3058.8" font-size="13" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="100" y="3075.1" font-size="13" fill="#1a1526" text-anchor="start" font-weight="400">Une question non posée ne compte ni au numérateur, ni au dénominateur : le score reste comparable</text>
+<text x="100" y="3091.3" font-size="13" fill="#1a1526" text-anchor="start" font-weight="400">d'une application à l'autre, même si l'une répond à 20 questions et l'autre à 45.</text>
+<text x="100" y="3107.6" font-size="13" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="100" y="3123.8" font-size="13" fill="#1a1526" text-anchor="start" font-weight="400">Oui = tous les points   ·   Partiellement = la moitié   ·   Non = zéro</text>
+<text x="100" y="3140.1" font-size="13" fill="#1a1526" text-anchor="start" font-weight="400">Une question critique ● répondue « Non »  →  score plafonné à 60</text>
+<text x="276" y="3296.3" font-size="13" fill="#1a1526" text-anchor="middle" font-weight="400">≥ 86   CONFORME</text>
+<text x="276" y="3312.6" font-size="13" fill="#1a1526" text-anchor="middle" font-weight="400"></text>
+<text x="276" y="3328.8" font-size="13" fill="#1a1526" text-anchor="middle" font-weight="400">Déployable en production.</text>
+<text x="276" y="3345.1" font-size="13" fill="#1a1526" text-anchor="middle" font-weight="400">Échéance 12 mois, puis retour</text>
+<text x="276" y="3361.3" font-size="13" fill="#1a1526" text-anchor="middle" font-weight="400">automatique en audit.</text>
+<text x="664" y="3296.3" font-size="13" fill="#1a1526" text-anchor="middle" font-weight="400">61 – 85   PARTIELLEMENT CONFORME</text>
+<text x="664" y="3312.6" font-size="13" fill="#1a1526" text-anchor="middle" font-weight="400"></text>
+<text x="664" y="3328.8" font-size="13" fill="#1a1526" text-anchor="middle" font-weight="400">Autorisée en test ou pilote.</text>
+<text x="664" y="3345.1" font-size="13" fill="#1a1526" text-anchor="middle" font-weight="400">Sans échéance : reste en test</text>
+<text x="664" y="3361.3" font-size="13" fill="#1a1526" text-anchor="middle" font-weight="400">jusqu'à réévaluation.</text>
+<text x="1052" y="3296.3" font-size="13" fill="#1a1526" text-anchor="middle" font-weight="400">≤ 60   NON CONFORME</text>
+<text x="1052" y="3312.6" font-size="13" fill="#1a1526" text-anchor="middle" font-weight="400"></text>
+<text x="1052" y="3328.8" font-size="13" fill="#1a1526" text-anchor="middle" font-weight="400">Non déployable.</text>
+<text x="1052" y="3345.1" font-size="13" fill="#1a1526" text-anchor="middle" font-weight="400">Une action corrective par</text>
+<text x="1052" y="3361.3" font-size="13" fill="#1a1526" text-anchor="middle" font-weight="400">question sous le maximum.</text>
+<text x="90" y="3463.3" font-size="13" fill="#6b6280" text-anchor="start" font-weight="400">Recommandations : chaque réponse en dessous du maximum produit une action corrective, avec son texte de remédiation.</text>
+<text x="90" y="3479.6" font-size="13" fill="#6b6280" text-anchor="start" font-weight="400">Elles sont classées par points récupérables, les critiques d'abord, et alimentent le plan d'action de l'application.</text>
+<text x="90" y="3495.8" font-size="13" fill="#6b6280" text-anchor="start" font-weight="400"></text>
+<text x="90" y="3512.1" font-size="13" fill="#6b6280" text-anchor="start" font-weight="400">Conception détaillée : docs/questionnaire-v2.md     ·     Définition en code : shared/src/questionnaire.ts</text>
 </svg>
