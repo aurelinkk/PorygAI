@@ -17,6 +17,7 @@ import { useApi } from '../api/useApi';
 import { useUser } from '../auth/AuthContext';
 import { BreakdownBars } from '../components/BreakdownBars';
 import { ExistingCostNotice } from '../components/CostEntry';
+import { MonthlyBars } from '../components/MonthlyBars';
 import { Alert, FormErrorSummary } from '../components/ui/Alert';
 import { StatusPill } from '../components/ui/Badges';
 import { Button } from '../components/ui/Button';
@@ -63,9 +64,8 @@ export function FinopsPage() {
   }
 
   const report = data.report;
-  const maxMonthly = Math.max(...report.monthly.map((entry) => entry.amountEur), 1);
   const nonCompliantCost = report.byStatus
-    .filter((row) => row.key === 'non_compliant' || row.key === 'in_progress')
+    .filter((row) => ['non_compliant', 'partially_compliant', 'in_progress'].includes(row.key))
     .reduce((sum, row) => sum + row.amountEur, 0);
 
   return (
@@ -110,43 +110,15 @@ export function FinopsPage() {
 
       {nonCompliantCost > 0 && (
         <Alert tone="warning">
-          <strong>{formatEur(nonCompliantCost)}</strong> ce mois-ci sur des applications qui ne sont pas conformes
-          (non conformes ou en cours d'audit), soit {((nonCompliantCost / (report.currentTotal || 1)) * 100).toFixed(0)} %
+          <strong>{formatEur(nonCompliantCost)}</strong> ce mois-ci sur des applications non validées pour la
+          production (non conformes, en test ou en cours d'audit), soit {((nonCompliantCost / (report.currentTotal || 1)) * 100).toFixed(0)} %
           de la dépense IA.
         </Alert>
       )}
 
       <div className="finops-grid">
         <Card title="Évolution mensuelle" titleId="monthly-title">
-          {/* Barres verticales : les valeurs restent lues par le tableau associé. */}
-          <div className="sparkline" aria-hidden="true">
-            {report.monthly.map((entry) => (
-              <div key={entry.month} className="sparkline__col">
-                <span
-                  className="sparkline__bar"
-                  style={{ height: `${Math.max((entry.amountEur / maxMonthly) * 100, 2)}%` }}
-                />
-                <span className="sparkline__label mono">{entry.month.slice(5)}</span>
-              </div>
-            ))}
-          </div>
-          <table className="table visually-hidden" aria-labelledby="monthly-title">
-            <caption>Coût mensuel</caption>
-            <thead>
-              <tr>
-                <th scope="col">Mois</th>
-                <th scope="col">Coût</th>
-              </tr>
-            </thead>
-            <tbody>
-              {report.monthly.map((entry) => (
-                <tr key={entry.month}>
-                  <th scope="row">{formatMonth(entry.month)}</th>
-                  <td>{formatEur(entry.amountEur)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <MonthlyBars months={report.monthly} labelledBy="monthly-title" />
         </Card>
 
         <Card title="Par statut de conformité" titleId="status-title">
@@ -185,10 +157,12 @@ export function FinopsPage() {
           header="Application"
           items={report.byApplication.map((row) => ({
             key: row.key,
-            label: <Link to={`/applications/${row.applicationId}`}>{row.label}</Link>,
+            // Sur un rapport FinOps, le nom mène au rapport de l'application ;
+            // le code, lui, ramène à sa fiche.
+            label: <Link to={`/applications/${row.applicationId}/finops`}>{row.label}</Link>,
             amountEur: row.amountEur,
             share: row.share,
-            hint: row.code,
+            hint: <Link to={`/applications/${row.applicationId}`}>{row.code}</Link>,
             tone: row.status,
           }))}
         />

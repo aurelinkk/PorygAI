@@ -16,10 +16,10 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AI_TYPES, APP_STATUSES, BUSINESS_DOMAINS, labelOf, type ApplicationDto } from '@poryg/shared';
-import { cx, formatDate, formatDateTime, formatMonthYear } from '../lib/format';
+import { cx, formatDate, formatDateTime, formatEur, formatMonthYear } from '../lib/format';
 import { StatusPill } from './ui/Badges';
 
-type SortKey = 'name' | 'businessDomain' | 'status' | 'updatedAt';
+type SortKey = 'name' | 'businessDomain' | 'status' | 'monthlyCost' | 'updatedAt';
 type SortDirection = 'asc' | 'desc';
 
 interface Column {
@@ -33,6 +33,8 @@ const COLUMNS: Column[] = [
   { key: 'name', label: 'Application', defaultDirection: 'asc' },
   { key: 'businessDomain', label: 'Domaine', defaultDirection: 'asc' },
   { key: 'status', label: 'Statut', defaultDirection: 'asc' },
+  // Coût du mois : du plus cher au moins cher au premier clic, c'est ce qu'on cherche.
+  { key: 'monthlyCost', label: 'Coût du mois', defaultDirection: 'desc' },
   // Libellé court : « Dernière modification » passe sur deux lignes dans la carte de l'accueil.
   { key: 'updatedAt', label: 'Modifiée le', defaultDirection: 'desc' },
 ];
@@ -49,6 +51,8 @@ function compare(a: ApplicationDto, b: ApplicationDto, key: SortKey): number {
     case 'status':
       // Ordre du cycle de vie (draft → … → deleted), plus parlant qu'un tri alphabétique.
       return APP_STATUSES.indexOf(a.status) - APP_STATUSES.indexOf(b.status);
+    case 'monthlyCost':
+      return (a.monthlyCostEur ?? 0) - (b.monthlyCostEur ?? 0);
     case 'updatedAt':
       // Dates ISO 8601 : l'ordre lexicographique est l'ordre chronologique.
       return a.updatedAt.localeCompare(b.updatedAt);
@@ -66,6 +70,11 @@ export function ApplicationsTable({ applications, labelledBy }: ApplicationsTabl
     key: 'updatedAt',
     direction: 'desc',
   });
+
+  // Sans la permission `finops:read`, l'API renvoie `null` : la colonne disparaît
+  // au lieu d'afficher des tirets vides.
+  const showCost = applications.some((app) => app.monthlyCostEur !== null);
+  const columns = showCost ? COLUMNS : COLUMNS.filter((column) => column.key !== 'monthlyCost');
 
   const sorted = useMemo(() => {
     const factor = sort.direction === 'asc' ? 1 : -1;
@@ -98,7 +107,7 @@ export function ApplicationsTable({ applications, labelledBy }: ApplicationsTabl
       <table className="table" aria-labelledby={labelledBy}>
         <thead>
           <tr>
-            {COLUMNS.map((column) => {
+            {columns.map((column) => {
               const isActive = sort.key === column.key;
               return (
                 <th
@@ -145,6 +154,11 @@ export function ApplicationsTable({ applications, labelledBy }: ApplicationsTabl
                   </span>
                 )}
               </td>
+              {showCost && (
+                <td className="mono cost-cell">
+                  {app.monthlyCostEur ? formatEur(app.monthlyCostEur) : <span className="muted">—</span>}
+                </td>
+              )}
               <td>
                 {/* <time> porte la date lisible par une machine ; l'affichage reste en français. */}
                 <time dateTime={app.updatedAt} className="mono table__date">

@@ -1,19 +1,39 @@
 /**
- * Fiche d'évaluation de conformité IA : scoring hybride (score + critères
- * éliminatoires), verdict automatique, plan d'action généré.
+ * Questionnaire v2 : cadrage dynamique, score sur 100, plafonds, blocages,
+ * verdict à trois niveaux, recommandations et plan d'action.
  */
 import type { FastifyInstance } from 'fastify';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
-  CRITICAL_QUESTIONS, MAX_SCORE, PASS_SCORE, QUESTIONS, scoreEvaluation,
-  type ActionPlanDto, type AnswerValue, type ApplicationDto, type EvaluationDto,
+  COMPLIANT_MIN, CRITICAL_CAP, PARTIAL_MIN, QUESTIONS, applicableQuestions, applicableSections,
+  scoreEvaluation, verdictFor, type Answers, type ApplicationDto, type EvaluationDto, type ActionPlanDto,
 } from '@poryg/shared';
 import { all, one } from '../src/db/connection.js';
 import { ACCOUNTS, createTestApp, loginAs } from './helpers.js';
 
-/** Réponses parfaites : toutes les questions à « Oui ». */
-const allYes = (): Record<string, AnswerValue> =>
-  Object.fromEntries(QUESTIONS.map((question) => [question.code, 2 as AnswerValue]));
+// --- Aides -------------------------------------------------------------------
+
+/** Cadrage « chatbot client GenAI, données perso, API tierce, UE » — un parcours médian. */
+const FRAMING: Answers = { C1: ['eu'], C2: 'no', C3: ['none'], C4: 'yes', C5: 'both', C6: 'api' };
+
+/**
+ * Répond à toutes les questions notées applicables au niveau demandé (2 = Oui).
+ * Itère jusqu'à stabilité : une réponse peut en faire apparaître une autre
+ * (D1 à « Non » révèle D3, l'AIPD).
+ */
+function answerAll(framing: Answers, level: '0' | '1' | '2' = '2', overrides: Answers = {}): Answers {
+  const answers: Answers = { ...framing, ...overrides };
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (const question of applicableQuestions(answers)) {
+      if (question.weight === undefined || answers[question.code] !== undefined) continue;
+      answers[question.code] = level;
+      changed = true;
+    }
+  }
+  return answers;
+}
 
 const PRELIMINARY = {
   toolVendor: 'Copilot — Microsoft',
@@ -25,220 +45,317 @@ function appId(app: FastifyInstance, name: string): number {
   return one<{ id: number }>(app.db, 'SELECT id FROM applications WHERE name = ?', name)!.id;
 }
 
-// --- Le calcul, isolé --------------------------------------------------------
+// --- Définition du questionnaire ---------------------------------------------
 
-describe('scoring du questionnaire', () => {
-  it('compte 9 questions pour 18 points, seuil à 14', () => {
-    expect(QUESTIONS).toHaveLength(9);
-    expect(MAX_SCORE).toBe(18);
-    expect(PASS_SCORE).toBe(14);
-    expect(CRITICAL_QUESTIONS.map((q) => q.code)).toEqual(['A1', 'A2', 'B1', 'C1']);
+describe('questionnaire v2 : définition', () => {
+  it('a des codes uniques et des poids valides', () => {
+    const codes = QUESTIONS.map((q) => q.code);
+    expect(new Set(codes).size).toBe(codes.length);
+    for (const question of QUESTIONS) {
+      if (question.weight !== undefined) expect([1, 2, 4]).toContain(question.weight);
+      if (question.critical) expect(question.weight).toBe(4);
+      if (question.weight !== undefined) expect(question.remediation, question.code).toBeTruthy();
+    }
   });
 
-  it('18/18 sans éliminatoire → conforme', () => {
-    const result = scoreEvaluation(allYes());
-    expect(result).toMatchObject({ score: 18, complete: true, redFlags: [], decision: 'compliant' });
-    expect(result.toImprove).toEqual([]);
+  it('reprend les neuf questions de la v1', () => {
+    const legacy = QUESTIONS.filter((q) => q.legacy).map((q) => q.legacy).sort();
+    expect(legacy).toEqual(['A1', 'A2', 'A3', 'B1', 'B2', 'C1', 'C2', 'D1', 'D2']);
   });
 
-  it('14/18 exactement → conforme (le seuil est inclusif)', () => {
-    // 4 points en moins sur des questions NON éliminatoires : A3, B2, C2, D1 à 1 pt.
-    const answers = { ...allYes(), A3: 1, B2: 1, C2: 1, D1: 1 } as Record<string, AnswerValue>;
-    const result = scoreEvaluation(answers);
-    expect(result.score).toBe(14);
-    expect(result.decision).toBe('compliant');
+  it('le cadrage oriente le parcours', () => {
+    const minimal = applicableQuestions({ C1: ['eu'], C2: 'no', C3: ['none'], C4: 'no', C5: 'none', C6: 'internal' });
+    const maximal = applicableQuestions({
+      C1: ['eu', 'us', 'cn'], C2: 'no', C3: ['employment', 'health'], C4: 'yes', C5: 'both', C6: 'api',
+    });
+    expect(minimal.length).toBeLessThan(maximal.length);
+
+    // Sans données personnelles, aucune question RGPD/PIPL.
+    const minimalCodes = minimal.map((q) => q.code);
+    expect(minimalCodes).not.toContain('D1');
+    expect(minimalCodes).not.toContain('UE5');
+    // Sans déploiement aux États-Unis ni en Chine, pas de bloc correspondant.
+    expect(minimalCodes.some((c) => c.startsWith('US'))).toBe(false);
+    expect(minimalCodes.some((c) => c.startsWith('CN'))).toBe(false);
+
+    const maximalCodes = maximal.map((q) => q.code);
+    expect(maximalCodes).toContain('US1'); // emploi aux États-Unis
+    expect(maximalCodes).toContain('US3'); // santé aux États-Unis
+    expect(maximalCodes).toContain('UE3'); // haut risque dans l'UE
+    expect(maximalCodes).toContain('CN4'); // données perso en Chine
+    expect(maximalCodes).toContain('S2'); // recours, domaine à fort enjeu
   });
 
-  it('13/18 → non conforme même sans éliminatoire', () => {
-    const answers = { ...allYes(), A3: 1, B2: 1, C2: 1, D1: 1, D2: 1 } as Record<string, AnswerValue>;
-    const result = scoreEvaluation(answers);
-    expect(result.score).toBe(13);
-    expect(result.redFlags).toEqual([]);
-    expect(result.decision).toBe('non_compliant');
+  it("n'affiche que les sections utiles", () => {
+    const sections = applicableSections({ C1: ['us'], C2: 'no', C3: ['none'], C4: 'no', C5: 'none', C6: 'internal' });
+    const codes = sections.map((s) => s.code);
+    expect(codes).toContain('framing');
+    expect(codes).toContain('US');
+    expect(codes).not.toContain('UE');
+    expect(codes).not.toContain('CN');
   });
 
-  it('un seul éliminatoire à 0 fait basculer, malgré un score élevé', () => {
-    // 16/18 mais B1 (transparence, éliminatoire) répondu « Non ».
-    const answers = { ...allYes(), B1: 0 } as Record<string, AnswerValue>;
-    const result = scoreEvaluation(answers);
-    expect(result.score).toBe(16);
-    expect(result.score).toBeGreaterThanOrEqual(PASS_SCORE);
-    expect(result.redFlags).toEqual(['B1']);
-    expect(result.decision).toBe('non_compliant');
-  });
-
-  it("un éliminatoire à 1 point (« Partiellement ») n'est pas un red flag", () => {
-    const result = scoreEvaluation({ ...allYes(), B1: 1 } as Record<string, AnswerValue>);
-    expect(result.redFlags).toEqual([]);
-    expect(result.decision).toBe('compliant');
-  });
-
-  it('signale un questionnaire incomplet et liste les questions à améliorer', () => {
-    const partial = scoreEvaluation({ A1: 2, A2: 1 });
-    expect(partial.complete).toBe(false);
-    expect(partial.toImprove).toEqual(['A2']);
+  it("l'AIPD n'apparaît qu'en cas de risque élevé", () => {
+    const sansRisque = applicableQuestions({ ...FRAMING, D1: '2' }).map((q) => q.code);
+    expect(sansRisque).not.toContain('D3');
+    const donneesSensibles = applicableQuestions({ ...FRAMING, D1: '0' }).map((q) => q.code);
+    expect(donneesSensibles).toContain('D3');
+    const domaineCritique = applicableQuestions({ ...FRAMING, C3: ['health'], D1: '2' }).map((q) => q.code);
+    expect(domaineCritique).toContain('D3');
   });
 });
 
-// --- Le parcours complet -----------------------------------------------------
+// --- Calcul du score -----------------------------------------------------------
 
-describe('évaluation : parcours', () => {
+describe('questionnaire v2 : scoring', () => {
+  it('tout « Oui » → 100, conforme, aucune recommandation', () => {
+    const result = scoreEvaluation(answerAll(FRAMING));
+    expect(result).toMatchObject({ score: 100, verdict: 'compliant', complete: true, cappedBy: [], blockedBy: null });
+    expect(result.recommendations).toEqual([]);
+    expect(result.pointsObtained).toBe(result.pointsApplicable);
+  });
+
+  it('les seuils : 86 conforme, 61 à 85 partiel, 60 et moins non conforme', () => {
+    expect(verdictFor(100, [])).toBe('compliant');
+    expect(verdictFor(COMPLIANT_MIN, [])).toBe('compliant');
+    expect(verdictFor(COMPLIANT_MIN - 1, [])).toBe('partially_compliant');
+    expect(verdictFor(PARTIAL_MIN, [])).toBe('partially_compliant');
+    expect(verdictFor(PARTIAL_MIN - 1, [])).toBe('non_compliant');
+    expect(verdictFor(0, [])).toBe('non_compliant');
+  });
+
+  it('une question critique à « Non » plafonne le score à 60', () => {
+    const result = scoreEvaluation(answerAll(FRAMING, '2', { D1: '0' }));
+    expect(result.cappedBy).toEqual(['D1']);
+    expect(result.score).toBe(CRITICAL_CAP);
+    expect(result.verdict).toBe('non_compliant');
+    // Sans le plafond, le score brut serait bien plus haut : l'information est conservée.
+    expect(result.pointsObtained / result.pointsApplicable).toBeGreaterThan(0.9);
+  });
+
+  it('un « Partiellement » sur une critique ne plafonne pas', () => {
+    const result = scoreEvaluation(answerAll(FRAMING, '2', { D1: '1' }));
+    expect(result.cappedBy).toEqual([]);
+    expect(result.verdict).toBe('compliant');
+  });
+
+  it('des réponses partielles donnent un verdict partiel', () => {
+    const partial = answerAll(FRAMING, '2', {
+      N2: '1', N3: '1', D2: '1', T2: '1', S3: '1', S4: '1', F1: '1', F2: '1', F3: '1', F4: '1', F5: '1',
+    });
+    const result = scoreEvaluation(partial);
+    expect(result.score).toBeGreaterThanOrEqual(PARTIAL_MIN);
+    expect(result.score).toBeLessThan(COMPLIANT_MIN);
+    expect(result.verdict).toBe('partially_compliant');
+  });
+
+  it('tout « Non » → non conforme, toutes les critiques en plafond', () => {
+    const result = scoreEvaluation(answerAll(FRAMING, '0'));
+    expect(result.score).toBe(0);
+    expect(result.verdict).toBe('non_compliant');
+    expect(result.cappedBy).toEqual(expect.arrayContaining(['N1', 'D1', 'D4', 'T1', 'S1']));
+  });
+
+  it('le domaine militaire bloque, sans score', () => {
+    const result = scoreEvaluation(answerAll({ ...FRAMING, C2: 'yes' }));
+    expect(result.verdict).toBe('blocked');
+    expect(result.blockedBy).toBe('C2');
+    expect(result.blockMessage).toMatch(/militaire/);
+    expect(result.score).toBeNull();
+  });
+
+  it("une pratique interdite par l'AI Act bloque, mais seulement si déployé dans l'UE", () => {
+    const eu = scoreEvaluation(answerAll(FRAMING, '2', { UE1: 'yes' }));
+    expect(eu.verdict).toBe('blocked');
+    expect(eu.blockedBy).toBe('UE1');
+
+    const usOnly = scoreEvaluation(answerAll({ ...FRAMING, C1: ['us'] }, '2', { UE1: 'yes' }));
+    expect(usOnly.verdict).not.toBe('blocked'); // UE1 n'est pas applicable
+  });
+
+  it('classe les recommandations : critiques d’abord, puis par points récupérables', () => {
+    const result = scoreEvaluation(answerAll(FRAMING, '2', { D1: '0', N2: '1', F4: '0', S3: '0' }));
+    const codes = result.recommendations.map((r) => r.code);
+    expect(codes[0]).toBe('D1'); // critique
+    // Ensuite S3 (2 pts) avant N2 (1 pt) et F4 (1 pt).
+    expect(codes.indexOf('S3')).toBeLessThan(codes.indexOf('N2'));
+    const d1 = result.recommendations.find((r) => r.code === 'D1')!;
+    expect(d1.pointsRecoverable).toBe(4);
+    expect(d1.critical).toBe(true);
+    expect(d1.remediation).toMatch(/DPO/);
+  });
+
+  it('signale les questions sans réponse et estime la durée', () => {
+    const result = scoreEvaluation({ ...FRAMING, N1: '2' });
+    expect(result.complete).toBe(false);
+    expect(result.missing).toContain('N2');
+    expect(result.missing).not.toContain('N1');
+    expect(result.missing).not.toContain('C1');
+    expect(result.estimatedMinutes).toBeGreaterThan(5);
+  });
+
+  it('calcule un sous-score par section, dont un par pays', () => {
+    const result = scoreEvaluation(answerAll({ ...FRAMING, C1: ['eu', 'us'] }, '2', { UE2: '0', US6: '1' }));
+    const ue = result.sections.find((s) => s.code === 'UE')!;
+    const us = result.sections.find((s) => s.code === 'US')!;
+    expect(ue.score).toBeLessThan(100);
+    expect(us.score).toBeLessThan(100);
+    expect(ue.pointsObtained).toBe(ue.pointsApplicable - 2);
+    expect(result.sections.find((s) => s.code === 'N')!.score).toBe(100);
+    expect(result.sections.some((s) => s.code === 'CN')).toBe(false);
+  });
+});
+
+// --- Parcours complet ------------------------------------------------------------
+
+describe('évaluation v2 : parcours', () => {
   let app: FastifyInstance;
   let target: number;
 
   beforeEach(async () => {
     app = await createTestApp();
-    target = appId(app, 'Chatbot Support'); // statut in_progress
+    target = appId(app, 'Chatbot Support'); // in_progress, Process Owner : Camille
   });
   afterEach(async () => {
     await app.close();
   });
 
-  const submit = (cookie: string, answers: Record<string, AnswerValue>, id = target) =>
+  const submit = (cookie: string, answers: Answers, id = target) =>
     app.inject({
       method: 'POST', url: `/api/applications/${id}/evaluation/submit`, headers: { cookie },
       payload: { ...PRELIMINARY, answers, comments: {} },
     });
 
-  it('un auditeur soumet une évaluation réussie : application conforme + échéance à 12 mois', async () => {
+  it('conforme : statut compliant et échéance à 12 mois, aucun plan', async () => {
     const cookie = await loginAs(app, ACCOUNTS.auditor);
-    const response = await submit(cookie, allYes());
-
+    const response = await submit(cookie, answerAll(FRAMING));
     expect(response.statusCode).toBe(200);
+
     const evaluation: EvaluationDto = response.json().evaluation;
-    expect(evaluation).toMatchObject({ status: 'submitted', score: 18, decision: 'compliant', redFlags: [] });
-    expect(evaluation.submittedBy?.displayName).toBe('Emma Bernard');
+    expect(evaluation).toMatchObject({
+      status: 'submitted', questionnaireVersion: 'v2', score: 100, maxScore: 100, verdict: 'compliant', cappedBy: [],
+    });
+    expect(evaluation.sections.length).toBeGreaterThan(5);
 
     const application: ApplicationDto = response.json().application;
     expect(application.status).toBe('compliant');
-    expect(response.json().actionPlans).toEqual([]);
-
-    // Échéance à +12 mois, ce qui alimentera le job d'expiration annuelle.
     const deadline = new Date(application.complianceValidUntil!);
     const expected = new Date(evaluation.submittedAt!);
     expected.setUTCMonth(expected.getUTCMonth() + 12);
     expect(deadline.toISOString().slice(0, 10)).toBe(expected.toISOString().slice(0, 10));
+    expect(response.json().actionPlans).toEqual([]);
   });
 
-  it('un échec génère le plan d’action, une action par question insuffisante', async () => {
+  it('partiellement conforme : statut dédié, SANS échéance, plan d’action généré', async () => {
     const cookie = await loginAs(app, ACCOUNTS.auditor);
-    // B1 « Non » (éliminatoire) et C2 « Partiellement ».
-    const response = await submit(cookie, { ...allYes(), B1: 0, C2: 1 } as Record<string, AnswerValue>);
-
+    const partial = answerAll(FRAMING, '2', {
+      N2: '1', N3: '1', D2: '1', T2: '1', S3: '1', S4: '1', F1: '1', F2: '1', F3: '1', F4: '1', F5: '1',
+    });
+    const response = await submit(cookie, partial);
     expect(response.statusCode).toBe(200);
-    expect(response.json().evaluation).toMatchObject({ decision: 'non_compliant', redFlags: ['B1'] });
-    expect(response.json().application.status).toBe('non_compliant');
-    expect(response.json().application.complianceValidUntil).toBeNull();
+    expect(response.json().evaluation.verdict).toBe('partially_compliant');
+
+    const application: ApplicationDto = response.json().application;
+    expect(application.status).toBe('partially_compliant');
+    expect(application.complianceValidUntil).toBeNull(); // pas de délai : reste en test jusqu'à réévaluation
 
     const plans: ActionPlanDto[] = response.json().actionPlans;
-    expect(plans.map((plan) => plan.questionCode).sort()).toEqual(['B1', 'C2']);
-
-    // Le texte de remédiation reprend littéralement l'exemple de la fiche d'évaluation.
-    const transparency = plans.find((plan) => plan.questionCode === 'B1')!;
-    expect(transparency.description).toBe(
-      "Ajouter une mention légale visible sur l'interface de l'application indiquant que les résultats sont générés par intelligence artificielle, puis soumettre à nouveau.",
-    );
-    expect(transparency.status).toBe('open');
-    expect(transparency.owner?.displayName).toBe('Camille Roux'); // Process Owner
-    // Échéance plus courte pour un critère éliminatoire (90 j contre 180 j).
-    const nonCritical = plans.find((plan) => plan.questionCode === 'C2')!;
-    expect(transparency.dueDate! < nonCritical.dueDate!).toBe(true);
+    expect(plans.length).toBe(11);
+    expect(plans.every((plan) => plan.owner?.displayName === 'Camille Roux')).toBe(true);
   });
 
-  it('refuse une soumission incomplète ou sans informations préliminaires', async () => {
+  it('plafonné par une critique : non conforme, plan avec échéance courte pour la critique', async () => {
     const cookie = await loginAs(app, ACCOUNTS.auditor);
+    const response = await submit(cookie, answerAll(FRAMING, '2', { T1: '0', F4: '1' }));
 
-    const incomplete = await app.inject({
-      method: 'POST', url: `/api/applications/${target}/evaluation/submit`, headers: { cookie },
-      payload: { ...PRELIMINARY, answers: { A1: 2 }, comments: {} },
-    });
-    expect(incomplete.statusCode).toBe(400);
-    expect(incomplete.json().error.fields.answers).toBeDefined();
+    expect(response.json().evaluation).toMatchObject({ verdict: 'non_compliant', score: 60, cappedBy: ['T1'] });
+    expect(response.json().application.status).toBe('non_compliant');
 
-    const noPreliminary = await app.inject({
-      method: 'POST', url: `/api/applications/${target}/evaluation/submit`, headers: { cookie },
-      payload: { toolVendor: '', purpose: '', businessCriticality: null, answers: allYes(), comments: {} },
-    });
-    expect(noPreliminary.statusCode).toBe(400);
-    expect(Object.keys(noPreliminary.json().error.fields).sort())
-      .toEqual(['businessCriticality', 'purpose', 'toolVendor']);
-
-    // Aucune évaluation soumise n'a été créée.
-    expect(all(app.db, "SELECT 1 FROM evaluations WHERE status = 'submitted'")).toHaveLength(0);
-    expect(one<{ status: string }>(app.db, 'SELECT status FROM applications WHERE id = ?', target)?.status)
-      .toBe('in_progress');
+    const plans: ActionPlanDto[] = response.json().actionPlans;
+    const t1 = plans.find((plan) => plan.questionCode === 'T1')!;
+    const f4 = plans.find((plan) => plan.questionCode === 'F4')!;
+    expect(t1.description).toMatch(/mention légale visible/); // texte de la fiche de référence conservé
+    expect(t1.dueDate! < f4.dueDate!).toBe(true); // 90 jours contre 180
   });
 
-  it('le brouillon se sauvegarde puis se recharge, sans rendre de verdict', async () => {
-    const cookie = await loginAs(app, ACCOUNTS.appManager);
+  it("refusée (domaine militaire) : non conforme, score nul, une action portant le motif", async () => {
+    const cookie = await loginAs(app, ACCOUNTS.auditor);
+    // Un blocage se soumet même si le reste n'est pas rempli.
+    const response = await submit(cookie, { ...FRAMING, C2: 'yes' });
+    expect(response.statusCode).toBe(200);
+    expect(response.json().evaluation).toMatchObject({ verdict: 'blocked', score: null, blockedBy: 'C2' });
+    expect(response.json().application.status).toBe('non_compliant');
 
+    const plans: ActionPlanDto[] = response.json().actionPlans;
+    expect(plans).toHaveLength(1);
+    expect(plans[0]!.description).toMatch(/hors périmètre/);
+  });
+
+  it('refuse une soumission incomplète, en disant combien il manque', async () => {
+    const cookie = await loginAs(app, ACCOUNTS.auditor);
+    const response = await submit(cookie, { ...FRAMING, N1: '2' });
+    expect(response.statusCode).toBe(400);
+    expect(response.json().error.fields.answers).toMatch(/question\(s\) sans réponse/);
+    expect(all(app.db, "SELECT 1 FROM evaluations WHERE status = 'submitted'")).toHaveLength(0);
+  });
+
+  it('le brouillon conserve tous les types de réponse', async () => {
+    const cookie = await loginAs(app, ACCOUNTS.appManager);
     const saved = await app.inject({
       method: 'PUT', url: `/api/applications/${target}/evaluation`, headers: { cookie },
-      payload: { toolVendor: 'Outil X', purpose: 'Essai', businessCriticality: 'low',
-        answers: { A1: 2, A2: 1 }, comments: { A2: 'À confirmer avec le DPO' } },
+      payload: {
+        toolVendor: 'X', purpose: 'Essai', businessCriticality: 'low',
+        answers: { C1: ['eu', 'cn'], C2: 'no', C4: 'yes', N1: '1', F3: '2' },
+        comments: { N1: 'Comparaison en cours' },
+      },
     });
     expect(saved.statusCode).toBe(200);
-    expect(saved.json().evaluation).toMatchObject({ status: 'draft', score: null, decision: null });
 
-    const reloaded = await app.inject({
+    const reloaded = await app.inject({ method: 'GET', url: `/api/applications/${target}/evaluation`, headers: { cookie } });
+    const draft: EvaluationDto = reloaded.json().draft;
+    expect(draft.answers).toEqual({ C1: ['eu', 'cn'], C2: 'no', C4: 'yes', N1: '1', F3: '2' });
+    expect(draft.comments.N1).toBe('Comparaison en cours');
+    expect(draft.verdict).toBeNull();
+  });
+
+  it('une évaluation soumise est figée et une nouvelle en crée une autre', async () => {
+    const cookie = await loginAs(app, ACCOUNTS.auditor);
+    await submit(cookie, answerAll(FRAMING, '2', { D1: '0' }));
+    const first = one<{ id: number }>(app.db, "SELECT id FROM evaluations WHERE status = 'submitted'")!.id;
+    expect(() => app.db.prepare('UPDATE evaluations SET score = 99 WHERE id = ?').run(first)).toThrow(/ne peut plus/);
+
+    await submit(cookie, answerAll(FRAMING));
+    const history = (await app.inject({
       method: 'GET', url: `/api/applications/${target}/evaluation`, headers: { cookie },
-    });
-    expect(reloaded.json().draft.answers).toEqual({ A1: 2, A2: 1 });
-    expect(reloaded.json().draft.comments.A2).toBe('À confirmer avec le DPO');
-    expect(reloaded.json().history).toEqual([]);
+    })).json().history as EvaluationDto[];
+    expect(history.map((e) => e.verdict)).toEqual(['compliant', 'non_compliant']);
+  });
 
-    // Le statut de l'application n'a pas bougé.
+  it('modifier un champ évalué d’une application partiellement conforme la remet en audit', async () => {
+    const auditor = await loginAs(app, ACCOUNTS.auditor);
+    await submit(auditor, answerAll(FRAMING, '2', {
+      N2: '1', N3: '1', D2: '1', T2: '1', S3: '1', S4: '1', F1: '1', F2: '1', F3: '1', F4: '1', F5: '1',
+    }));
     expect(one<{ status: string }>(app.db, 'SELECT status FROM applications WHERE id = ?', target)?.status)
-      .toBe('in_progress');
-  });
+      .toBe('partially_compliant');
 
-  it('un second enregistrement met à jour le même brouillon (pas de doublon)', async () => {
-    const cookie = await loginAs(app, ACCOUNTS.appManager);
-    const body = (answers: Record<string, AnswerValue>) => ({
-      method: 'PUT' as const, url: `/api/applications/${target}/evaluation`, headers: { cookie },
-      payload: { ...PRELIMINARY, answers, comments: {} },
-    });
-
-    await app.inject(body({ A1: 2 }));
-    await app.inject(body({ A1: 0, A2: 2 }));
-
-    expect(all(app.db, 'SELECT 1 FROM evaluations WHERE application_id = ?', target)).toHaveLength(1);
-    const reloaded = await app.inject({
-      method: 'GET', url: `/api/applications/${target}/evaluation`, headers: { cookie },
-    });
-    expect(reloaded.json().draft.answers).toEqual({ A1: 0, A2: 2 });
-  });
-
-  it('une évaluation soumise est figée en base', async () => {
-    const cookie = await loginAs(app, ACCOUNTS.auditor);
-    await submit(cookie, allYes());
-    const evaluationId = one<{ id: number }>(app.db, "SELECT id FROM evaluations WHERE status = 'submitted'")!.id;
-
-    expect(() => app.db.prepare('UPDATE evaluations SET score = 0 WHERE id = ?').run(evaluationId))
-      .toThrow(/ne peut plus être modifiée/);
-    expect(() => app.db.prepare('DELETE FROM evaluations WHERE id = ?').run(evaluationId))
-      .toThrow(/Suppression physique interdite/);
-  });
-
-  it("une nouvelle soumission crée une nouvelle évaluation et conserve l'historique", async () => {
-    const cookie = await loginAs(app, ACCOUNTS.auditor);
-    await submit(cookie, { ...allYes(), B1: 0 } as Record<string, AnswerValue>); // non conforme
-    await submit(cookie, allYes()); // corrigée
-
+    const officer = await loginAs(app, ACCOUNTS.aiOfficer);
     const response = await app.inject({
-      method: 'GET', url: `/api/applications/${target}/evaluation`, headers: { cookie },
+      method: 'PUT', url: `/api/applications/${target}`, headers: { cookie: officer },
+      payload: {
+        name: 'Chatbot Support', description: 'idem', businessDomain: 'client',
+        dataSensitivity: 'sensitive', aiType: 'genai',
+        processOwnerId: one<{ id: number }>(app.db, 'SELECT id FROM users WHERE email = ?', ACCOUNTS.appManager)!.id,
+      },
     });
-    const history: EvaluationDto[] = response.json().history;
-    expect(history).toHaveLength(2);
-    expect(history[0]!.decision).toBe('compliant'); // la plus récente d'abord
-    expect(history[1]!.decision).toBe('non_compliant');
-    expect(response.json().draft).toBeNull();
+    expect(response.json().reevaluationTriggered).toBe(true);
+    expect(response.json().application.status).toBe('in_progress');
   });
 });
 
-// --- Autorisations -----------------------------------------------------------
+// --- Autorisations (inchangées) --------------------------------------------------
 
-describe('évaluation : autorisations', () => {
+describe('évaluation v2 : autorisations', () => {
   let app: FastifyInstance;
   let target: number;
 
@@ -250,65 +367,37 @@ describe('évaluation : autorisations', () => {
     await app.close();
   });
 
-  it("un utilisateur standard n'accède pas au questionnaire (403)", async () => {
-    const cookie = await loginAs(app, ACCOUNTS.standard);
-    expect((await app.inject({ method: 'GET', url: `/api/applications/${target}/evaluation`, headers: { cookie } }))
-      .statusCode).toBe(403);
-  });
+  it('un Application Manager saisit mais ne soumet pas ; le DPO consulte ; le standard est exclu', async () => {
+    const manager = await loginAs(app, ACCOUNTS.appManager);
+    expect((await app.inject({
+      method: 'POST', url: `/api/applications/${target}/evaluation/submit`, headers: { cookie: manager },
+      payload: { ...PRELIMINARY, answers: answerAll(FRAMING), comments: {} },
+    })).statusCode).toBe(403);
 
-  it('un Application Manager peut saisir mais pas soumettre', async () => {
-    const cookie = await loginAs(app, ACCOUNTS.appManager);
-
-    const read = await app.inject({ method: 'GET', url: `/api/applications/${target}/evaluation`, headers: { cookie } });
-    expect(read.json().permissions).toEqual({ fill: true, submit: false });
-
-    const save = await app.inject({
-      method: 'PUT', url: `/api/applications/${target}/evaluation`, headers: { cookie },
-      payload: { ...PRELIMINARY, answers: allYes(), comments: {} },
-    });
-    expect(save.statusCode).toBe(200);
-
-    const submitted = await app.inject({
-      method: 'POST', url: `/api/applications/${target}/evaluation/submit`, headers: { cookie },
-      payload: { ...PRELIMINARY, answers: allYes(), comments: {} },
-    });
-    expect(submitted.statusCode).toBe(403);
-  });
-
-  it('le DPO consulte sans pouvoir saisir', async () => {
-    const cookie = await loginAs(app, ACCOUNTS.dpo);
-    const read = await app.inject({ method: 'GET', url: `/api/applications/${target}/evaluation`, headers: { cookie } });
-    expect(read.statusCode).toBe(200);
+    const dpo = await loginAs(app, ACCOUNTS.dpo);
+    const read = await app.inject({ method: 'GET', url: `/api/applications/${target}/evaluation`, headers: { cookie: dpo } });
     expect(read.json().permissions).toEqual({ fill: false, submit: false });
 
-    const save = await app.inject({
-      method: 'PUT', url: `/api/applications/${target}/evaluation`, headers: { cookie },
-      payload: { ...PRELIMINARY, answers: allYes(), comments: {} },
-    });
-    expect(save.statusCode).toBe(403);
+    const standard = await loginAs(app, ACCOUNTS.standard);
+    expect((await app.inject({ method: 'GET', url: `/api/applications/${target}/evaluation`, headers: { cookie: standard } }))
+      .statusCode).toBe(403);
   });
 
   it("une application en brouillon ou supprimée ne s'évalue pas", async () => {
     const cookie = await loginAs(app, ACCOUNTS.aiOfficer);
-
-    const draft = await app.inject({
-      method: 'PUT', url: `/api/applications/${appId(app, 'Résumé de réunions')}/evaluation`, headers: { cookie },
-      payload: { ...PRELIMINARY, answers: allYes(), comments: {} },
-    });
-    expect(draft.statusCode).toBe(400);
-    expect(draft.json().error.message).toMatch(/envoyée à l'audit/);
-
-    const deleted = await app.inject({
-      method: 'PUT', url: `/api/applications/${appId(app, 'Prévision Stock v1')}/evaluation`, headers: { cookie },
-      payload: { ...PRELIMINARY, answers: allYes(), comments: {} },
-    });
-    expect(deleted.statusCode).toBe(400);
+    for (const name of ['Résumé de réunions', 'Prévision Stock v1']) {
+      const response = await app.inject({
+        method: 'PUT', url: `/api/applications/${appId(app, name)}/evaluation`, headers: { cookie },
+        payload: { ...PRELIMINARY, answers: FRAMING, comments: {} },
+      });
+      expect(response.statusCode, name).toBe(400);
+    }
   });
 });
 
-// --- Plans d'action ----------------------------------------------------------
+// --- Plans d'action ----------------------------------------------------------------
 
-describe("plans d'action", () => {
+describe("plans d'action v2", () => {
   let app: FastifyInstance;
   let planId: number;
 
@@ -317,43 +406,82 @@ describe("plans d'action", () => {
     const cookie = await loginAs(app, ACCOUNTS.auditor);
     await app.inject({
       method: 'POST', url: `/api/applications/${appId(app, 'Chatbot Support')}/evaluation/submit`,
-      headers: { cookie }, payload: { ...PRELIMINARY, answers: { ...allYes(), B1: 0 }, comments: {} },
+      headers: { cookie }, payload: { ...PRELIMINARY, answers: answerAll(FRAMING, '2', { T1: '0' }), comments: {} },
     });
-    planId = one<{ id: number }>(app.db, "SELECT id FROM action_plans WHERE question_code = 'B1'")!.id;
+    planId = one<{ id: number }>(app.db, "SELECT id FROM action_plans WHERE question_code = 'T1'")!.id;
   });
   afterEach(async () => {
     await app.close();
   });
 
-  it('le Process Owner coche puis décoche une action corrective', async () => {
-    const cookie = await loginAs(app, ACCOUNTS.appManager);
-
+  it('le Process Owner coche puis décoche ; un auditeur ne peut pas', async () => {
+    const manager = await loginAs(app, ACCOUNTS.appManager);
     const done = await app.inject({
-      method: 'POST', url: `/api/action-plans/${planId}/done`, headers: { cookie }, payload: { done: true },
+      method: 'POST', url: `/api/action-plans/${planId}/done`, headers: { cookie: manager }, payload: { done: true },
     });
-    expect(done.statusCode).toBe(200);
     expect(done.json().actionPlan).toMatchObject({ status: 'done' });
     expect(done.json().actionPlan.doneBy.displayName).toBe('Camille Roux');
 
     const reopened = await app.inject({
-      method: 'POST', url: `/api/action-plans/${planId}/done`, headers: { cookie }, payload: { done: false },
+      method: 'POST', url: `/api/action-plans/${planId}/done`, headers: { cookie: manager }, payload: { done: false },
     });
-    expect(reopened.json().actionPlan).toMatchObject({ status: 'open', doneBy: null, doneAt: null });
+    expect(reopened.json().actionPlan).toMatchObject({ status: 'open', doneBy: null });
+
+    const auditor = await loginAs(app, ACCOUNTS.auditor);
+    expect((await app.inject({
+      method: 'POST', url: `/api/action-plans/${planId}/done`, headers: { cookie: auditor }, payload: { done: true },
+    })).statusCode).toBe(403);
+  });
+});
+
+// --- Compatibilité avec la v1 -----------------------------------------------------
+
+describe('évaluation v2 : héritage v1', () => {
+  let app: FastifyInstance;
+  let target: number;
+
+  beforeEach(async () => {
+    app = await createTestApp();
+    target = appId(app, 'Chatbot Support');
+  });
+  afterEach(async () => {
+    await app.close();
   });
 
-  it("un auditeur ne coche pas les actions (c'est au Process Owner de les exécuter)", async () => {
-    const cookie = await loginAs(app, ACCOUNTS.auditor);
-    const response = await app.inject({
-      method: 'POST', url: `/api/action-plans/${planId}/done`, headers: { cookie }, payload: { done: true },
-    });
-    expect(response.statusCode).toBe(403);
-  });
+  it('un brouillon v1 est converti en v2 sans doublon, ses anciennes réponses écartées', async () => {
+    // Simule un brouillon laissé par l'ancien questionnaire.
+    app.db.prepare(
+      "INSERT INTO evaluations (application_id, questionnaire_version, status, max_score) VALUES (?, 'v1', 'draft', 18)",
+    ).run(target);
+    const draftId = one<{ id: number }>(app.db, 'SELECT id FROM evaluations WHERE application_id = ?', target)!.id;
+    app.db.prepare("INSERT INTO evaluation_answers (evaluation_id, question_code, value_json) VALUES (?, 'A1', '2')").run(draftId);
 
-  it('une action inconnue renvoie 404', async () => {
     const cookie = await loginAs(app, ACCOUNTS.appManager);
-    const response = await app.inject({
-      method: 'POST', url: '/api/action-plans/9999/done', headers: { cookie }, payload: { done: true },
+    const saved = await app.inject({
+      method: 'PUT', url: `/api/applications/${target}/evaluation`, headers: { cookie },
+      payload: { ...PRELIMINARY, answers: { C1: ['eu'], C2: 'no' }, comments: {} },
     });
-    expect(response.statusCode).toBe(404);
+    expect(saved.statusCode).toBe(200);
+
+    const draft: EvaluationDto = saved.json().evaluation;
+    expect(draft.id).toBe(draftId); // même ligne, pas de doublon
+    expect(draft.questionnaireVersion).toBe('v2');
+    expect(draft.maxScore).toBe(100);
+    expect(draft.answers).toEqual({ C1: ['eu'], C2: 'no' }); // A1 a disparu
+    expect(all(app.db, 'SELECT 1 FROM evaluations WHERE application_id = ?', target)).toHaveLength(1);
+  });
+
+  it("une évaluation v1 soumise reste lisible avec son barème d'origine", async () => {
+    app.db.prepare(
+      `INSERT INTO evaluations (application_id, questionnaire_version, status, max_score, score, verdict, capped_by_json, submitted_at)
+       VALUES (?, 'v1', 'submitted', 18, 16, 'non_compliant', '["B1"]', '2026-09-01T10:00:00.000Z')`,
+    ).run(target);
+
+    const cookie = await loginAs(app, ACCOUNTS.auditor);
+    const response = await app.inject({ method: 'GET', url: `/api/applications/${target}/evaluation`, headers: { cookie } });
+    const history: EvaluationDto[] = response.json().history;
+    expect(history[0]).toMatchObject({
+      questionnaireVersion: 'v1', score: 16, maxScore: 18, verdict: 'non_compliant', cappedBy: ['B1'], blockedBy: null,
+    });
   });
 });

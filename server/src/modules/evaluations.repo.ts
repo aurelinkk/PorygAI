@@ -6,9 +6,9 @@
  * calcul en direct pour guider la saisie, mais il ne décide de rien.
  */
 import {
-  MAX_SCORE, QUESTIONNAIRE_VERSION, getQuestion, scoreEvaluation,
-  type ActionPlanDto, type AnswerValue, type EvaluationDto,
-  type SaveEvaluationInput, type UserDto,
+  QUESTIONNAIRE_VERSION, getQuestion, scoreEvaluation, questionWording,
+  type ActionPlanDto, type AnswerValue, type Answers, type EvaluationDto,
+  type SaveEvaluationInput, type SectionScore, type UserDto, type Verdict,
 } from '@poryg/shared';
 import { recordAudit } from '../audit.js';
 import { all, one, run, transaction, type Db } from '../db/connection.js';
@@ -25,8 +25,10 @@ interface EvaluationRow {
   business_criticality: string | null;
   score: number | null;
   max_score: number;
-  red_flags_json: string;
-  decision: 'compliant' | 'non_compliant' | null;
+  verdict: Verdict | null;
+  capped_by_json: string;
+  blocked_by: string | null;
+  sections_json: string;
   created_by: number | null;
   created_by_name: string | null;
   created_at: string;
@@ -44,14 +46,14 @@ const SELECT_EVALUATION = `
 `;
 
 function toDto(db: Db, row: EvaluationRow): EvaluationDto {
-  const answerRows = all<{ question_code: string; value: AnswerValue; comment: string }>(
-    db, 'SELECT question_code, value, comment FROM evaluation_answers WHERE evaluation_id = ?', row.id,
+  const answerRows = all<{ question_code: string; value_json: string; comment: string }>(
+    db, 'SELECT question_code, value_json, comment FROM evaluation_answers WHERE evaluation_id = ?', row.id,
   );
 
   const answers: Record<string, AnswerValue> = {};
   const comments: Record<string, string> = {};
   for (const answer of answerRows) {
-    answers[answer.question_code] = answer.value;
+    answers[answer.question_code] = JSON.parse(answer.value_json) as AnswerValue;
     if (answer.comment) comments[answer.question_code] = answer.comment;
   }
 
@@ -67,8 +69,10 @@ function toDto(db: Db, row: EvaluationRow): EvaluationDto {
     comments,
     score: row.score,
     maxScore: row.max_score,
-    redFlags: JSON.parse(row.red_flags_json) as string[],
-    decision: row.decision,
+    cappedBy: JSON.parse(row.capped_by_json) as string[],
+    blockedBy: row.blocked_by,
+    verdict: row.verdict,
+    sections: JSON.parse(row.sections_json) as SectionScore[],
     createdBy: row.created_by && row.created_by_name ? { id: row.created_by, displayName: row.created_by_name } : null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -97,25 +101,32 @@ export function getEvaluation(db: Db, id: number): EvaluationDto | null {
   return row ? toDto(db, row) : null;
 }
 
-/** Dernière évaluation soumise (celle qui porte le verdict en vigueur). */
-export function getLastSubmitted(db: Db, applicationId: number): EvaluationDto | null {
-  const row = one<EvaluationRow>(
-    db, `${SELECT_EVALUATION} WHERE e.application_id = ? AND e.status = 'submitted' ORDER BY e.id DESC LIMIT 1`,
-    applicationId,
-  );
-  return row ? toDto(db, row) : null;
-}
-
-/** Récupère le brouillon en cours, ou en crée un vide. */
+/**
+ * Récupère le brouillon en cours, ou en crée un vide (toujours en v2).
+ *
+ * Un brouillon commencé avec une version antérieure du questionnaire est
+ * converti : ses réponses n'ont plus de sens (les codes ont changé) et un
+ * brouillon n'est pas une preuve d'audit — on repart de zéro, en gardant la
+ * ligne pour ne pas créer de doublon.
+ */
 export function getOrCreateDraft(db: Db, applicationId: number, actor: UserDto): EvaluationDto {
   const existing = getDraftEvaluation(db, applicationId);
-  if (existing) return existing;
+  if (existing && existing.questionnaireVersion === QUESTIONNAIRE_VERSION) return existing;
+  if (existing) {
+    run(db, 'DELETE FROM evaluation_answers WHERE evaluation_id = ?', existing.id);
+    run(
+      db,
+      'UPDATE evaluations SET questionnaire_version = ?, max_score = 100, updated_at = ? WHERE id = ?',
+      QUESTIONNAIRE_VERSION, nowIso(), existing.id,
+    );
+    return getEvaluation(db, existing.id)!;
+  }
 
   const result = run(
     db,
     `INSERT INTO evaluations (application_id, questionnaire_version, status, max_score, created_by)
-     VALUES (?, ?, 'draft', ?, ?)`,
-    applicationId, QUESTIONNAIRE_VERSION, MAX_SCORE, actor.id,
+     VALUES (?, ?, 'draft', 100, ?)`,
+    applicationId, QUESTIONNAIRE_VERSION, actor.id,
   );
   return getEvaluation(db, Number(result.lastInsertRowid))!;
 }
@@ -134,8 +145,8 @@ function writeEvaluationContent(db: Db, evaluationId: number, input: SaveEvaluat
     if (!getQuestion(code)) continue; // ignore un code inconnu (questionnaire changé)
     run(
       db,
-      'INSERT INTO evaluation_answers (evaluation_id, question_code, value, comment) VALUES (?, ?, ?, ?)',
-      evaluationId, code, value, input.comments[code] ?? '',
+      'INSERT INTO evaluation_answers (evaluation_id, question_code, value_json, comment) VALUES (?, ?, ?, ?)',
+      evaluationId, code, JSON.stringify(value), input.comments[code] ?? '',
     );
   }
 }
@@ -161,14 +172,22 @@ export interface SubmitResult {
   actionPlans: ActionPlanDto[];
 }
 
+/** Statut de l'application pour un verdict donné. */
+function statusForVerdict(verdict: Verdict): 'compliant' | 'partially_compliant' | 'non_compliant' {
+  if (verdict === 'compliant') return 'compliant';
+  if (verdict === 'partially_compliant') return 'partially_compliant';
+  return 'non_compliant';
+}
+
 /**
  * Soumet l'évaluation : calcule le score, fige l'évaluation, applique le verdict
- * à l'application et génère le plan d'action si elle est non conforme.
+ * à l'application et génère le plan d'action.
  *
- * Conforme    → statut `compliant`, échéance à +12 mois (le job d'expiration
- *               annuelle la repassera en `in_progress`).
- * Non conforme → statut `non_compliant` + une action corrective par question
- *               ayant obtenu 0 ou 1 point.
+ * Conforme (≥ 86)         → `compliant`, échéance à +12 mois (job d'expiration annuelle).
+ * Partiel (61–85)         → `partially_compliant`, sans échéance : reste en test
+ *                           jusqu'à une nouvelle évaluation. Plan d'action généré.
+ * Non conforme / plafonné → `non_compliant`, plan d'action généré.
+ * Refusée (blocage)       → `non_compliant`, une seule action : le motif du refus.
  */
 export function submitEvaluation(
   db: Db, applicationId: number, input: SaveEvaluationInput, actor: UserDto, ip?: string,
@@ -179,50 +198,52 @@ export function submitEvaluation(
 
     // Le calcul qui fait foi : celui du serveur, sur les réponses effectivement stockées.
     const stored = getEvaluation(db, draft.id)!;
-    const result = scoreEvaluation(stored.answers);
+    const result = scoreEvaluation(stored.answers as Answers);
     const submittedAt = nowIso();
 
     run(
       db,
       `UPDATE evaluations
-          SET status = 'submitted', score = ?, red_flags_json = ?, decision = ?,
+          SET status = 'submitted', score = ?, verdict = ?, capped_by_json = ?, blocked_by = ?, sections_json = ?,
               submitted_by = ?, submitted_at = ?, updated_at = ?
         WHERE id = ?`,
-      result.score, JSON.stringify(result.redFlags), result.decision,
+      result.score, result.verdict, JSON.stringify(result.cappedBy), result.blockedBy, JSON.stringify(result.sections),
       actor.id, submittedAt, submittedAt, draft.id,
     );
 
     const applicationBefore = getApplication(db, applicationId)!;
+    const status = statusForVerdict(result.verdict);
+    run(
+      db,
+      `UPDATE applications SET status = ?, compliance_valid_until = ?, updated_by = ?, updated_at = ? WHERE id = ?`,
+      status, status === 'compliant' ? complianceDeadline(submittedAt) : null, actor.id, submittedAt, applicationId,
+    );
 
-    if (result.decision === 'compliant') {
-      run(
-        db,
-        "UPDATE applications SET status = 'compliant', compliance_valid_until = ?, updated_by = ?, updated_at = ? WHERE id = ?",
-        complianceDeadline(submittedAt), actor.id, submittedAt, applicationId,
-      );
-    } else {
-      run(
-        db,
-        "UPDATE applications SET status = 'non_compliant', compliance_valid_until = NULL, updated_by = ?, updated_at = ? WHERE id = ?",
-        actor.id, submittedAt, applicationId,
-      );
-    }
-
-    // Plan d'action : une action par question insuffisante (0 ou 1 point).
+    // Plan d'action : une action par recommandation, sauf si l'application est conforme.
     const actionPlans: ActionPlanDto[] = [];
-    if (result.decision === 'non_compliant') {
-      for (const code of result.toImprove) {
-        const question = getQuestion(code)!;
+    if (result.verdict === 'blocked') {
+      const insert = run(
+        db,
+        `INSERT INTO action_plans (application_id, evaluation_id, question_code, title, description, owner_id, due_date)
+         VALUES (?, ?, ?, ?, ?, ?, NULL)`,
+        applicationId, draft.id, result.blockedBy,
+        `${result.blockedBy} — évaluation refusée`,
+        result.blockMessage ?? "L'application ne peut pas être déployée.",
+        applicationBefore.processOwner.id,
+      );
+      actionPlans.push(getActionPlan(db, Number(insert.lastInsertRowid))!);
+    } else if (result.verdict !== 'compliant') {
+      for (const recommendation of result.recommendations) {
         const insert = run(
           db,
           `INSERT INTO action_plans (application_id, evaluation_id, question_code, title, description, owner_id, due_date)
            VALUES (?, ?, ?, ?, ?, ?, ?)`,
-          applicationId, draft.id, code,
-          `${code} — ${question.wording}`,
-          question.remediation,
+          applicationId, draft.id, recommendation.code,
+          `${recommendation.code} — ${questionWording(recommendation.code)}`,
+          recommendation.remediation,
           applicationBefore.processOwner.id,
-          // Échéance par défaut : 90 jours pour un critère éliminatoire, 180 sinon.
-          addDays(submittedAt, question.critical ? 90 : 180),
+          // Échéance par défaut : 90 jours pour un critère critique, 180 sinon.
+          addDays(submittedAt, recommendation.critical ? 90 : 180),
         );
         actionPlans.push(getActionPlan(db, Number(insert.lastInsertRowid))!);
       }
@@ -233,8 +254,8 @@ export function submitEvaluation(
       actorId: actor.id, entity: 'application', entityId: applicationId, action: 'evaluation_submitted', ip,
       before: { status: applicationBefore.status },
       after: {
-        status: result.decision, score: result.score, maxScore: result.maxScore,
-        redFlags: result.redFlags, evaluationId: draft.id,
+        status, score: result.score, maxScore: 100, verdict: result.verdict,
+        cappedBy: result.cappedBy, blockedBy: result.blockedBy, evaluationId: draft.id,
       },
     });
 

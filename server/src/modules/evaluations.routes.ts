@@ -82,11 +82,13 @@ export function registerEvaluationsRoutes(app: FastifyInstance, options: { db: D
       // À la soumission, les informations préliminaires deviennent obligatoires…
       const input = validate(submitEvaluationSchema, request.body);
 
-      // … et toutes les questions doivent avoir une réponse.
+      // … et toutes les questions applicables au parcours doivent avoir une réponse.
+      // Un blocage (domaine militaire, pratique interdite) se soumet tel quel : il
+      // n'y a plus rien à répondre après lui.
       const preview = scoreEvaluation(input.answers);
-      if (!preview.complete) {
+      if (!preview.complete && preview.verdict !== 'blocked') {
         throw badRequest('Toutes les questions doivent recevoir une réponse avant la soumission', {
-          answers: 'Questionnaire incomplet',
+          answers: `Questionnaire incomplet : ${preview.missing.length} question(s) sans réponse`,
         });
       }
 

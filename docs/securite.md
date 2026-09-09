@@ -70,6 +70,8 @@ En développement, Vite relaie `/api` sans `changeOrigin` pour que `Host` reste 
   pas seulement dans l'UI. Un brouillon d'autrui renvoie **404** (rien n'est révélé), y compris sur
   son historique.
 - Le champ `permissions` renvoyé par la fiche est calculé côté serveur : le client ne décide rien.
+- Le **coût du mois** porté par chaque application n'est calculé en SQL que si l'utilisateur a
+  `finops:read` ; sinon la colonne vaut `NULL` et la donnée ne quitte jamais le serveur.
 - Tests : `tests/permissions.test.ts`, `tests/applications.test.ts`, `tests/inventory.test.ts`.
 
 ### Validation et injection
@@ -108,7 +110,7 @@ autorisées explicitement), `frame-ancestors 'none'`, `X-Content-Type-Options: n
 ## Vérifier
 
 ```bash
-npm test          # 110 tests : auth, SSO, CSRF, RBAC, propriété, filtres, scoring, triggers
+npm test          # 129 tests : auth, SSO, CSRF, RBAC, propriété, filtres, scoring, triggers
 npm audit         # vulnérabilités connues des dépendances
 ```
 

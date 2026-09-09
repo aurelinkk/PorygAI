@@ -11,7 +11,7 @@
  */
 import {
   BUSINESS_DOMAINS, STATUS_LABELS, labelOf, monthKey, shiftMonth,
-  type ApplicationCostDto, type AppStatus, type FinopsBreakdownRow,
+  type ApplicationCostDto, type ApplicationFinopsDto, type AppStatus, type FinopsBreakdownRow,
   type FinopsReportDto, type SaveCostInput, type UserDto,
 } from '@poryg/shared';
 import type { SQLInputValue } from 'node:sqlite';
@@ -162,6 +162,99 @@ export function buildFinopsReport(db: Db, user: UserDto, months: number): Finops
     byDomain,
     byStatus,
     coverage: { withCost: activeTotal - missing.length, total: activeTotal, missing },
+  };
+}
+
+/**
+ * Rapport FinOps d'une seule application. La visibilité et l'exclusion des
+ * applications supprimées ne s'appliquent qu'aux **totaux de comparaison**
+ * (part et rang) : l'application demandée est, elle, toujours détaillée — la
+ * route a déjà vérifié qu'elle est visible par l'utilisateur.
+ */
+export function buildApplicationFinops(
+  db: Db, user: UserDto, applicationId: number, months: number,
+): ApplicationFinopsDto {
+  const currentMonth = monthKey(new Date());
+  const previousMonth = shiftMonth(currentMonth, -1);
+  const firstMonth = shiftMonth(currentMonth, -(months - 1));
+
+  const monthlyRows = all<{ month: string; total: number }>(
+    db,
+    `SELECT period_month AS month, SUM(amount_eur) AS total
+       FROM finops_costs
+      WHERE application_id = ? AND period_month >= ? AND period_month <= ?
+      GROUP BY period_month`,
+    applicationId, firstMonth, currentMonth,
+  );
+  const byMonth = new Map(monthlyRows.map((row) => [row.month, round2(row.total)]));
+
+  const monthly: ApplicationFinopsDto['monthly'] = [];
+  for (let index = 0; index < months; index += 1) {
+    const month = shiftMonth(firstMonth, index);
+    monthly.push({ month, amountEur: byMonth.get(month) ?? 0 });
+  }
+
+  const currentTotal = byMonth.get(currentMonth) ?? 0;
+  const previousTotal = byMonth.get(previousMonth) ?? 0;
+  const windowTotal = round2(monthly.reduce((sum, entry) => sum + entry.amountEur, 0));
+
+  // Répartition par source sur toute la fenêtre : sur un seul mois, une
+  // application n'a souvent qu'une source, ce qui n'apprendrait rien.
+  const sourceRows = all<{ source: string; total: number }>(
+    db,
+    `SELECT source, SUM(amount_eur) AS total
+       FROM finops_costs
+      WHERE application_id = ? AND period_month >= ? AND period_month <= ?
+      GROUP BY source
+      ORDER BY total DESC`,
+    applicationId, firstMonth, currentMonth,
+  );
+  const bySource: FinopsBreakdownRow[] = sourceRows.map((row) => ({
+    key: row.source,
+    label: row.source,
+    amountEur: round2(row.total),
+    share: share(row.total, windowTotal),
+    applications: 1,
+  }));
+
+  // Situer l'application : part de la dépense du mois, et rang.
+  const scope = scopeFor(user);
+  const companyTotal = round2(
+    one<{ total: number | null }>(
+      db,
+      `SELECT SUM(c.amount_eur) AS total
+         FROM finops_costs c JOIN applications a ON a.id = c.application_id
+        WHERE ${scope.sql} AND c.period_month = ?`,
+      ...scope.params, currentMonth,
+    )?.total ?? 0,
+  );
+
+  const ranking = all<{ id: number }>(
+    db,
+    `SELECT a.id
+       FROM finops_costs c JOIN applications a ON a.id = c.application_id
+      WHERE ${scope.sql} AND c.period_month = ?
+      GROUP BY a.id
+      ORDER BY SUM(c.amount_eur) DESC`,
+    ...scope.params, currentMonth,
+  );
+  const position = ranking.findIndex((row) => row.id === applicationId);
+
+  return {
+    applicationId,
+    currentMonth,
+    currentTotal,
+    previousMonth,
+    previousTotal,
+    variationPct: previousTotal > 0 ? round2(((currentTotal - previousTotal) / previousTotal) * 100) : null,
+    windowTotal,
+    monthly,
+    bySource,
+    companyTotal,
+    shareOfCompany: share(currentTotal, companyTotal),
+    rank: position >= 0 ? position + 1 : null,
+    rankedOver: ranking.length,
+    entries: listApplicationCosts(db, applicationId),
   };
 }
 

@@ -6,7 +6,7 @@
  */
 import type { FastifyInstance } from 'fastify';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { monthKey, shiftMonth, type FinopsReportDto } from '@poryg/shared';
+import { monthKey, shiftMonth, type ApplicationFinopsDto, type FinopsReportDto } from '@poryg/shared';
 import { all, one } from '../src/db/connection.js';
 import { ACCOUNTS, createTestApp, loginAs } from './helpers.js';
 
@@ -237,5 +237,167 @@ describe('saisie des coûts', () => {
     // Du mois le plus récent au plus ancien.
     const mois = response.json().costs.map((cost: { periodMonth: string }) => cost.periodMonth);
     expect(mois).toEqual([...mois].sort().reverse());
+  });
+});
+
+// --- Rapport d'une seule application ----------------------------------------
+
+describe("rapport FinOps d'une application", () => {
+  let app: FastifyInstance;
+  let cookie: string;
+  let target: number;
+
+  beforeEach(async () => {
+    app = await createTestApp();
+    cookie = await loginAs(app, ACCOUNTS.aiOfficer);
+    target = appId(app, 'Assistant Recrutement'); // 18 500 € : la plus coûteuse du seed
+  });
+  afterEach(async () => {
+    await app.close();
+  });
+
+  const fetchReport = async (id = target, query = '') => {
+    const response = await app.inject({
+      method: 'GET', url: `/api/applications/${id}/finops${query}`, headers: { cookie },
+    });
+    expect(response.statusCode).toBe(200);
+    return response.json().report as ApplicationFinopsDto;
+  };
+
+  it('ne compte que les coûts de cette application', async () => {
+    const report = await fetchReport();
+    const attendu = one<{ total: number }>(
+      app.db, 'SELECT SUM(amount_eur) AS total FROM finops_costs WHERE application_id = ? AND period_month = ?',
+      target, CURRENT,
+    )!.total;
+
+    expect(report.applicationId).toBe(target);
+    expect(report.currentTotal).toBe(attendu);
+    expect(report.currentTotal).toBeLessThan(report.companyTotal);
+  });
+
+  it("situe l'application : part de la dépense et rang", async () => {
+    const report = await fetchReport();
+    expect(report.shareOfCompany).toBeCloseTo(report.currentTotal / report.companyTotal, 5);
+    expect(report.rank).toBe(1); // la plus coûteuse du jeu de démonstration
+    expect(report.rankedOver).toBeGreaterThan(1);
+
+    // Une application moins chère est logiquement moins bien classée.
+    const autre = await fetchReport(appId(app, 'Détection Fraude'));
+    expect(autre.rank!).toBeGreaterThan(1);
+  });
+
+  it('ventile par source sur toute la fenêtre', async () => {
+    await app.inject({
+      method: 'PUT', url: `/api/applications/${target}/costs`, headers: { cookie },
+      payload: { periodMonth: CURRENT, amountEur: 500 },
+    });
+
+    const report = await fetchReport();
+    const sources = Object.fromEntries(report.bySource.map((row) => [row.key, row.amountEur]));
+    expect(sources.manuel).toBe(500);
+    expect(sources.seed).toBeGreaterThan(0);
+    expect(report.bySource.reduce((sum, row) => sum + row.amountEur, 0)).toBeCloseTo(report.windowTotal, 2);
+  });
+
+  it('liste les saisies du mois le plus récent au plus ancien', async () => {
+    const report = await fetchReport();
+    const mois = report.entries.map((entry) => entry.periodMonth);
+    expect(mois).toEqual([...mois].sort().reverse());
+    expect(report.entries.every((entry) => entry.applicationId === target)).toBe(true);
+  });
+
+  it('renvoie un rapport vide, sans erreur, pour une application sans coût', async () => {
+    const sansCout = appId(app, 'Prévision Stock v1'); // supprimée : aucun coût dans le seed
+    const report = await fetchReport(sansCout);
+    expect(report.currentTotal).toBe(0);
+    expect(report.windowTotal).toBe(0);
+    expect(report.entries).toEqual([]);
+    expect(report.bySource).toEqual([]);
+    expect(report.rank).toBeNull();
+    expect(report.shareOfCompany).toBe(0);
+    expect(report.variationPct).toBeNull();
+  });
+
+  it('respecte la fenêtre demandée', async () => {
+    expect((await fetchReport(target, '?months=3')).monthly).toHaveLength(3);
+    expect((await fetchReport(target, '?months=24')).monthly).toHaveLength(24);
+  });
+
+  it("refuse l'accès à un utilisateur standard et 404 sur un brouillon d'autrui", async () => {
+    const standard = await loginAs(app, ACCOUNTS.standard);
+    expect((await app.inject({
+      method: 'GET', url: `/api/applications/${target}/finops`, headers: { cookie: standard },
+    })).statusCode).toBe(403);
+
+    const auditeur = await loginAs(app, ACCOUNTS.auditor);
+    expect((await app.inject({
+      method: 'GET', url: `/api/applications/${appId(app, 'Résumé de réunions')}/finops`,
+      headers: { cookie: auditeur },
+    })).statusCode).toBe(404);
+  });
+});
+
+// --- Coût du mois porté par les applications --------------------------------
+
+describe("coût du mois dans l'inventaire", () => {
+  let app: FastifyInstance;
+  beforeEach(async () => {
+    app = await createTestApp();
+  });
+  afterEach(async () => {
+    await app.close();
+  });
+
+  const list = async (email: string) => {
+    const cookie = await loginAs(app, email);
+    const response = await app.inject({ method: 'GET', url: '/api/applications', headers: { cookie } });
+    return response.json().applications as { name: string; monthlyCostEur: number | null }[];
+  };
+
+  it('expose le coût du mois aux rôles qui ont finops:read', async () => {
+    const applications = await list(ACCOUNTS.aiOfficer);
+    const recrutement = applications.find((a) => a.name === 'Assistant Recrutement')!;
+
+    const attendu = one<{ total: number }>(
+      app.db, 'SELECT SUM(amount_eur) AS total FROM finops_costs WHERE application_id = (SELECT id FROM applications WHERE name = ?) AND period_month = ?',
+      'Assistant Recrutement', CURRENT,
+    )!.total;
+    expect(recrutement.monthlyCostEur).toBe(attendu);
+
+    // Une application sans coût sur le mois vaut 0, pas null.
+    const supprimee = applications.find((a) => a.name === 'Prévision Stock v1')!;
+    expect(supprimee.monthlyCostEur).toBe(0);
+  });
+
+  it("ne calcule aucun coût pour un rôle sans finops:read", async () => {
+    const applications = await list(ACCOUNTS.standard);
+    expect(applications.length).toBeGreaterThan(0);
+    expect(applications.every((a) => a.monthlyCostEur === null)).toBe(true);
+  });
+
+  it('la fiche détaillée suit la même règle', async () => {
+    const id = appId(app, 'Assistant Recrutement');
+    const fiche = async (email: string) => {
+      const cookie = await loginAs(app, email);
+      const response = await app.inject({ method: 'GET', url: `/api/applications/${id}`, headers: { cookie } });
+      return response.json().application.monthlyCostEur;
+    };
+    expect(await fiche(ACCOUNTS.auditor)).toBeGreaterThan(0);
+    expect(await fiche(ACCOUNTS.standard)).toBeNull();
+  });
+
+  it('le coût suit une nouvelle saisie', async () => {
+    const cookie = await loginAs(app, ACCOUNTS.aiOfficer);
+    const id = appId(app, 'Chatbot Support');
+    const avant = (await list(ACCOUNTS.aiOfficer)).find((a) => a.name === 'Chatbot Support')!.monthlyCostEur!;
+
+    await app.inject({
+      method: 'PUT', url: `/api/applications/${id}/costs`, headers: { cookie },
+      payload: { periodMonth: CURRENT, amountEur: 1000 },
+    });
+
+    const apres = (await list(ACCOUNTS.aiOfficer)).find((a) => a.name === 'Chatbot Support')!.monthlyCostEur!;
+    expect(apres).toBe(avant + 1000); // source 'manuel' ajoutée à la source 'seed'
   });
 });

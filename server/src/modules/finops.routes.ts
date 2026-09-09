@@ -14,7 +14,7 @@ import type { Db } from '../db/connection.js';
 import { forbidden, notFound } from '../lib/http-errors.js';
 import { validate } from '../lib/validate.js';
 import { getApplication, isVisible } from './applications.repo.js';
-import { buildFinopsReport, listApplicationCosts, saveCost } from './finops.repo.js';
+import { buildApplicationFinops, buildFinopsReport, listApplicationCosts, saveCost } from './finops.repo.js';
 
 export function registerFinopsRoutes(app: FastifyInstance, options: { db: Db }): void {
   const { db } = options;
@@ -31,6 +31,20 @@ export function registerFinopsRoutes(app: FastifyInstance, options: { db: Db }):
     const { months } = validate(finopsQuerySchema, request.query);
     return { report: buildFinopsReport(db, request.user!, months) };
   });
+
+  app.get<{ Params: { id: string } }>(
+    '/api/applications/:id/finops',
+    { preHandler: app.requirePermission('finops:read') },
+    async (request) => {
+      const user = request.user!;
+      const application = loadVisible(user, request.params.id);
+      const { months } = validate(finopsQuerySchema, request.query);
+      return {
+        report: buildApplicationFinops(db, user, application.id, months),
+        permissions: { edit: canEditCosts(user, application) },
+      };
+    },
+  );
 
   app.get<{ Params: { id: string } }>(
     '/api/applications/:id/costs',

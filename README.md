@@ -6,7 +6,7 @@ avec un questionnaire d'IA éthique et responsable, de leur donner un **statut d
 et de suivre leur **usage et leurs coûts** (FinOps, dashboards).
 
 Rôles : AI Officer · Application Manager · DPO · Auditeur · Utilisateur standard.
-Statuts : Draft → In progress → Conforme / Non conforme (+ Deleted, suppression logique).
+Statuts : Draft → In progress → Conforme / Partiellement conforme / Non conforme (+ Deleted, suppression logique).
 
 > État actuel : **lots 1 à 5** livrés — connexion (SSO Google + mot de passe) et rôles, accueil,
 > inventaire complet (déclaration, recherche, fiche, édition, suppression logique tracée,
@@ -161,6 +161,7 @@ Les alternatives écartées (ORM, NestJS, Next.js, lib de composants, JWT…) so
 | [docs/securite.md](docs/securite.md)                     | Mesures de sécurité, où elles sont dans le code, ce qui reste à faire |
 | [docs/accessibilite.md](docs/accessibilite.md)           | Règles appliquées (WCAG 2.2 AA), contrastes vérifiés, checklist de test |
 | [docs/roles-et-permissions.md](docs/roles-et-permissions.md) | Matrice des rôles, cycle de vie des statuts, règles de gestion |
+| [docs/questionnaire-v2.md](docs/questionnaire-v2.md)       | Conception du questionnaire : arbre de décision, barème, toutes les questions et recommandations |
 | [docs/charte/](docs/charte/)                             | Charte graphique d'origine (HTML) — source des tokens CSS       |
 
 ---
@@ -186,9 +187,9 @@ Les alternatives écartées (ORM, NestJS, Next.js, lib de composants, JWT…) so
 | 1   | Design system, connexion + rôles, accueil, formulaire de déclaration                        | ✅ livré |
 | 1b  | SSO Google + comptes de l'équipe                                                            | ✅ livré |
 | 2   | Inventaire filtrable, fiche application, édition, envoi à l'audit, suppression logique, historique | ✅ livré |
-| 3   | Questionnaire d'évaluation (18 pts, critères éliminatoires), scoring, verdict automatique    | ✅ livré |
+| 3   | Questionnaire d'évaluation v2 : cadrage dynamique, score /100, blocs par pays, verdict à 3 niveaux | ✅ livré |
 | 4   | Plan d'action généré automatiquement, suivi des actions correctives                          | ✅ livré |
-| 5   | FinOps : saisie des coûts, rapport (évolution, répartitions, couverture)                     | ✅ livré |
+| 5   | FinOps : saisie des coûts, rapport global et rapport par application                         | ✅ livré |
 | 6   | Dashboards BI et historique                                                                 | à faire  |
 | 7   | Durcissement : polices auto-hébergées, revue sécurité, mise en production                   | à faire  |
 

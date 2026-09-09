@@ -2,12 +2,18 @@
  * Bloc « Conformité » de la fiche application : dernier verdict rendu, plan
  * d'action en cours, et lien vers le questionnaire.
  *
+ * Affiche indifféremment une évaluation v1 (sur 18, éliminatoires) ou v2 (sur
+ * 100, plafonds, blocage) : `maxScore` et `questionnaireVersion` disent laquelle.
+ *
  * Les actions correctives sont cochables par ceux qui ont `action_plan:execute`
  * (Process Owner, AI Officer) ; les autres les voient en lecture seule.
  */
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { PASS_SCORE, can, getQuestion, type ActionPlanDto, type EvaluationDto } from '@poryg/shared';
+import {
+  COMPLIANT_MIN, PARTIAL_MIN, VERDICT_LABELS, can, questionWording,
+  type ActionPlanDto, type EvaluationDto,
+} from '@poryg/shared';
 import { api, ApiError } from '../api/client';
 import type { ApiQuery } from '../api/useApi';
 import { useUser } from '../auth/AuthContext';
@@ -70,6 +76,7 @@ export function EvaluationSummary({ applicationId, query, onChange }: Evaluation
 
   const last = data.history[0] ?? null;
   const openPlans = data.actionPlans.filter((plan) => plan.status === 'open');
+  const countries = last?.sections.filter((section) => ['UE', 'US', 'CN', 'AU'].includes(section.code)) ?? [];
 
   return (
     <Card
@@ -78,7 +85,7 @@ export function EvaluationSummary({ applicationId, query, onChange }: Evaluation
       actions={
         data.permissions.fill ? (
           <ButtonLink to={`/applications/${applicationId}/evaluation`} variant="secondary" small>
-            {data.draft ? 'Reprendre le questionnaire' : 'Remplir le questionnaire'}
+            {data.draft ? 'Reprendre le questionnaire' : last ? 'Nouvelle évaluation' : 'Remplir le questionnaire'}
           </ButtonLink>
         ) : (
           <ButtonLink to={`/applications/${applicationId}/evaluation`} variant="ghost" small>
@@ -99,30 +106,54 @@ export function EvaluationSummary({ applicationId, query, onChange }: Evaluation
       {last && (
         <>
           <p className="score score--inline">
-            <span className="score__value">{last.score}</span>
+            <span className="score__value">{last.score ?? '—'}</span>
             <span className="score__max">/ {last.maxScore}</span>
-            <span className={`verdict verdict--${last.decision}`}>
-              {last.decision === 'compliant' ? 'Conforme' : 'Non conforme'}
-            </span>
+            {last.verdict && <span className={`verdict verdict--${last.verdict}`}>{VERDICT_LABELS[last.verdict].split(' — ')[0]}</span>}
           </p>
           <p className="muted score__hint">
-            Seuil : {PASS_SCORE}/{last.maxScore} · soumise par {last.submittedBy?.displayName ?? 'Système'} le{' '}
+            {last.maxScore === 100
+              ? `Conforme dès ${COMPLIANT_MIN}, test de ${PARTIAL_MIN} à ${COMPLIANT_MIN - 1}`
+              : 'Questionnaire v1 : seuil 14/18'}
+            {' · '}soumise par {last.submittedBy?.displayName ?? 'Système'} le{' '}
             <span className="mono">{last.submittedAt ? formatDateTime(last.submittedAt) : '—'}</span>
             {data.history.length > 1 && ` · ${data.history.length} évaluations au total`}
           </p>
 
-          {last.redFlags.length > 0 && (
+          {last.blockedBy && (
             <div className="notice notice--danger">
-              Critère{last.redFlags.length > 1 ? 's' : ''} éliminatoire{last.redFlags.length > 1 ? 's' : ''} non
-              satisfait{last.redFlags.length > 1 ? 's' : ''} :
+              Évaluation refusée sur la question <span className="mono">{last.blockedBy}</span> —{' '}
+              {questionWording(last.blockedBy)}
+            </div>
+          )}
+
+          {last.cappedBy.length > 0 && !last.blockedBy && (
+            <div className="notice notice--danger">
+              {last.maxScore === 100 ? 'Score plafonné à 60 par les critères critiques' : 'Critères éliminatoires'} non
+              satisfaits :
               <ul className="redflags">
-                {last.redFlags.map((code) => (
+                {last.cappedBy.map((code) => (
                   <li key={code}>
-                    <span className="mono">{code}</span> — {getQuestion(code)?.wording ?? code}
+                    <span className="mono">{code}</span> — {questionWording(code)}
                   </li>
                 ))}
               </ul>
             </div>
+          )}
+
+          {countries.length > 0 && (
+            <ul className="section-bars section-bars--inline">
+              {countries.map((section) => (
+                <li key={section.code} className="section-bar">
+                  <span className="section-bar__label">{section.label.replace('Réglementation — ', '')}</span>
+                  <span className="section-bar__value mono">
+                    {section.pointsObtained.toLocaleString('fr-FR')}/{section.pointsApplicable}
+                  </span>
+                  <span className="section-bar__track" aria-hidden="true">
+                    <span className="section-bar__fill" style={{ width: `${section.score ?? 0}%` }} />
+                  </span>
+                </li>
+              ))}
+            </ul>
           )}
         </>
       )}

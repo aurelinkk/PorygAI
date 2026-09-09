@@ -345,7 +345,9 @@ function toneFor(entry: AuditEntryDto): string {
   // changement de statut que l'entrée porte déjà.
   if (entry.action === 'evaluation_submitted') {
     const status = entry.changes.find((change) => change.field === 'status')?.after;
-    return status === 'compliant' ? 'done' : 'alert';
+    if (status === 'compliant') return 'done';
+    if (status === 'partially_compliant') return 'partial';
+    return 'alert';
   }
   return TIMELINE_TONES[entry.action] ?? 'neutral';
 }

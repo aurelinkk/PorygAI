@@ -211,7 +211,9 @@ export function CostCard({ applicationId, query, editable, onSaved }: CostCardPr
       )}
 
       <p className="muted cost-link">
-        <Link to="/finops">Voir le rapport FinOps complet</Link>
+        <Link to={`/applications/${applicationId}/finops`}>Rapport FinOps de cette application</Link>
+        {' · '}
+        <Link to="/finops">Rapport global</Link>
       </p>
     </Card>
   );

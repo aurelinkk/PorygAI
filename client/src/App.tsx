@@ -7,6 +7,7 @@
  *   /applications/:id              fiche détaillée
  *   /applications/:id/modifier     édition (permission application:update + propriétaire)
  *   /applications/:id/evaluation   questionnaire de conformité (permission evaluation:read)
+ *   /applications/:id/finops       rapport FinOps de l'application (permission finops:read)
  *   /finops                        rapport FinOps (permission finops:read)
  */
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
@@ -14,6 +15,7 @@ import { AuthProvider } from './auth/AuthContext';
 import { RequireAuth, RequirePermission } from './auth/guards';
 import { AppShell } from './layout/AppShell';
 import { ApplicationDetailPage } from './pages/ApplicationDetailPage';
+import { ApplicationFinopsPage } from './pages/ApplicationFinopsPage';
 import { ApplicationsPage } from './pages/ApplicationsPage';
 import { DeclareAppPage } from './pages/DeclareAppPage';
 import { EditAppPage } from './pages/EditAppPage';
@@ -45,6 +47,14 @@ const router = createBrowserRouter([
         ),
       },
       { path: 'applications/:id', element: <ApplicationDetailPage /> },
+      {
+        path: 'applications/:id/finops',
+        element: (
+          <RequirePermission permission="finops:read">
+            <ApplicationFinopsPage />
+          </RequirePermission>
+        ),
+      },
       {
         path: 'applications/:id/evaluation',
         element: (

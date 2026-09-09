@@ -82,14 +82,15 @@ Règles complémentaires, au-delà de la simple permission de rôle :
 ## Cycle de vie d'une application
 
 ```
-             déclaration                soumission               décision auditeur
-  (rien) ───────────────► draft ───────────────────► in_progress ─────┬────► compliant
-                                                          ▲           │
-                                                          │           └────► non_compliant
+             déclaration                soumission                 verdict (score /100)
+  (rien) ───────────────► draft ───────────────────► in_progress ─────┬────► compliant            (≥ 86, prod)
+                                                          ▲           ├────► partially_compliant  (61–85, test)
+                                                          │           └────► non_compliant        (≤ 60, plafonné ou refusé)
                                                           │                     │ plan d'action
                                                           │  1 an après la      │ puis nouvelle
                                                           └──── conformité ─────┘ évaluation
 
+  partially_compliant : sans échéance automatique — reste en test jusqu'à réévaluation.
   deleted : depuis n'importe quel statut, par l'AI Officer. Jamais de DELETE SQL.
 ```
 
@@ -97,8 +98,9 @@ Règles complémentaires, au-delà de la simple permission de rôle :
 | --------------- | ------------- | ---------------------------------------------------------------------------------- |
 | `draft`         | Draft         | En cours de saisie. Modifiable par le Process Owner, invisible des tableaux de conformité. |
 | `in_progress`   | In progress   | En cours d'audit. Aussi le statut automatique un an après une mise en conformité.  |
-| `compliant`     | Conforme      | Toutes les exigences satisfaites. `compliance_valid_until` = décision + 12 mois.   |
-| `non_compliant` | Non conforme  | Motif obligatoire ; plan d'action avec échéance et responsable.                    |
+| `compliant`     | Conforme      | Score ≥ 86/100 : déployable en production. `compliance_valid_until` = décision + 12 mois. |
+| `partially_compliant` | Partiellement conforme | Score 61–85 : autorisée en test / pilote. Sans échéance. Plan d'action généré. |
+| `non_compliant` | Non conforme  | Score ≤ 60, critère critique manqué (plafond) ou pratique refusée (blocage). Plan d'action. |
 | `deleted`       | Deleted       | Suppression logique : `deleted_by`, `deleted_at`. Reste affichée, grisée et barrée. |
 
 ### Règles de gestion (brief)
@@ -112,47 +114,35 @@ Règles complémentaires, au-delà de la simple permission de rôle :
 3. **Traçabilité** — toute action porte son auteur et son horodatage (`audit_log`, table immuable).
    La fiche d'une application affiche cet historique, avec le détail des champs modifiés.
 
-### Le questionnaire d'évaluation
+### Le questionnaire d'évaluation (v2)
 
-Défini dans `shared/src/questionnaire.ts` (versionné avec le code, comme les référentiels).
-9 questions réparties en 4 piliers, **18 points** au total : Oui = 2, Partiellement = 1, Non = 0.
+Conception complète, arbre de décision et liste des questions : **[questionnaire-v2.md](questionnaire-v2.md)**.
+Définition en code : `shared/src/questionnaire.ts` (versionnée : `QUESTIONNAIRE_VERSION`).
 
-| Pilier | Questions | Dont éliminatoires |
-| --- | --- | --- |
-| A. Sécurité & Données | A1, A2, A3 | A1 (hébergement), A2 (données sensibles) |
-| B. Transparence | B1, B2 | B1 (information des utilisateurs) |
-| C. Équité & Supervision | C1, C2 | C1 (humain dans la boucle) |
-| D. FinOps & Éco-conception | D1, D2 | — |
+En résumé :
 
-**Scoring hybride.** L'application est *Conforme* si le score ≥ **14/18** **ET** qu'aucun critère
-éliminatoire n'a obtenu 0. Un seul « Non » sur un éliminatoire suffit à basculer en *Non conforme*,
-même avec 16/18. Le calcul est celui de `scoreEvaluation()` — la même fonction sert au client
-(affichage en direct pendant la saisie) et au serveur (calcul qui fait foi à la soumission).
+- **Cadrage** (6 questions, non notées) : pays de déploiement, domaine militaire (→ blocage), domaine à
+  fort enjeu, données personnelles, contenu généré / interaction, origine du modèle. Chaque réponse
+  active ou masque des questions via `showIf`.
+- **8 thèmes notés**, dont un bloc réglementaire **par pays** (UE, États-Unis, Chine, autre) avec sa
+  propre barre d'avancement.
+- **Score = 100 × points obtenus / points applicables.** Poids : critique 4, standard 2, mineur 1.
+  Une question masquée ne compte nulle part.
+- **Verdict** : ≥ 86 conforme · 61–85 partiellement conforme · ≤ 60 non conforme. Une question
+  **critique** à « Non » plafonne à 60. Deux **blocages** (militaire, pratique interdite AI Act)
+  refusent l'évaluation sans score.
+- **Recommandations** : une par point perdu, classées par points récupérables ; elles deviennent le
+  plan d'action (sauf si conforme).
 
-**Effets de la soumission :**
-
-- *Conforme* → statut `compliant` et échéance à +12 mois ; le job d'expiration annuelle prendra le relais.
-- *Non conforme* → statut `non_compliant`, échéance effacée, et **une action corrective par question
-  à 0 ou 1 point**, avec le texte de remédiation prévu pour cette question. Échéance par défaut :
-  90 jours pour un critère éliminatoire, 180 jours sinon ; responsable = le Process Owner.
-
-> La fiche d'évaluation d'origine mentionne, en cas de non-conformité, une action système
-> « l'application est bloquée ». Point tranché avec le métier : **cela désigne le statut
-> `non_compliant` lui-même**, pas un mécanisme supplémentaire. Poryg'AI est un registre et n'a
-> aucune prise technique sur les applications inventoriées — il n'y a donc rien à implémenter de plus.
-
-> L'échéance de conformité est posée à **+12 mois** (date anniversaire) plutôt qu'à 365 jours fixes :
-> cela colle à la règle de gestion « conforme pendant un an » et ne dérive pas les années bissextiles.
-
-**Qui fait quoi :** `evaluation:fill` (AI Officer, Application Manager, Auditeur) permet de saisir et
-d'enregistrer un brouillon ; `evaluation:decide` (AI Officer, Auditeur) permet de **soumettre**, ce
-qui déclenche le verdict. Le DPO consulte. Une évaluation soumise est figée en base (trigger SQL) :
-c'est la preuve de l'audit. Une nouvelle soumission crée une nouvelle évaluation, l'historique reste.
+**Qui fait quoi :** `evaluation:fill` (AI Officer, Application Manager, Auditeur) saisit et enregistre
+un brouillon (sauvegarde automatique à chaque étape) ; `evaluation:decide` (AI Officer, Auditeur)
+**soumet**, ce qui déclenche le verdict. Une évaluation soumise est figée (trigger SQL). Les
+évaluations v1 restent lisibles avec leur barème d'origine (16/18).
 
 ### Règle ajoutée au lot 2 : réévaluation après modification
 
 Modifier le **domaine métier**, la **sensibilité des données** ou le **type d'IA** d'une application
-déjà décidée (Conforme ou Non conforme) la replace en `in_progress` et efface son échéance : ce qui
+déjà décidée (Conforme, Partiellement conforme ou Non conforme) la replace en `in_progress` et efface son échéance : ce qui
 a été audité ne correspondrait plus à ce qui est déclaré.
 
 Les autres champs (nom, description, Process Owner) ne déclenchent pas de réévaluation. La liste est

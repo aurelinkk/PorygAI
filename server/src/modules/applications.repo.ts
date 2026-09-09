@@ -5,7 +5,7 @@
  * son créateur, et les rôles ayant `application:read_all_drafts` (AI Officer).
  */
 import {
-  can, AUDIT_ACTION_LABELS, COMPLIANCE_VALIDITY_MONTHS, REEVALUATION_FIELDS,
+  can, AUDIT_ACTION_LABELS, COMPLIANCE_VALIDITY_MONTHS, DECIDED_STATUSES, REEVALUATION_FIELDS,
   type ApplicationFilters, type AppStatus, type ApplicationDto, type AuditEntryDto,
   type CreateApplicationInput, type UpdateApplicationInput, type UserDto,
 } from '@poryg/shared';
@@ -33,13 +33,34 @@ export interface ApplicationRow {
   deleted_by: number | null;
   deleted_by_name: string | null;
   deleted_at: string | null;
+  monthly_cost: number | null;
 }
 
-const SELECT_APPLICATION = `
+/**
+ * Coût du mois en cours, calculé en SQL (`strftime` donne le mois UTC, comme
+ * `monthKey()` côté application).
+ *
+ * Sans la permission `finops:read`, la colonne vaut littéralement NULL : la
+ * donnée ne part pas au client, plutôt que d'être masquée à l'affichage.
+ */
+function costColumn(user?: UserDto): string {
+  if (!user || !can(user.role, 'finops:read')) return 'NULL AS monthly_cost';
+  return `(SELECT COALESCE(SUM(fc.amount_eur), 0)
+             FROM finops_costs fc
+            WHERE fc.application_id = a.id
+              AND fc.period_month = strftime('%Y-%m', 'now')) AS monthly_cost`;
+}
+
+/**
+ * `user` est optionnel et son absence est le cas le plus restrictif (pas de
+ * coût) : un appel interne qui l'oublie ne peut pas provoquer de fuite.
+ */
+const selectApplication = (user?: UserDto) => `
   SELECT a.*,
          owner.display_name   AS owner_name,
          creator.display_name AS created_by_name,
-         deleter.display_name AS deleted_by_name
+         deleter.display_name AS deleted_by_name,
+         ${costColumn(user)}
     FROM applications a
     JOIN users owner   ON owner.id   = a.process_owner_id
     LEFT JOIN users creator ON creator.id = a.created_by
@@ -63,6 +84,7 @@ export function toDto(row: ApplicationRow): ApplicationDto {
     updatedAt: row.updated_at,
     deletedAt: row.deleted_at,
     deletedBy: row.deleted_by && row.deleted_by_name ? { id: row.deleted_by, displayName: row.deleted_by_name } : null,
+    monthlyCostEur: row.monthly_cost,
   };
 }
 
@@ -113,15 +135,20 @@ export function listApplications(
 
   const rows = all<ApplicationRow>(
     db,
-    `${SELECT_APPLICATION} WHERE ${conditions.join(' AND ')} ORDER BY a.updated_at DESC LIMIT ?`,
+    `${selectApplication(user)} WHERE ${conditions.join(' AND ')} ORDER BY a.updated_at DESC LIMIT ?`,
     ...params,
     limit,
   );
   return rows.map(toDto);
 }
 
-export function getApplication(db: Db, id: number): ApplicationDto | null {
-  const row = one<ApplicationRow>(db, `${SELECT_APPLICATION} WHERE a.id = ?`, id);
+/**
+ * `user` n'est à passer que lorsque le résultat part vers le client : il
+ * conditionne le calcul du coût du mois. Les appels internes (audit, écritures)
+ * l'omettent et n'obtiennent donc pas de coût.
+ */
+export function getApplication(db: Db, id: number, user?: UserDto): ApplicationDto | null {
+  const row = one<ApplicationRow>(db, `${selectApplication(user)} WHERE a.id = ?`, id);
   return row ? toDto(row) : null;
 }
 
@@ -178,7 +205,7 @@ export function updateApplication(
 ): UpdateResult {
   return transaction(db, () => {
     const before = getApplication(db, id)!;
-    const decided = before.status === 'compliant' || before.status === 'non_compliant';
+    const decided = DECIDED_STATUSES.includes(before.status);
     const reevaluationTriggered = decided && requiresReevaluation(before, input);
     const status: AppStatus = reevaluationTriggered ? 'in_progress' : before.status;
 

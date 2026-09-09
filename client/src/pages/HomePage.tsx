@@ -42,8 +42,21 @@ export function HomePage() {
         <>
           <dl className="kpi-grid">
             <Kpi label="Applications" value={data.applications} hint={`${data.inProgress} en cours d'audit`} />
-            <Kpi label="Conformes" value={data.compliant} hint={`${data.nonCompliant} non conforme${data.nonCompliant > 1 ? 's' : ''}`} tone="success" />
-            <Kpi label="Coût IA / mois" value={formatEur(data.monthlyCostEur)} hint={formatMonth(data.month)} tone="accent" />
+            <Kpi
+              label="Conformes"
+              value={data.compliant}
+              hint={`${data.partiallyCompliant} en test · ${data.nonCompliant} non conforme${data.nonCompliant > 1 ? 's' : ''}`}
+              tone="success"
+            />
+            <Kpi
+              label="Coût IA / mois"
+              value={formatEur(data.monthlyCostEur)}
+              hint={formatMonth(data.month)}
+              tone="accent"
+              // Sans la permission, la page renverrait un 403 : pas de lien alors.
+              to={can(user.role, 'finops:read') ? '/finops' : undefined}
+              linkLabel="voir le rapport FinOps"
+            />
           </dl>
 
           <div className="home-grid">

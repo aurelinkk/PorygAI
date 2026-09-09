@@ -24,6 +24,7 @@ function myEvaluations(user: UserDto, applications: ApplicationDto[]): Dashboard
         if (app.status === 'draft') push(app, 'Brouillon à compléter');
         else if (app.status === 'in_progress') push(app, 'Questionnaire à renseigner');
         else if (app.status === 'non_compliant') push(app, "Plan d'action à exécuter");
+        else if (app.status === 'partially_compliant') push(app, 'En test : actions à mener avant production');
         break;
       case 'auditor':
         if (app.status === 'in_progress') push(app, 'À auditer');
@@ -36,6 +37,7 @@ function myEvaluations(user: UserDto, applications: ApplicationDto[]): Dashboard
       case 'ai_officer':
         if (app.status === 'in_progress') push(app, "En cours d'audit");
         else if (app.status === 'non_compliant') push(app, "Plan d'action à suivre");
+        else if (app.status === 'partially_compliant') push(app, 'En test, à faire progresser');
         break;
       case 'standard':
         break;
@@ -69,6 +71,7 @@ export function registerDashboardRoutes(app: FastifyInstance, options: { db: Db 
     const summary: DashboardSummaryDto = {
       applications: total,
       compliant: count('compliant'),
+      partiallyCompliant: count('partially_compliant'),
       inProgress: count('in_progress'),
       nonCompliant: count('non_compliant'),
       monthlyCostEur: cost?.total ?? 0,

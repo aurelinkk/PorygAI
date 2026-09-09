@@ -47,13 +47,23 @@ export const REEVALUATION_FIELDS = ['businessDomain', 'dataSensitivity', 'aiType
 const optional = <T extends z.ZodTypeAny>(schema: T) =>
   z.preprocess((value) => (value === '' || value === undefined ? undefined : value), schema.optional());
 
+/**
+ * Une réponse : échelle (0/1/2 en nombre ou en chaîne), valeur d'un choix, ou
+ * liste de valeurs pour un choix multiple.
+ */
+const answerValueSchema = z.union([
+  z.number().int().min(0).max(2),
+  z.string().max(40),
+  z.array(z.string().max(40)).max(20),
+]);
+
 /** Informations préliminaires (non notées) + réponses au questionnaire. */
 export const saveEvaluationSchema = z.object({
   toolVendor: z.string().trim().max(200, '200 caractères maximum').default(''),
   purpose: z.string().trim().max(2000, '2000 caractères maximum').default(''),
   businessCriticality: z.enum(codes(BUSINESS_CRITICALITIES)).optional().nullable(),
-  /** code de question → 0, 1 ou 2. Une question sans réponse est simplement absente. */
-  answers: z.record(z.string(), z.union([z.literal(0), z.literal(1), z.literal(2)])).default({}),
+  /** code de question → réponse. Une question sans réponse est simplement absente. */
+  answers: z.record(z.string(), answerValueSchema).default({}),
   comments: z.record(z.string(), z.string().trim().max(1000)).default({}),
 });
 export type SaveEvaluationInput = z.infer<typeof saveEvaluationSchema>;

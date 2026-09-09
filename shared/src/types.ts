@@ -1,4 +1,5 @@
 /** Types des objets échangés entre l'API et le client (DTO). */
+import type { AnswerValue, SectionScore, Verdict } from './questionnaire.js';
 import type { Role } from './roles.js';
 import type { AppStatus } from './statuses.js';
 
@@ -38,6 +39,12 @@ export interface ApplicationDto {
   processOwner: UserRef;
   status: AppStatus;
   complianceValidUntil: string | null; // ISO 8601
+  /**
+   * Coût du mois en cours, toutes sources confondues.
+   * `null` quand l'utilisateur n'a pas la permission `finops:read` : la donnée
+   * n'est alors pas calculée du tout côté serveur, pas seulement masquée.
+   */
+  monthlyCostEur: number | null;
   createdAt: string;
   createdBy: UserRef | null;
   updatedAt: string;
@@ -48,6 +55,7 @@ export interface ApplicationDto {
 export interface DashboardSummaryDto {
   applications: number; // hors deleted
   compliant: number;
+  partiallyCompliant: number;
   inProgress: number;
   nonCompliant: number;
   monthlyCostEur: number; // mois courant
@@ -61,18 +69,25 @@ export interface DashboardSummaryDto {
 export interface EvaluationDto {
   id: number;
   applicationId: number;
+  /** 'v1' (18 points, éliminatoires) ou 'v2' (sur 100, cadrage dynamique). */
   questionnaireVersion: string;
   /** 'draft' : saisie en cours · 'submitted' : soumise, verdict rendu. */
   status: 'draft' | 'submitted';
   toolVendor: string;
   purpose: string;
   businessCriticality: string | null;
-  answers: Record<string, 0 | 1 | 2>;
+  answers: Record<string, AnswerValue>;
   comments: Record<string, string>;
+  /** v1 : 0–18 · v2 : 0–100. `maxScore` dit lequel. `null` si non soumise ou refusée. */
   score: number | null;
   maxScore: number;
-  redFlags: string[];
-  decision: 'compliant' | 'non_compliant' | null;
+  /** v2 : questions critiques manquées (plafond 60). v1 : critères éliminatoires à 0. */
+  cappedBy: string[];
+  /** Code de la question ayant refusé l'évaluation (v2), sinon `null`. */
+  blockedBy: string | null;
+  verdict: Verdict | null;
+  /** Sous-scores par section, tels que calculés à la soumission (v2). */
+  sections: SectionScore[];
   createdBy: UserRef | null;
   createdAt: string;
   updatedAt: string;
@@ -144,6 +159,34 @@ export interface FinopsReportDto {
     total: number;
     missing: { id: number; code: string; name: string }[];
   };
+}
+
+/**
+ * Rapport FinOps d'UNE application. Même lecture que le rapport global, mais
+ * ramenée à une seule application, avec en plus sa part dans la dépense totale
+ * et le détail des saisies (qui a saisi quoi, depuis quelle source).
+ */
+export interface ApplicationFinopsDto {
+  applicationId: number;
+  currentMonth: string;
+  currentTotal: number;
+  previousMonth: string;
+  previousTotal: number;
+  variationPct: number | null;
+  /** Total sur la fenêtre analysée. */
+  windowTotal: number;
+  monthly: { month: string; amountEur: number }[];
+  /** Répartition par source de coût, sur toute la fenêtre. */
+  bySource: FinopsBreakdownRow[];
+  /** Dépense IA totale de l'entreprise sur le mois courant, pour situer l'application. */
+  companyTotal: number;
+  /** Part de cette application dans cette dépense (0 à 1). */
+  shareOfCompany: number;
+  /** Rang de l'application dans le classement des plus coûteuses (1 = la plus chère). */
+  rank: number | null;
+  rankedOver: number;
+  /** Toutes les saisies, du mois le plus récent au plus ancien. */
+  entries: ApplicationCostDto[];
 }
 
 /** Une entrée du journal d'audit, prête à afficher. */

@@ -38,7 +38,8 @@ export function registerApplicationsRoutes(app: FastifyInstance, options: { db: 
   function loadVisible(user: UserDto, rawId: string): ApplicationDto {
     const id = Number(rawId);
     if (!Number.isInteger(id) || id <= 0) throw notFound('Application introuvable');
-    const application = getApplication(db, id);
+    // L'utilisateur est passé : le coût du mois n'est calculé que s'il y a droit.
+    const application = getApplication(db, id, user);
     if (!application || !isVisible(db, user, id)) throw notFound('Application introuvable');
     return application;
   }

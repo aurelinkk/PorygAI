@@ -70,7 +70,8 @@ port, pas de réseau, une base neuve par test.
 | PUT | `/api/applications/:id/evaluation` | `evaluation:fill` | enregistre un brouillon, sans verdict |
 | POST | `/api/applications/:id/evaluation/submit` | `evaluation:decide` | score, verdict, plan d'action |
 | POST | `/api/action-plans/:id/done` | `action_plan:execute` | coche / décoche une action corrective |
-| GET | `/api/finops/report` | `finops:read` | rapport agrégé, `?months=6` (1 à 36) |
+| GET | `/api/finops/report` | `finops:read` | rapport global agrégé, `?months=6` (1 à 36) |
+| GET | `/api/applications/:id/finops` | `finops:read` | rapport d'une seule application |
 | GET | `/api/applications/:id/costs` | `finops:read` | coûts mensuels d'une application |
 | PUT | `/api/applications/:id/costs` | `finops:write` | + `canEditCosts` (propriétaire) |
 | GET | `/api/dashboard/summary` | `dashboard:read` | indicateurs adaptés au rôle |
@@ -131,7 +132,15 @@ application `compliant` dont `compliance_valid_until` est dépassé, avec une li
 Schéma actuel :
 - migration 001 — `users`, `sessions`, `applications`, `finops_costs`, `audit_log` ;
 - migration 002 — comptes de l'équipe (données, pas de structure) ;
-- migration 003 — `evaluations`, `evaluation_answers`, `action_plans`.
+- migration 003 — `evaluations`, `evaluation_answers`, `action_plans` ;
+- migration 004 — questionnaire v2 : statut `partially_compliant`, verdict à quatre valeurs,
+  réponses en JSON. **Reconstruit trois tables** (SQLite ne sait pas modifier une contrainte CHECK).
+
+Une migration qui commence par `-- migrate: no-transaction` est exécutée hors transaction : c'est le
+seul moyen de désactiver les clés étrangères (`PRAGMA foreign_keys` est sans effet dans une
+transaction), nécessaire pour reconstruire une table référencée. Le fichier pose lui-même
+`BEGIN … COMMIT` autour de la reconstruction, et le runner vérifie `PRAGMA foreign_key_check`
+après coup. Procédure et raisons : en-tête de `004_questionnaire_v2.sql`.
 
 ### Le rapport FinOps
 
@@ -146,13 +155,27 @@ même mois (`ON CONFLICT … DO UPDATE` sur la contrainte unique `(application, 
 formulaire de saisie affiche donc toujours ce qui est déjà enregistré pour le mois choisi, sans quoi
 le total obtenu serait incompréhensible.
 
+**Le coût du mois voyage avec l'application.** `ApplicationDto.monthlyCostEur` est calculé par une
+sous-requête SQL (`strftime('%Y-%m','now')`), ce qui évite un aller-retour supplémentaire pour
+l'afficher dans les tableaux. Sans la permission `finops:read`, la colonne SQL vaut littéralement
+`NULL` : la donnée n'est pas calculée, pas seulement masquée à l'affichage. `getApplication()` prend
+un `user` **optionnel** dont l'absence est le cas le plus restrictif — un appel interne qui l'oublie
+ne peut pas provoquer de fuite. Côté client, le tableau retire la colonne quand la valeur est `null`.
+
+**Deux rapports, deux échelles.** `buildFinopsReport` couvre toute l'entreprise ;
+`buildApplicationFinops` ramène la même lecture à une application, en y ajoutant sa part dans la
+dépense du mois et son rang — c'est ce qui transforme un montant brut en information exploitable.
+Les totaux de comparaison respectent la visibilité de l'utilisateur, mais l'application demandée est
+toujours détaillée (la route a déjà vérifié qu'elle lui est visible).
+
 Deux points de saisie, une seule route (`PUT /api/applications/:id/costs`) :
 - la page **FinOps**, avec un sélecteur d'application, pour saisir plusieurs coûts à la suite ;
 - la carte **Coûts** de la fiche application (`components/CostEntry.tsx`), où l'application est déjà
   connue : un bouton dévoile un formulaire à deux champs.
 
 Le message d'avertissement est le même des deux côtés : le composant `ExistingCostNotice` est
-partagé, pour qu'une évolution de la règle ne soit à faire qu'une fois.
+partagé, pour qu'une évolution de la règle ne soit à faire qu'une fois. Les graphiques mensuels
+passent tous par `components/MonthlyBars.tsx`, pour la même raison.
 
 ---
 

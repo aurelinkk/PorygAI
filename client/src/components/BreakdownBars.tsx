@@ -13,7 +13,7 @@ export interface BreakdownItem {
   label: ReactNode;
   amountEur: number;
   share: number;
-  hint?: string;
+  hint?: ReactNode;
   /** Modificateur CSS optionnel, pour colorer une ligne (statut de conformité). */
   tone?: string;
 }
