@@ -24,16 +24,26 @@ export interface ApiQuery<T> extends State<T> {
   reload: () => void;
 }
 
-export function useApi<T>(url: string): ApiQuery<T> {
+/**
+ * `url` peut être vide ou `null` : la requête n'est alors pas lancée. Cela permet
+ * à un composant de conditionner un chargement (« charge les coûts seulement
+ * quand une application est choisie ») sans enfreindre les règles des hooks.
+ */
+export function useApi<T>(url: string | null): ApiQuery<T> {
   // Une donnée déjà en cache est affichée d'emblée : pas de scintillement.
   const [state, setState] = useState<State<T>>(() => {
-    const cached = readCache<T>(url);
-    return { data: cached ?? null, error: null, loading: cached === undefined };
+    const cached = url ? readCache<T>(url) : undefined;
+    return { data: cached ?? null, error: null, loading: Boolean(url) && cached === undefined };
   });
   const [version, setVersion] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
+
+    if (!url) {
+      setState({ data: null, error: null, loading: false });
+      return;
+    }
 
     const cached = version === 0 ? readCache<T>(url) : undefined;
     if (cached !== undefined) {
@@ -57,7 +67,7 @@ export function useApi<T>(url: string): ApiQuery<T> {
 
   /** Force un rechargement en ignorant le cache. */
   const reload = useCallback(() => {
-    invalidate(url);
+    if (url) invalidate(url);
     setVersion((current) => current + 1);
   }, [url]);
 

@@ -4,7 +4,7 @@
  *   état invalide (aria-invalid). Les erreurs sont annoncées par le résumé en
  *   tête de formulaire (FormErrorSummary), pas champ par champ.
  */
-import type { InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from 'react';
+import type { InputHTMLAttributes, ReactNode, Ref, SelectHTMLAttributes, TextareaHTMLAttributes } from 'react';
 import { cx } from '../../lib/format';
 
 interface FieldBase {
@@ -42,7 +42,9 @@ function FieldWrapper({ id, label, hint, error, required, children }: FieldBase 
   );
 }
 
-type TextFieldProps = FieldBase & Omit<InputHTMLAttributes<HTMLInputElement>, 'id' | 'required'>;
+/** `ref` est transmise à l'`<input>` : utile pour y placer le focus (React 19). */
+type TextFieldProps = FieldBase &
+  Omit<InputHTMLAttributes<HTMLInputElement>, 'id' | 'required'> & { ref?: Ref<HTMLInputElement> };
 
 export function TextField({ id, label, hint, error, required, className, ...input }: TextFieldProps) {
   return (

@@ -86,7 +86,15 @@ export function ApplicationsTable({ applications, labelledBy }: ApplicationsTabl
   }
 
   return (
-    <div className="table-wrap">
+    <div
+      className="table-wrap"
+      // Rend le défilement horizontal atteignable au clavier (WCAG 2.1.1).
+      // `group` et non `region` : la carte parente est déjà un landmark portant
+      // ce même titre, deux landmarks homonymes seraient une erreur.
+      tabIndex={0}
+      role="group"
+      aria-labelledby={labelledBy}
+    >
       <table className="table" aria-labelledby={labelledBy}>
         <thead>
           <tr>

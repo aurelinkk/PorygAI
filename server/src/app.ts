@@ -20,6 +20,7 @@ import { registerApplicationsRoutes } from './modules/applications.routes.js';
 import { registerAuthRoutes } from './modules/auth.routes.js';
 import { registerDashboardRoutes } from './modules/dashboard.routes.js';
 import { registerEvaluationsRoutes } from './modules/evaluations.routes.js';
+import { registerFinopsRoutes } from './modules/finops.routes.js';
 import { registerUsersRoutes } from './modules/users.routes.js';
 import { registerAuth } from './plugins/auth.js';
 import { registerSecurity } from './plugins/security.js';
@@ -69,6 +70,7 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
   registerUsersRoutes(app, { db });
   registerApplicationsRoutes(app, { db });
   registerEvaluationsRoutes(app, { db });
+  registerFinopsRoutes(app, { db });
   registerDashboardRoutes(app, { db });
 
   // En production, l'API sert aussi le front compilé (`npm run build`) : un seul processus.

@@ -58,6 +58,13 @@ export function AppShell() {
                   Inventaire
                 </NavLink>
               </li>
+              {can(user.role, 'finops:read') && (
+                <li>
+                  <NavLink to="/finops" className="nav__link">
+                    FinOps
+                  </NavLink>
+                </li>
+              )}
               {can(user.role, 'application:create') && (
                 <li>
                   <NavLink to="/applications/nouvelle" className="nav__link">

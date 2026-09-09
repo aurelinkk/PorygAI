@@ -145,7 +145,7 @@ export function EvaluationPage() {
     }
   }
 
-  if (application.loading || evaluation.loading) {
+  if ((application.loading && !application.data) || (evaluation.loading && !evaluation.data)) {
     return <LoadingScreen message="Chargement du questionnaire…" />;
   }
   if (application.error || evaluation.error || !application.data || !evaluation.data) {

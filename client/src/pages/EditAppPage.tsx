@@ -33,7 +33,7 @@ export function EditAppPage() {
     document.title = "Modifier une application · Poryg'AI";
   }, []);
 
-  if (loading) {
+  if (loading && !data) {
     return (
       <LoadingScreen message="Chargement du formulaire…" />
     );

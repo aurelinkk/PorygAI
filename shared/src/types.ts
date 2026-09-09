@@ -2,6 +2,18 @@
 import type { Role } from './roles.js';
 import type { AppStatus } from './statuses.js';
 
+/** Helpers de mois 'YYYY-MM', partagés client/serveur. */
+export function monthKey(date: Date): string {
+  return date.toISOString().slice(0, 7);
+}
+
+/** Décale un mois 'YYYY-MM' de `delta` mois (négatif pour reculer). */
+export function shiftMonth(month: string, delta: number): string {
+  const date = new Date(`${month}-01T00:00:00.000Z`);
+  date.setUTCMonth(date.getUTCMonth() + delta);
+  return monthKey(date);
+}
+
 export interface UserDto {
   id: number;
   email: string;
@@ -82,6 +94,56 @@ export interface ActionPlanDto {
   createdAt: string;
   doneBy: UserRef | null;
   doneAt: string | null;
+}
+
+/** Un coût mensuel saisi pour une application. */
+export interface ApplicationCostDto {
+  id: number;
+  applicationId: number;
+  periodMonth: string; // 'YYYY-MM'
+  amountEur: number;
+  source: string;
+  createdBy: UserRef | null;
+  createdAt: string;
+}
+
+/** Une ligne de répartition du rapport FinOps. */
+export interface FinopsBreakdownRow {
+  key: string;
+  label: string;
+  amountEur: number;
+  /** Part du total, entre 0 et 1. */
+  share: number;
+  applications: number;
+}
+
+/**
+ * Rapport FinOps — phase « Inform » : répartir la dépense et la rendre lisible.
+ * Tous les montants sont en euros, sur les applications non supprimées.
+ */
+export interface FinopsReportDto {
+  /** Mois analysé (le plus récent de la fenêtre), au format 'YYYY-MM'. */
+  currentMonth: string;
+  currentTotal: number;
+  previousMonth: string;
+  previousTotal: number;
+  /** Variation en % par rapport au mois précédent ; `null` si le mois précédent est à zéro. */
+  variationPct: number | null;
+  /** Total sur toute la fenêtre analysée. */
+  windowTotal: number;
+  /** Série mensuelle complète, mois sans dépense inclus (à zéro). */
+  monthly: { month: string; amountEur: number }[];
+  /** Applications les plus coûteuses sur le mois courant, de la plus chère à la moins chère. */
+  byApplication: (FinopsBreakdownRow & { applicationId: number; code: string; status: AppStatus })[];
+  byDomain: FinopsBreakdownRow[];
+  /** Le croisement clé : combien coûte ce qui n'est pas conforme. */
+  byStatus: FinopsBreakdownRow[];
+  /** Qualité de la donnée : applications actives sans coût saisi pour le mois courant. */
+  coverage: {
+    withCost: number;
+    total: number;
+    missing: { id: number; code: string; name: string }[];
+  };
 }
 
 /** Une entrée du journal d'audit, prête à afficher. */

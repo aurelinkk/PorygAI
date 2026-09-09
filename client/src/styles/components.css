@@ -751,6 +751,27 @@ legend.field__label {
   background: var(--blanc);
   border: var(--border-thin);
 }
+/* Pastille colorée par type d'événement (voir TIMELINE_TONES).
+   Renfort visuel uniquement : le libellé de l'action est toujours affiché. */
+.timeline__item--create::before {
+  background: var(--rose);
+}
+.timeline__item--update::before,
+.timeline__item--progress::before {
+  background: var(--bleu);
+}
+.timeline__item--draft::before {
+  background: var(--violet);
+}
+.timeline__item--done::before {
+  background: var(--vert);
+}
+.timeline__item--alert::before {
+  background: var(--rouge);
+}
+.timeline__item--neutral::before {
+  background: var(--gris-fond);
+}
 .timeline__head {
   margin: 0;
   display: flex;
@@ -1100,6 +1121,99 @@ legend.field__label {
   font-weight: 700;
 }
 
+/* --- FinOps ------------------------------------------------------------------ */
+.finops-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: var(--gutter);
+  align-items: start;
+  margin-bottom: var(--gutter);
+}
+.finops-card {
+  margin-bottom: var(--gutter);
+}
+/* Le sélecteur de période vit dans l'en-tête de page : pas de marge basse. */
+.window-select {
+  min-width: 200px;
+}
+.page-header .field {
+  margin-bottom: 0;
+}
+
+/* Barres de répartition (BreakdownBars) */
+.breakdown .breakdown__label {
+  display: block;
+}
+.breakdown__amount {
+  display: block;
+  font-weight: 700;
+}
+.breakdown__track {
+  display: block;
+  height: 8px;
+  margin-top: 6px;
+  min-width: 120px;
+  background: var(--gris-fond);
+  border: 2px solid var(--encre);
+  border-radius: var(--radius-badge);
+  overflow: hidden;
+}
+.breakdown__bar {
+  display: block;
+  height: 100%;
+  background: var(--degrade);
+}
+/* Teintes reprises des statuts : la couleur double le libellé, elle ne le remplace pas. */
+.breakdown__bar--compliant {
+  background: var(--vert);
+}
+.breakdown__bar--non_compliant {
+  background: var(--rouge);
+}
+.breakdown__bar--in_progress {
+  background: var(--bleu);
+}
+.breakdown__bar--draft {
+  background: var(--violet);
+}
+
+/* Évolution mensuelle : barres verticales */
+.sparkline {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  height: 160px;
+  padding-top: 8px;
+}
+.sparkline__col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  height: 100%;
+  gap: 6px;
+  min-width: 0;
+}
+.sparkline__bar {
+  width: 100%;
+  max-width: 44px;
+  background: var(--degrade);
+  border: 2px solid var(--encre);
+  border-radius: 6px 6px 0 0;
+}
+.sparkline__label {
+  font-size: 11px;
+  color: var(--texte-2);
+}
+
+.missing-list {
+  margin: 8px 0 0;
+  padding-left: 20px;
+  display: grid;
+  gap: 4px;
+}
+
 /* --- Connexion -------------------------------------------------------------- */
 .login-layout {
   min-height: 100vh;
@@ -1189,7 +1303,8 @@ legend.field__label {
   }
   .home-grid,
   .detail-grid,
-  .eval-layout {
+  .eval-layout,
+  .finops-grid {
     grid-template-columns: 1fr;
   }
   .eval-side {
@@ -1223,4 +1338,40 @@ legend.field__label {
   .user-menu__name {
     display: none;
   }
+}
+
+/* Rappel des coûts déjà enregistrés dans le formulaire de saisie FinOps */
+.notice--info {
+  background: var(--bleu-pastel);
+  border: 2px solid var(--bleu-dark);
+  color: var(--bleu-text);
+  font-weight: 500;
+}
+
+/* Le conteneur de tableau est focusable (défilement au clavier) : son anneau de
+   focus doit rester visible sans déborder de la carte. */
+.table-wrap:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: -3px;
+  border-radius: var(--radius-field);
+}
+
+/* --- Saisie d'un coût depuis la fiche application ---------------------------- */
+.cost-total {
+  font-family: var(--font-display);
+  font-size: 28px;
+  line-height: 1;
+}
+.cost-history {
+  font-size: 12px;
+  margin-bottom: 0;
+}
+.cost-form {
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 2px dashed var(--gris-ligne);
+}
+.cost-link {
+  margin: 16px 0 0;
+  font-size: 13px;
 }

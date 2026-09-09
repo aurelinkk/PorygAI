@@ -22,6 +22,7 @@ import { Button, ButtonLink } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { Loading, LoadingScreen } from '../components/ui/Loading';
 import { EvaluationSummary, type EvaluationResponse } from '../components/EvaluationSummary';
+import { CostCard, type CostsResponse } from '../components/CostEntry';
 import { formatDate, formatDateTime } from '../lib/format';
 
 interface DetailResponse {
@@ -42,6 +43,9 @@ export function ApplicationDetailPage() {
   const { data, error, loading, reload } = useApi<DetailResponse>(`/api/applications/${id}`);
   const history = useApi<{ history: AuditEntryDto[] }>(`/api/applications/${id}/history`);
   const evaluation = useApi<EvaluationResponse>(`/api/applications/${id}/evaluation`);
+  const costs = useApi<CostsResponse>(
+    can(user.role, 'finops:read') ? `/api/applications/${id}/costs` : null,
+  );
   const [flash, setFlash] = useState<string | null>(initialFlash);
   const [actionError, setActionError] = useState<string | null>(null);
   const [confirming, setConfirming] = useState<'delete' | 'submit' | null>(null);
@@ -72,7 +76,9 @@ export function ApplicationDetailPage() {
     }
   }
 
-  if (loading) {
+  // Écran d'attente au tout premier chargement seulement : lors d'un rechargement
+  // (après une action), on garde la page affichée plutôt que de la démonter.
+  if (loading && !data) {
     return (
       <LoadingScreen message="Chargement de la fiche…" />
     );
@@ -193,6 +199,15 @@ export function ApplicationDetailPage() {
             />
           )}
 
+          {can(user.role, 'finops:read') && (
+            <CostCard
+              applicationId={application.id}
+              query={costs}
+              editable={!isDeleted}
+              onSaved={costs.reload}
+            />
+          )}
+
           {permissions.history && <HistoryCard query={history} />}
         </div>
 
@@ -280,7 +295,7 @@ function HistoryCard({ query }: { query: ApiQuery<{ history: AuditEntryDto[] }> 
       {data && data.history.length > 0 && (
         <ol className="timeline">
           {data.history.map((entry) => (
-            <li key={entry.id} className="timeline__item">
+            <li key={entry.id} className={`timeline__item timeline__item--${toneFor(entry)}`}>
               <p className="timeline__head">
                 <span className="timeline__action">{AUDIT_ACTION_LABELS[entry.action] ?? entry.action}</span>
                 <span className="timeline__meta mono">
@@ -305,6 +320,34 @@ function HistoryCard({ query }: { query: ApiQuery<{ history: AuditEntryDto[] }> 
       )}
     </Card>
   );
+}
+
+/**
+ * Couleur de la pastille de la frise, par type d'événement.
+ *
+ * La couleur ne fait que renforcer : le libellé de l'action est toujours affiché
+ * juste à côté, donc l'information ne repose jamais sur elle seule.
+ */
+const TIMELINE_TONES: Record<string, string> = {
+  create: 'create', // rose : naissance de la fiche
+  seed: 'neutral', // gris : donnée technique
+  update: 'update', // bleu : modification
+  submit: 'progress', // bleu : passage en audit
+  compliance_expired: 'progress', // bleu : retour en audit
+  evaluation_saved: 'draft', // violet : brouillon, comme le statut Draft
+  delete: 'neutral', // gris : comme le statut Deleted
+  restore: 'done', // vert : retour à la vie
+  action_plan_done: 'done', // vert : action soldée
+};
+
+function toneFor(entry: AuditEntryDto): string {
+  // Une évaluation soumise prend la couleur de son verdict, lu dans le
+  // changement de statut que l'entrée porte déjà.
+  if (entry.action === 'evaluation_submitted') {
+    const status = entry.changes.find((change) => change.field === 'status')?.after;
+    return status === 'compliant' ? 'done' : 'alert';
+  }
+  return TIMELINE_TONES[entry.action] ?? 'neutral';
 }
 
 /** Rend une valeur d'historique lisible (codes → libellés, vide → « — »). */

@@ -70,6 +70,9 @@ port, pas de réseau, une base neuve par test.
 | PUT | `/api/applications/:id/evaluation` | `evaluation:fill` | enregistre un brouillon, sans verdict |
 | POST | `/api/applications/:id/evaluation/submit` | `evaluation:decide` | score, verdict, plan d'action |
 | POST | `/api/action-plans/:id/done` | `action_plan:execute` | coche / décoche une action corrective |
+| GET | `/api/finops/report` | `finops:read` | rapport agrégé, `?months=6` (1 à 36) |
+| GET | `/api/applications/:id/costs` | `finops:read` | coûts mensuels d'une application |
+| PUT | `/api/applications/:id/costs` | `finops:write` | + `canEditCosts` (propriétaire) |
 | GET | `/api/dashboard/summary` | `dashboard:read` | indicateurs adaptés au rôle |
 
 `GET /api/applications/:id` renvoie aussi un objet `permissions` (`edit`, `submit`, `delete`,
@@ -125,8 +128,31 @@ application `compliant` dont `compliance_valid_until` est dépassé, avec une li
   `BEFORE DELETE` refusent la suppression physique sur `users`, `applications`, `finops_costs`, `audit_log`.
 - **Seed** (`db/seed.ts`) : idempotent, utilisé par `npm run db:seed` et par les tests.
 
-Schéma actuel (migration 001) : `users`, `sessions`, `applications`, `finops_costs`, `audit_log`.
-Les tables des questionnaires, évaluations et plans d'action arriveront avec les lots 3 et 4.
+Schéma actuel :
+- migration 001 — `users`, `sessions`, `applications`, `finops_costs`, `audit_log` ;
+- migration 002 — comptes de l'équipe (données, pas de structure) ;
+- migration 003 — `evaluations`, `evaluation_answers`, `action_plans`.
+
+### Le rapport FinOps
+
+`modules/finops.repo.ts` fait toutes les agrégations **en SQL** (série mensuelle, répartitions par
+application, domaine et statut, couverture) ; le code ne sert qu'à combler les mois sans dépense et
+à calculer les parts. Deux partis pris : les applications **supprimées** sont exclues (elles ne
+tournent plus), et la règle de visibilité des brouillons s'applique comme partout ailleurs.
+
+Les coûts s'additionnent par **source** (`finops_costs.source`) : une saisie manuelle vient s'ajouter
+à un éventuel import automatique, et une nouvelle saisie manuelle remplace la précédente pour le
+même mois (`ON CONFLICT … DO UPDATE` sur la contrainte unique `(application, mois, source)`). Le
+formulaire de saisie affiche donc toujours ce qui est déjà enregistré pour le mois choisi, sans quoi
+le total obtenu serait incompréhensible.
+
+Deux points de saisie, une seule route (`PUT /api/applications/:id/costs`) :
+- la page **FinOps**, avec un sélecteur d'application, pour saisir plusieurs coûts à la suite ;
+- la carte **Coûts** de la fiche application (`components/CostEntry.tsx`), où l'application est déjà
+  connue : un bouton dévoile un formulaire à deux champs.
+
+Le message d'avertissement est le même des deux côtés : le composant `ExistingCostNotice` est
+partagé, pour qu'une évolution de la règle ne soit à faire qu'une fois.
 
 ---
 

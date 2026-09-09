@@ -53,7 +53,7 @@ export function EvaluationSummary({ applicationId, query, onChange }: Evaluation
     }
   }
 
-  if (loading) {
+  if (loading && !data) {
     return (
       <Card title="Conformité" titleId="conformity-title">
         <Loading message="Chargement de l'évaluation…" />

@@ -68,6 +68,23 @@ export const submitEvaluationSchema = saveEvaluationSchema.extend({
 });
 export type SubmitEvaluationInput = z.infer<typeof submitEvaluationSchema>;
 
+/** Saisie d'un coût mensuel pour une application. */
+export const saveCostSchema = z.object({
+  periodMonth: z
+    .string()
+    .regex(/^\d{4}-(0[1-9]|1[0-2])$/, 'Mois attendu au format AAAA-MM'),
+  amountEur: z.coerce
+    .number({ invalid_type_error: 'Montant invalide' })
+    .min(0, 'Le montant ne peut pas être négatif')
+    .max(100_000_000, 'Montant hors limites'),
+});
+export type SaveCostInput = z.infer<typeof saveCostSchema>;
+
+/** Fenêtre d'analyse du rapport FinOps, en nombre de mois. */
+export const finopsQuerySchema = z.object({
+  months: z.coerce.number().int().min(1).max(36).default(6),
+});
+
 export const applicationFiltersSchema = z.object({
   /** Recherche libre sur le nom, le code et la description. */
   q: optional(z.string().trim().max(120)),

@@ -8,10 +8,10 @@ et de suivre leur **usage et leurs coûts** (FinOps, dashboards).
 Rôles : AI Officer · Application Manager · DPO · Auditeur · Utilisateur standard.
 Statuts : Draft → In progress → Conforme / Non conforme (+ Deleted, suppression logique).
 
-> État actuel : **lots 1 à 4** livrés — connexion (SSO Google + mot de passe) et rôles, accueil,
+> État actuel : **lots 1 à 5** livrés — connexion (SSO Google + mot de passe) et rôles, accueil,
 > inventaire complet (déclaration, recherche, fiche, édition, suppression logique tracée,
-> historique), et évaluation de conformité avec scoring automatique et plan d'action.
-> Voir la [feuille de route](#feuille-de-route).
+> historique), évaluation de conformité avec scoring automatique et plan d'action, et rapport
+> FinOps. Voir la [feuille de route](#feuille-de-route).
 
 ---
 
@@ -188,7 +188,7 @@ Les alternatives écartées (ORM, NestJS, Next.js, lib de composants, JWT…) so
 | 2   | Inventaire filtrable, fiche application, édition, envoi à l'audit, suppression logique, historique | ✅ livré |
 | 3   | Questionnaire d'évaluation (18 pts, critères éliminatoires), scoring, verdict automatique    | ✅ livré |
 | 4   | Plan d'action généré automatiquement, suivi des actions correctives                          | ✅ livré |
-| 5   | FinOps : saisie/import des coûts, rapport                                                   | à faire  |
+| 5   | FinOps : saisie des coûts, rapport (évolution, répartitions, couverture)                     | ✅ livré |
 | 6   | Dashboards BI et historique                                                                 | à faire  |
 | 7   | Durcissement : polices auto-hébergées, revue sécurité, mise en production                   | à faire  |
 

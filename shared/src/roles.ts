@@ -44,8 +44,9 @@ export const PERMISSIONS = {
   'action_plan:create': ['ai_officer', 'auditor', 'dpo'],
   'action_plan:execute': ['ai_officer', 'app_manager'],
 
-  // FinOps & BI (lots 5-6)
+  // FinOps & BI
   'finops:read': ['ai_officer', 'app_manager', 'dpo', 'auditor'],
+  'finops:write': ['ai_officer', 'app_manager'], // + règle « propriétaire » pour l'Application Manager
   'dashboard:read': ALL,
 
   // Administration
@@ -82,6 +83,14 @@ export function ownsApplication(user: { id: number }, application: ApplicationSu
 export function canEditApplication(user: { id: number; role: Role }, application: ApplicationSubject): boolean {
   if (application.status === 'deleted') return false;
   if (!can(user.role, 'application:update')) return false;
+  if (can(user.role, 'application:update_any')) return true;
+  return ownsApplication(user, application);
+}
+
+/** Saisie d'un coût : l'AI Officer sur toute application, le manager sur les siennes. */
+export function canEditCosts(user: { id: number; role: Role }, application: ApplicationSubject): boolean {
+  if (application.status === 'deleted') return false;
+  if (!can(user.role, 'finops:write')) return false;
   if (can(user.role, 'application:update_any')) return true;
   return ownsApplication(user, application);
 }

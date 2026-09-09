@@ -56,6 +56,7 @@ Une adresse absente de cette table ne peut pas se connecter, même avec un compt
 | `action_plan:create`          |          |             | ✅       | ✅  | ✅         | 4 |
 | `action_plan:execute`         |          | ✅          |          |     | ✅         | 4 |
 | `finops:read`                 |          | ✅          | ✅       | ✅  | ✅         | 5 |
+| `finops:write`                |          | ✅ (les siennes) |     |     | ✅         | 5 |
 | `dashboard:read`              | ✅       | ✅          | ✅       | ✅  | ✅         | 1 |
 | `admin:referentiels`          |          |             |          |     | ✅         | 7 |
 | `admin:users`                 |          |             |          |     | ✅         | 7 |
