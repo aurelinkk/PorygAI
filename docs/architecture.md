@@ -75,6 +75,7 @@ port, pas de réseau, une base neuve par test.
 | GET | `/api/applications/:id/costs` | `finops:read` | coûts mensuels d'une application |
 | PUT | `/api/applications/:id/costs` | `finops:write` | + `canEditCosts` (propriétaire) |
 | GET | `/api/dashboard/summary` | `dashboard:read` | indicateurs adaptés au rôle |
+| GET | `/api/dashboard/bi` | `dashboard:read` | tableaux de bord BI, `?months=12` (1 à 36) |
 
 `GET /api/applications/:id` renvoie aussi un objet `permissions` (`edit`, `submit`, `delete`,
 `restore`, `history`) : le client s'en sert pour n'afficher que les actions réellement possibles,
@@ -178,6 +179,44 @@ Deux points de saisie, une seule route (`PUT /api/applications/:id/costs`) :
 Le message d'avertissement est le même des deux côtés : le composant `ExistingCostNotice` est
 partagé, pour qu'une évolution de la règle ne soit à faire qu'une fois. Les graphiques mensuels
 passent tous par `components/MonthlyBars.tsx`, pour la même raison.
+
+### Les tableaux de bord BI
+
+`modules/dashboard.repo.ts` (`buildBiReport`) répond à la question que le FinOps ne traite pas :
+**où en est le parc, comment il évolue, et où ça coince**. Une seule route, `GET /api/dashboard/bi`,
+et sept blocs :
+
+| Bloc | Source | Lecture |
+| --- | --- | --- |
+| `portfolio` | `applications` | forme du parc : statut, domaine, sensibilité, type d'IA, taux de conformité |
+| `history` | `applications.created_at` + `evaluations.submitted_at` | déclarations et décisions, mois par mois |
+| `quality` | `evaluations.sections_json` + `evaluation_answers` | thèmes les plus faibles, questions le plus souvent manquées |
+| `actions` | `action_plans` | actions ouvertes, terminées, en retard |
+| `compliance` | `applications.compliance_valid_until` | conformités qui expirent dans 90 jours |
+| `activity` | `audit_log` | activité de la plateforme, par mois et par type d'événement |
+| `monthlyCostEur` | `finops_costs` | le lien vers le FinOps, `null` sans `finops:read` |
+
+Trois points qui méritent d'être connus avant de modifier ce module :
+
+- **Les sous-scores par thème sont relus, pas recalculés.** `sections_json` est écrit à la
+  soumission : c'est le résultat qui a fait foi ce jour-là. Rejouer `scoreEvaluation` avec le
+  questionnaire d'aujourd'hui donnerait un historique qui change tout seul quand on ajoute une
+  question — inacceptable pour un registre de conformité.
+- **Les questions manquées passent par la définition du questionnaire**, pas par la valeur brute
+  stockée : on cherche l'option dont le `score` vaut 0, parce que « 0 » n'est pas toujours la
+  valeur basse d'une question à choix.
+- **Les répartitions sont ordonnées par le référentiel**, pas par les données : une catégorie vide
+  reste affichée (« aucune application à données sensibles » est une information) et l'ordre des
+  lignes ne change pas d'un mois à l'autre.
+
+Comme partout, chaque requête est filtrée par `visibilityClause(user)`. C'est ici que la règle est
+la plus facile à oublier : un simple compteur suffirait à révéler l'existence du brouillon d'un
+autre. Le coût, lui, n'est calculé que si l'utilisateur a `finops:read` — il vaut `null` sinon.
+
+**Ce que ces tableaux de bord ne mesurent pas.** L'« utilisation » qu'ils montrent est celle de
+*Poryg'AI* (journal d'audit), pas celle des outils d'IA inventoriés : la plateforme ne collecte
+aucune télémétrie sur les applications qu'elle recense. La page le dit explicitement, pour qu'un
+lecteur ne prenne pas un compteur d'événements pour un compteur d'usages.
 
 ---
 

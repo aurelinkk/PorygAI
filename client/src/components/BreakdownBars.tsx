@@ -4,6 +4,9 @@
  * C'est un vrai tableau HTML : les chiffres restent lisibles pour tout le monde,
  * la barre n'est qu'un renfort visuel (`aria-hidden`). Aucune bibliothèque de
  * graphiques — quelques lignes de CSS suffisent, et le rendu reste accessible.
+ *
+ * La valeur est un nombre quelconque : des euros pour le FinOps (format par
+ * défaut), un nombre d'applications ou d'événements pour les tableaux de bord BI.
  */
 import type { ReactNode } from 'react';
 import { formatEur } from '../lib/format';
@@ -11,7 +14,8 @@ import { formatEur } from '../lib/format';
 export interface BreakdownItem {
   key: string;
   label: ReactNode;
-  amountEur: number;
+  /** Valeur mesurée : euros, nombre d'applications, nombre d'événements… */
+  value: number;
   share: number;
   hint?: ReactNode;
   /** Modificateur CSS optionnel, pour colorer une ligne (statut de conformité). */
@@ -23,17 +27,23 @@ interface BreakdownBarsProps {
   labelledBy: string;
   /** En-tête de la première colonne. */
   header: string;
+  /** En-tête de la colonne de valeurs. */
+  valueHeader?: string;
+  /** Mise en forme d'une valeur. Par défaut : des euros. */
+  formatValue?: (value: number) => string;
   emptyMessage?: string;
 }
 
-export function BreakdownBars({ items, labelledBy, header, emptyMessage }: BreakdownBarsProps) {
+export function BreakdownBars({
+  items, labelledBy, header, valueHeader = 'Coût', formatValue = formatEur, emptyMessage,
+}: BreakdownBarsProps) {
   if (items.length === 0) {
     return <p className="muted">{emptyMessage ?? 'Aucune donnée pour ce mois.'}</p>;
   }
 
   // Les barres sont proportionnelles à la plus grande valeur, pas au total :
   // sinon, avec dix lignes, elles seraient toutes illisiblement courtes.
-  const max = Math.max(...items.map((item) => item.amountEur), 1);
+  const max = Math.max(...items.map((item) => item.value), 1);
 
   return (
     <div
@@ -49,7 +59,7 @@ export function BreakdownBars({ items, labelledBy, header, emptyMessage }: Break
         <thead>
           <tr>
             <th scope="col">{header}</th>
-            <th scope="col">Coût</th>
+            <th scope="col">{valueHeader}</th>
             <th scope="col">Part</th>
           </tr>
         </thead>
@@ -61,11 +71,11 @@ export function BreakdownBars({ items, labelledBy, header, emptyMessage }: Break
                 {item.hint && <span className="table__meta mono">{item.hint}</span>}
               </th>
               <td>
-                <span className="mono breakdown__amount">{formatEur(item.amountEur)}</span>
+                <span className="mono breakdown__amount">{formatValue(item.value)}</span>
                 <span className="breakdown__track" aria-hidden="true">
                   <span
                     className={`breakdown__bar${item.tone ? ` breakdown__bar--${item.tone}` : ''}`}
-                    style={{ width: `${(item.amountEur / max) * 100}%` }}
+                    style={{ width: `${(item.value / max) * 100}%` }}
                   />
                 </span>
               </td>

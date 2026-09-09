@@ -102,12 +102,13 @@ export function getEvaluation(db: Db, id: number): EvaluationDto | null {
 }
 
 /**
- * Récupère le brouillon en cours, ou en crée un vide (toujours en v2).
+ * Récupère le brouillon en cours, ou en crée un vide (toujours dans la version courante).
  *
- * Un brouillon commencé avec une version antérieure du questionnaire est
- * converti : ses réponses n'ont plus de sens (les codes ont changé) et un
- * brouillon n'est pas une preuve d'audit — on repart de zéro, en gardant la
- * ligne pour ne pas créer de doublon.
+ * Un brouillon commencé sous une version antérieure du questionnaire est réétiqueté
+ * et vidé de ses réponses stockées. C'est sans conséquence pour l'utilisateur : le
+ * formulaire renvoie toujours l'état complet, et ce qu'il a déjà saisi lui a été
+ * rendu par la lecture précédente. Un brouillon n'est de toute façon pas une preuve
+ * d'audit ; on garde la ligne pour ne pas créer de doublon.
  */
 export function getOrCreateDraft(db: Db, applicationId: number, actor: UserDto): EvaluationDto {
   const existing = getDraftEvaluation(db, applicationId);

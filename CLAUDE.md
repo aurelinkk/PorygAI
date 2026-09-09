@@ -29,7 +29,7 @@ savoir pour *modifier* le code sans casser les règles du projet.
 
 ```bash
 npm run dev          # API (127.0.0.1:3000) + front (localhost:5173)
-npm test             # 131 tests Vitest, base SQLite en mémoire
+npm test             # 142 tests Vitest, base SQLite en mémoire
 npm run typecheck    # les 3 workspaces
 npm run db:reset     # base neuve + jeu de démo (interdit en production)
 ```
@@ -94,7 +94,16 @@ requêtes en vol et garde les lectures 15 s ; **toute écriture vide le cache en
 
 **Données réservées à un rôle.** Ne pas envoyer puis masquer : ne pas calculer du tout. Exemple :
 `monthlyCostEur` vaut `NULL` en SQL si l'utilisateur n'a pas `finops:read`, et `getApplication()`
-prend un `user` **optionnel dont l'absence est le cas le plus restrictif**.
+prend un `user` **optionnel dont l'absence est le cas le plus restrictif**. Même règle sur les
+tableaux de bord : tout agrégat passe par `visibilityClause(user)`, sinon un simple compteur
+révélerait l'existence du brouillon d'un autre.
+
+**Piste `1fr` et contenu large.** Dans une grille, `grid-template-columns: 1fr` a pour largeur
+minimale celle de son contenu : un tableau large pousse la carte, et donc la page, au-delà de
+l'écran — malgré son conteneur `overflow-x: auto`. Écrire `minmax(0, 1fr)`.
+
+**`overflow: hidden` ne découpe pas un `<table>`.** Un tableau en `.visually-hidden` débordait la
+page entière. Le masquage doit porter sur un `<div>` qui enveloppe le tableau.
 
 ---
 
@@ -109,11 +118,17 @@ permission de rôle, puis la règle de **propriété** (`canEditApplication`, `c
 plus `deleted`. Un brouillon n'est visible que par son propriétaire et l'AI Officer ; un brouillon
 d'autrui renvoie **404, pas 403** (on ne révèle pas son existence).
 
-**Questionnaire v2** — définition dans `shared/src/questionnaire.ts`, conception dans
+**Questionnaire v2.1** — définition dans `shared/src/questionnaire.ts`, conception dans
 [docs/questionnaire-v2.md](docs/questionnaire-v2.md), schéma visuel dans
-`docs/questionnaire-v2.excalidraw` (aperçu : le `.svg` à côté).
+`docs/questionnaire-v2.excalidraw` (aperçu : le `.svg` à côté, tous deux regénérés par
+`scratchpad/gen_arbre.py` à partir du code pour qu'ils ne puissent pas diverger).
+**Ajouter des questions n'exige rien d'autre que `questionnaire.ts`** : sections, étapes du
+formulaire, sous-scores et plan d'action en découlent. Incrémenter `QUESTIONNAIRE_VERSION` pour
+que les évaluations soumises gardent la trace du jeu de questions utilisé.
 Score sur 100 = points obtenus ÷ points applicables. Le **cadrage** (C1–C6) détermine quelles
-questions s'affichent (`showIf`) ; une question masquée ne compte nulle part. Poids : critique 4,
+questions s'affichent (`showIf`) ; une question masquée ne compte nulle part. Neuf thèmes, dont
+« Biais cognitifs et algorithmiques » (BI, ajouté en v2.1 d'après le cours 5) : le thème E mesure
+si l'IA discrimine, le thème BI d'où vient le biais et comment on le détecte. Poids : critique 4,
 standard 2, mineur 1. Une critique à « Non » plafonne à 60. Deux blocages (C2 militaire, UE1
 pratique interdite AI Act) refusent l'évaluation sans score. Verdict : ≥ 86 conforme · 61–85
 partiellement conforme · ≤ 60 non conforme.

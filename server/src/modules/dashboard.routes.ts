@@ -1,11 +1,16 @@
 /**
- * GET /api/dashboard/summary → indicateurs de la page d'accueil, adaptés au rôle.
+ * Tableaux de bord.
+ *
+ *   GET /api/dashboard/summary        indicateurs de la page d'accueil, adaptés au rôle
+ *   GET /api/dashboard/bi?months=12   tableaux de bord BI : historique et utilisation
  */
 import type { FastifyInstance } from 'fastify';
-import type { ApplicationDto, DashboardSummaryDto, UserDto } from '@poryg/shared';
+import { biQuerySchema, type ApplicationDto, type DashboardSummaryDto, type UserDto } from '@poryg/shared';
 import { all, one, type Db } from '../db/connection.js';
 import { currentMonth } from '../lib/time.js';
+import { validate } from '../lib/validate.js';
 import { listApplications } from './applications.repo.js';
+import { buildBiReport } from './dashboard.repo.js';
 
 interface StatusCount {
   status: string;
@@ -80,5 +85,10 @@ export function registerDashboardRoutes(app: FastifyInstance, options: { db: Db 
       myEvaluations: myEvaluations(user, applications),
     };
     return summary;
+  });
+
+  app.get('/api/dashboard/bi', { preHandler: app.requirePermission('dashboard:read') }, async (request) => {
+    const { months } = validate(biQuerySchema, request.query);
+    return { report: buildBiReport(db, request.user!, months) };
   });
 }

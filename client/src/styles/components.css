@@ -568,6 +568,9 @@ legend.field__label {
 }
 .nav {
   display: flex;
+  /* Cinq entrées depuis les tableaux de bord : sur un écran étroit elles
+     passent à la ligne plutôt que de déborder la page. */
+  flex-wrap: wrap;
   gap: 6px;
   list-style: none;
   margin: 0;
@@ -1225,6 +1228,72 @@ legend.field__label {
   gap: 4px;
 }
 
+/* Colonnes empilées de l'historique BI : une pile = un mois, une part = un verdict. */
+.stack {
+  display: flex;
+  flex-direction: column-reverse;
+  width: 100%;
+  max-width: 44px;
+  border: 2px solid var(--encre);
+  border-radius: 6px 6px 0 0;
+  overflow: hidden;
+}
+.stack__part {
+  display: block;
+  min-height: 0;
+}
+.stack__part--compliant {
+  background: var(--vert);
+}
+.stack__part--partiallyCompliant {
+  background: var(--rose);
+}
+.stack__part--nonCompliant {
+  background: var(--rouge);
+}
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  list-style: none;
+  margin: 12px 0 16px;
+  padding: 0;
+  font-size: 13px;
+}
+.legend__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.legend__dot {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--encre);
+  border-radius: 4px;
+}
+
+/* Questions les plus souvent manquées */
+.gap-list {
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 8px;
+}
+.gap-list__item {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 12px;
+  align-items: baseline;
+  font-size: 14px;
+}
+.gap-list__count {
+  font-weight: 700;
+  color: var(--rose-lien);
+  white-space: nowrap;
+}
+
 /* --- Connexion -------------------------------------------------------------- */
 .login-layout {
   min-height: 100vh;
@@ -1316,7 +1385,10 @@ legend.field__label {
   .detail-grid,
   .eval-layout,
   .finops-grid {
-    grid-template-columns: 1fr;
+    /* `minmax(0, 1fr)` et non `1fr` : la largeur minimale d'une piste `1fr` est
+       celle de son contenu, si bien qu'un tableau large poussait la carte —
+       et donc la page — au-delà de l'écran malgré son conteneur défilant. */
+    grid-template-columns: minmax(0, 1fr);
   }
   .eval-side {
     position: static; /* pas de colonne collante quand tout est empilé */
@@ -1605,6 +1677,35 @@ legend.field__label {
   height: 100%;
   background: var(--degrade);
   transition: width 0.2s;
+}
+
+.progress__summary {
+  margin-top: 14px;
+}
+.todo-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+}
+.todo-list__item {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 10px;
+  border: var(--border-thin);
+  border-radius: var(--radius-badge);
+  background: var(--blanc);
+}
+.todo-list__item--current {
+  background: var(--rose-pastel);
+  font-weight: 700;
+}
+.todo-list__item .mono {
+  color: var(--texte-2);
+  white-space: nowrap;
 }
 
 /* Recommandations classées */

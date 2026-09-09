@@ -118,7 +118,7 @@ export function FinopsPage() {
 
       <div className="finops-grid">
         <Card title="Évolution mensuelle" titleId="monthly-title">
-          <MonthlyBars months={report.monthly} labelledBy="monthly-title" />
+          <MonthlyBars months={report.monthly.map((entry) => ({ month: entry.month, value: entry.amountEur }))} labelledBy="monthly-title" />
         </Card>
 
         <Card title="Par statut de conformité" titleId="status-title">
@@ -128,7 +128,7 @@ export function FinopsPage() {
             items={report.byStatus.map((row) => ({
               key: row.key,
               label: <StatusPill status={row.key as never} />,
-              amountEur: row.amountEur,
+              value: row.amountEur,
               share: row.share,
               hint: `${row.applications} application${row.applications > 1 ? 's' : ''}`,
               tone: row.key,
@@ -144,7 +144,7 @@ export function FinopsPage() {
           items={report.byDomain.map((row) => ({
             key: row.key,
             label: row.label,
-            amountEur: row.amountEur,
+            value: row.amountEur,
             share: row.share,
             hint: `${row.applications} application${row.applications > 1 ? 's' : ''}`,
           }))}
@@ -160,7 +160,7 @@ export function FinopsPage() {
             // Sur un rapport FinOps, le nom mène au rapport de l'application ;
             // le code, lui, ramène à sa fiche.
             label: <Link to={`/applications/${row.applicationId}/finops`}>{row.label}</Link>,
-            amountEur: row.amountEur,
+            value: row.amountEur,
             share: row.share,
             hint: <Link to={`/applications/${row.applicationId}`}>{row.code}</Link>,
             tone: row.status,

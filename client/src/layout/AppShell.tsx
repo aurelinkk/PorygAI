@@ -58,6 +58,11 @@ export function AppShell() {
                   Inventaire
                 </NavLink>
               </li>
+              <li>
+                <NavLink to="/tableaux-de-bord" className="nav__link">
+                  Tableaux de bord
+                </NavLink>
+              </li>
               {can(user.role, 'finops:read') && (
                 <li>
                   <NavLink to="/finops" className="nav__link">

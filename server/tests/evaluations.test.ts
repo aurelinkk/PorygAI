@@ -5,7 +5,7 @@
 import type { FastifyInstance } from 'fastify';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
-  COMPLIANT_MIN, CRITICAL_CAP, PARTIAL_MIN, QUESTIONS, applicableQuestions, applicableSections,
+  COMPLIANT_MIN, CRITICAL_CAP, PARTIAL_MIN, QUESTIONNAIRE_VERSION, QUESTIONS, applicableQuestions, applicableSections,
   scoreEvaluation, verdictFor, type Answers, type ApplicationDto, type EvaluationDto, type ActionPlanDto,
 } from '@poryg/shared';
 import { all, one } from '../src/db/connection.js';
@@ -93,6 +93,34 @@ describe('questionnaire v2 : définition', () => {
     expect(codes).toContain('US');
     expect(codes).not.toContain('UE');
     expect(codes).not.toContain('CN');
+  });
+
+  it('les biais : section propre, questions conditionnées au parcours', () => {
+    // Parcours minimal : ni domaine sensible, ni IA générative, modèle interne.
+    const minimal: Answers = { C1: ['other'], C2: 'no', C3: ['none'], C4: 'no', C5: 'none', C6: 'internal' };
+    const codes = applicableQuestions(minimal).map((q) => q.code);
+    expect(applicableSections(minimal).map((s) => s.code)).toContain('BI');
+    expect(codes).toEqual(expect.arrayContaining(['BI2', 'BI3', 'BI6', 'BI7', 'BI8']));
+    expect(codes).not.toContain('BI1'); // analyse des données : domaines à fort enjeu
+    expect(codes).not.toContain('BI4'); // ancrage du prompt : IA générative
+    expect(codes).not.toContain('BI5'); // effet de halo : fort enjeu ou contenu généré
+
+    // API tierce : nous n'annotons pas les données d'apprentissage.
+    const viaApi = applicableQuestions({ ...minimal, C6: 'api' }).map((q) => q.code);
+    expect(viaApi).not.toContain('BI2');
+
+    // Recrutement + assistant génératif : toute la section s'applique.
+    const complet = applicableQuestions({ ...minimal, C3: ['employment'], C5: 'both' }).map((q) => q.code);
+    expect(complet).toEqual(expect.arrayContaining(['BI1', 'BI2', 'BI3', 'BI4', 'BI5', 'BI6', 'BI7', 'BI8']));
+  });
+
+  it("l'analyse des biais dans les données est critique en domaine à fort enjeu", () => {
+    const answers = answerAll({ ...FRAMING, C3: ['employment'] }, '2', { BI1: '0' });
+    const result = scoreEvaluation(answers);
+    expect(result.cappedBy).toEqual(['BI1']);
+    expect(result.score).toBe(CRITICAL_CAP);
+    expect(result.verdict).toBe('non_compliant');
+    expect(result.recommendations[0]).toMatchObject({ code: 'BI1', section: 'BI', pointsRecoverable: 4 });
   });
 
   it("l'AIPD n'apparaît qu'en cas de risque élevé", () => {
@@ -255,7 +283,8 @@ describe('évaluation v2 : parcours', () => {
 
     const evaluation: EvaluationDto = response.json().evaluation;
     expect(evaluation).toMatchObject({
-      status: 'submitted', questionnaireVersion: 'v2', score: 100, maxScore: 100, verdict: 'compliant', cappedBy: [],
+      status: 'submitted', questionnaireVersion: QUESTIONNAIRE_VERSION, score: 100, maxScore: 100,
+      verdict: 'compliant', cappedBy: [],
     });
     expect(evaluation.sections.length).toBeGreaterThan(5);
 
@@ -489,7 +518,7 @@ describe('évaluation v2 : héritage v1', () => {
 
     const draft: EvaluationDto = saved.json().evaluation;
     expect(draft.id).toBe(draftId); // même ligne, pas de doublon
-    expect(draft.questionnaireVersion).toBe('v2');
+    expect(draft.questionnaireVersion).toBe(QUESTIONNAIRE_VERSION);
     expect(draft.maxScore).toBe(100);
     expect(draft.answers).toEqual({ C1: ['eu'], C2: 'no' }); // A1 a disparu
     expect(all(app.db, 'SELECT 1 FROM evaluations WHERE application_id = ?', target)).toHaveLength(1);

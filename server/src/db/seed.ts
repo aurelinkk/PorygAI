@@ -127,19 +127,25 @@ export async function seedDatabase(db: Db, log: (message: string) => void = () =
 
     DEMO_APPS.forEach((app, index) => {
       const code = `APP-${String(index + 1).padStart(4, '0')}`;
+      // Déclarations étalées sur l'année écoulée : sans cela, l'historique des
+      // tableaux de bord serait une seule colonne au mois courant.
+      const declaredAt = addMonths(nowIso(), -((DEMO_APPS.length - 1 - index) % 11));
       const ownerId = userIds.get(app.owner)!;
       const deletedBy = app.deletedBy ? userIds.get(app.deletedBy)! : null;
       const result = run(
         db,
         `INSERT INTO applications
            (code, name, description, business_domain, data_sensitivity, ai_type, process_owner_id,
-            status, compliance_valid_until, created_by, deleted_by, deleted_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            status, compliance_valid_until, created_by, created_at, updated_at, deleted_by, deleted_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         code, app.name, app.description, app.domain, app.sensitivity, app.aiType, ownerId,
-        app.status, app.validUntil ?? null, ownerId, deletedBy, app.deletedAt ?? null,
+        app.status, app.validUntil ?? null, ownerId, declaredAt, declaredAt, deletedBy, app.deletedAt ?? null,
       );
       const appId = Number(result.lastInsertRowid);
-      recordAudit(db, { actorId: null, entity: 'application', entityId: appId, action: 'seed', after: { code, status: app.status } });
+      recordAudit(db, {
+        actorId: null, entity: 'application', entityId: appId, action: 'seed',
+        after: { code, status: app.status }, at: declaredAt,
+      });
 
       // Coûts : mois courant + 2 mois d'historique (légèrement différents).
       if (app.status !== 'deleted') {

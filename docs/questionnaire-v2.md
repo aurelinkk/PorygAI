@@ -3,6 +3,10 @@
 > Statut : **proposition à valider** avant implémentation. Les questions v1 pertinentes sont
 > reprises (marquées `← A1` etc.). Les questions sur les biais cognitifs viendront dans une
 > version ultérieure : le thème « Équité & biais » est prévu pour les accueillir.
+>
+> **v2.1 (2026-09-09)** — ajout du thème 6 « Biais cognitifs et algorithmiques » (BI1–BI8),
+> d'après le cours 5. Aucun code de question existant n'a changé ; les thèmes suivants sont
+> renumérotés.
 
 ## 1. Principes
 
@@ -41,11 +45,14 @@ façon sur leur périmètre.
 
 ### Exemple de parcours
 
-| Cas | Questions vues | Points max |
-| --- | --- | --- |
-| Outil interne, pas de données perso, non génératif, UE seule | 24 | 48 |
-| Chatbot client GenAI, données perso, UE + US | 36 | 74 |
-| Tri de CV (emploi = haut risque), données sensibles, UE + US + Chine | 49 | 109 |
+| Cas | Cadrage | Questions notées | Points max |
+| --- | --- | --- | --- |
+| Outil interne, pas de données perso, non génératif, UE seule | `C1=UE · C3=Aucun · C4=Non · C5=Ni l'un ni l'autre · C6=interne` | 29 | 56 |
+| Chatbot client GenAI, données perso, UE + US | `C1=UE,US · C3=Aucun · C4=Oui · C5=Les deux · C6=API` | 42 | 84 |
+| Tri de CV (emploi = haut risque), données sensibles, UE + US + Chine | `C1=UE,US,CN · C3=Emploi · C4=Oui · C5=Ni l'un ni l'autre · C6=fine-tuning · D1=Non` | 49 | 105 |
+
+Chiffres recalculés en v2.1 (le thème 6 ajoute 8 à 14 points selon le parcours). Le cadrage est
+donné pour que ces trois lignes soient reproductibles : `applicableQuestions()` sur ces réponses.
 
 Le formulaire annonce la durée estimée dès le cadrage terminé.
 
@@ -67,10 +74,11 @@ THÈMES NOTÉS
  2 Données & vie privée              élargi si C4
  3 Transparence & explicabilité      élargi si C5
  4 Supervision humaine & robustesse  élargi si C3
- 5 Équité & biais                    toujours (extensible)
- 6 Sécurité                          élargi si C5 / C6
- 7 Frugalité & FinOps                toujours
- 8 Réglementation                    un sous-bloc par pays de C1
+ 5 Équité & biais                    toujours
+ 6 Biais cognitifs & algorithmiques  toujours, élargi si C3 / C5 / C6
+ 7 Sécurité                          élargi si C5 / C6
+ 8 Frugalité & FinOps                toujours
+ 9 Réglementation                    un sous-bloc par pays de C1
     ├─ UE   : AI Act (dont art. 5 = BLOCAGE), RGPD, maîtrise de l'IA
     ├─ US   : sectoriel (emploi, biométrie, santé, crédit), lois d'État, FTC
     ├─ CN   : enregistrement CAC, marquage, PIPL, localisation des données
@@ -85,10 +93,10 @@ THÈMES NOTÉS
 | --- | --- | --- | --- |
 | C1 | Dans quels pays / zones l'application sera-t-elle déployée ou utilisée ? | Choix multiple : UE · États-Unis · Chine · Autre | Active les blocs pays. Au moins un choix requis. |
 | C2 | L'application est-elle **exclusivement** destinée à un usage militaire, de défense ou de sécurité nationale ? | Oui / Non | **Oui → BLOCAGE** : « Hors périmètre de la politique IA de l'entreprise ». Évaluation refusée, statut non conforme, motif enregistré. |
-| C3 | L'application intervient-elle dans un domaine à fort enjeu pour les personnes ? | Choix multiple : Santé · Biométrie / identification · Emploi, RH, recrutement · Éducation, examens · Crédit, assurance, accès à des services essentiels · Justice, forces de l'ordre, migration · Infrastructures critiques · **Aucun** | Active le bloc « systèmes critiques » (S2, S6, D3) et les questions sectorielles US. Correspond aux domaines « haut risque » de l'annexe III de l'AI Act. |
+| C3 | L'application intervient-elle dans un domaine à fort enjeu pour les personnes ? | Choix multiple : Santé · Biométrie / identification · Emploi, RH, recrutement · Éducation, examens · Crédit, assurance, accès à des services essentiels · Justice, forces de l'ordre, migration · Infrastructures critiques · **Aucun** | Active le bloc « systèmes critiques » (S2, S6, D3), les questions de biais BI1 et BI5, et les questions sectorielles US. Correspond aux domaines « haut risque » de l'annexe III de l'AI Act. |
 | C4 | L'application traite-t-elle des données personnelles (directement ou via ses données d'entraînement) ? | Oui / Non | Active D2, D3, D6, UE5, UE6, US7, CN3, CN4 |
-| C5 | L'application génère-t-elle du contenu (texte, image, audio, vidéo) ou interagit-elle directement avec des personnes ? | Génère du contenu · Interagit (chatbot, assistant) · Les deux · Ni l'un ni l'autre | Active T1, T3, SE2, UE4, CN1, CN2, CN6 |
-| C6 | D'où vient le modèle ? | Développé en interne · Modèle tiers ajusté (fine-tuning) · API d'un fournisseur (OpenAI, Mistral, Anthropic…) · Modèle ouvert hébergé par nous | Active SE3, UE7, D5 |
+| C5 | L'application génère-t-elle du contenu (texte, image, audio, vidéo) ou interagit-elle directement avec des personnes ? | Génère du contenu · Interagit (chatbot, assistant) · Les deux · Ni l'un ni l'autre | Active T1, T3, BI4, BI5, SE2, UE4, CN1, CN2, CN6 |
+| C6 | D'où vient le modèle ? | Développé en interne · Modèle tiers ajusté (fine-tuning) · API d'un fournisseur (OpenAI, Mistral, Anthropic…) · Modèle ouvert hébergé par nous | Active SE3, UE7, D5, BI2 |
 
 Ces réponses sont **enregistrées** avec l'évaluation (elles remplacent les « informations préliminaires »
 de la v1, qui restent : outil & éditeur, finalité, criticité métier).
@@ -154,10 +162,47 @@ Légende : **●** critique (4 pts, plafond 60 si Non) · ○ standard (2 pts) �
 | E2 | ○ | `[si C3 ≠ Aucun]` Les populations affectées et les critères d'équité retenus sont-ils définis par écrit ? | Nommer les groupes à protéger et la métrique d'équité (parité, égalité des chances…) avant les tests. |
 | E3 | · | Les utilisateurs sont-ils formés aux limites de l'IA pour éviter une confiance excessive (automation bias) ? | Intégrer un module « limites et bonnes pratiques » à la formation des utilisateurs. |
 
-> **Extension prévue** : les questions sur les biais cognitifs (ancrage, confirmation, automatisme…)
-> viendront s'ajouter ici. La structure `showIf` permet de les conditionner au type d'usage.
+> Les biais **cognitifs** (ancrage, effet de halo) et l'origine des biais algorithmiques font
+> l'objet du thème 6, ajouté en v2.1.
 
-### Thème 6 — Sécurité
+### Thème 6 — Biais cognitifs et algorithmiques
+
+Ajouté en v2.1, d'après le cours 5 « Impact sociétal et éthique ». Le thème 5 mesure le
+**résultat** (l'IA discrimine-t-elle ?) ; celui-ci s'intéresse aux **causes** et aux **moyens de
+détection**. Deux familles de biais, traitées ensemble parce qu'elles se nourrissent l'une l'autre :
+
+| | Biais cognitifs (humains) | Biais algorithmiques |
+| --- | --- | --- |
+| Origine | Heuristiques, émotions, expérience | Données biaisées, conception du modèle, choix des variables |
+| Nature | Distorsion du jugement | Distorsion des prédictions ou des recommandations |
+| Exemples | Confirmation, ancrage, effet de halo | Discrimination genre/âge, sur-représentation d'un groupe |
+| Traitement | Formation, prise de conscience, relecture externe | Audit des données, métriques d'équité, explicabilité |
+
+| Code | Q | Question | Recommandation |
+| --- | --- | --- | --- |
+| BI1 | ● | `[si C3 ≠ Aucun]` Les données sur lesquelles repose le système ont-elles été analysées pour y chercher des biais (sur-représentation, décisions passées discriminatoires, période ou zone non représentative) ? | Mesurer la représentation de chaque groupe et la comparer à la population réelle ; rééquilibrer. Modèle fourni : exiger sa fiche de données. |
+| BI2 | ○ | `[si C6 ≠ API tierce]` Le processus de collecte et d'annotation est-il documenté : qui annote, selon quelles consignes écrites, avec quel contrôle de cohérence ? | Guide d'annotation, double annotation d'un échantillon, mesure du taux d'accord, correction des consignes. |
+| BI3 | ○ | Le poids réel de chaque variable dans les résultats a-t-il été examiné, pour repérer une variable qui pèse anormalement lourd ? *Oui, avec SHAP/LIME ou équivalent / lecture manuelle des pondérations / poids inconnu* | Analyser la contribution des variables (SHAP, LIME) sur un échantillon représentatif ; normaliser ou repondérer celles qui dominent. |
+| BI4 | ○ | `[si C5 ≠ Ni l'un ni l'autre]` Les consignes système et les exemples fournis au modèle ont-ils été testés en faisant varier leur ordre et leur formulation ? | Rejouer un jeu de cas de référence en permutant l'ordre des exemples et en reformulant la consigne ; figer la formulation retenue. |
+| BI5 | ○ | `[si C3 ≠ Aucun ou C5 génère]` L'effet d'un signe de prestige (école, diplôme, marque, service d'origine, ancienneté) sur les résultats a-t-il été testé ? | Rejouer des cas identiques en ne changeant que ce signe ; si le résultat bouge, réduire le poids de la variable, la retirer ou la masquer. |
+| BI6 | ○ | Les biais détectés donnent-ils lieu à une correction mise en œuvre, puis à une nouvelle mesure qui vérifie qu'elle a fonctionné ? | Registre des biais : mesure initiale, correction appliquée, mesure après correction, date et responsable. |
+| BI7 | · | Les personnes qui conçoivent et valident le système sont-elles sensibilisées à leurs propres biais cognitifs (confirmation, ancrage, halo) ? | Module « biais cognitifs » dans la formation de l'équipe projet ; relecture des variables et critères par une personne extérieure. |
+| BI8 | · | Les biais sont-ils remesurés périodiquement après la mise en production, sur les données réellement traitées ? | Remesure au moins annuelle sur les données de production, rattachée à la revue de conformité. |
+
+> **Pourquoi BI1 est critique.** Le cours en fait la première cause de biais algorithmique : un
+> modèle appris sur les décisions passées d'une organisation en reproduit les discriminations et
+> les applique désormais à grande échelle. La question n'est posée qu'en domaine à fort enjeu
+> (C3), là où la conséquence est directe pour les personnes.
+>
+> **Répartition.** 16 points au maximum, soit environ 15 % du score sur les parcours types —
+> comparable au thème « Données & vie privée ». Cinq questions sur huit sont posées sur tous les
+> parcours ; les trois autres suivent le cadrage.
+>
+> **À ne pas confondre avec le thème 5.** E1 demande *si* des tests de biais ont été faits, E2 *sur
+> quelles populations*, E3 porte sur l'excès de confiance des utilisateurs (automation bias). Le
+> thème 6 demande *d'où vient le biais* et *comment on le voit*.
+
+### Thème 7 — Sécurité
 
 | Code | Q | Question | Recommandation |
 | --- | --- | --- | --- |
@@ -165,7 +210,7 @@ Légende : **●** critique (4 pts, plafond 60 si Non) · ○ standard (2 pts) �
 | SE2 | ○ | `[si C5 ≠ Ni l'un ni l'autre]` L'application est-elle protégée contre les attaques propres à l'IA (injection de prompt, extraction de données, contournement des consignes) ? | Filtrer les entrées, cloisonner les données accessibles au modèle, tester les injections connues. |
 | SE3 | ○ | `[si C6 = API tierce]` Le contrat avec le fournisseur interdit-il l'usage de nos données pour entraîner ses modèles et couvre-t-il la confidentialité ? | Vérifier les conditions (opt-out d'entraînement, zone de traitement, sous-traitants) et les faire valider par le juridique. |
 
-### Thème 7 — Frugalité et FinOps
+### Thème 8 — Frugalité et FinOps
 
 | Code | Q | Question | Recommandation |
 | --- | --- | --- | --- |
@@ -175,7 +220,7 @@ Légende : **●** critique (4 pts, plafond 60 si Non) · ○ standard (2 pts) �
 | F4 | · | Des optimisations réduisent-elles la consommation (cache des réponses, traitement par lots, modèle distillé ou quantifié) ? | Mettre en place un cache et évaluer un modèle plus petit sur les cas simples. |
 | F5 | · | Le volume d'appels est-il maîtrisé (pas d'appels redondants ou inutiles) ? | Auditer les appels sur une semaine et supprimer les redondances. |
 
-### Thème 8 — Réglementation par pays
+### Thème 9 — Réglementation par pays
 
 Un sous-bloc par pays coché en C1. Chaque sous-bloc a **sa barre d'avancement** (en pourcentage de son
 périmètre) et **ses recommandations**. Pour le score global, le thème compte comme les autres (ses
@@ -273,6 +318,10 @@ Un **assistant par étapes** (une étape par thème), et non plus une page uniqu
 - **Une question à la fois** visuellement (carte), réponses en gros boutons, « Pourquoi cette question ? »
   dépliable, commentaire facultatif.
 - **Enregistrement automatique** à chaque changement d'étape : on peut s'interrompre et reprendre.
+- **Avancement** sur toutes les étapes notées : une barre pour l'étape affichée (« 3/8 »), une pour
+  l'ensemble (« 3/46 »), le nombre de questions restantes avec la durée correspondante, et la liste
+  des étapes incomplètes — celle où l'on se trouve y est mise en avant. Le compte porte sur les
+  questions *applicables* : il descend quand une réponse de cadrage en masque.
 - **Score en direct** dans la colonne de droite, avec le verdict prévu, les plafonds actifs et les
   barres par pays.
 - **Étape finale** : récapitulatif, top 5 des actions pour gagner des points, puis soumission.

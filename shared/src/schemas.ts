@@ -95,6 +95,11 @@ export const finopsQuerySchema = z.object({
   months: z.coerce.number().int().min(1).max(36).default(6),
 });
 
+/** Même fenêtre pour les tableaux de bord BI, avec un historique par défaut plus long. */
+export const biQuerySchema = z.object({
+  months: z.coerce.number().int().min(1).max(36).default(12),
+});
+
 export const applicationFiltersSchema = z.object({
   /** Recherche libre sur le nom, le code et la description. */
   q: optional(z.string().trim().max(120)),

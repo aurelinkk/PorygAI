@@ -223,3 +223,96 @@ export interface ApiErrorBody {
     fields?: Record<string, string>;
   };
 }
+
+// ---------------------------------------------------------------------------
+// Tableaux de bord BI (lot 6)
+// ---------------------------------------------------------------------------
+
+/** Une ligne de répartition en nombre d'applications (et non en euros). */
+export interface BiCountRow {
+  key: string;
+  label: string;
+  count: number;
+  /** Part du total, entre 0 et 1. */
+  share: number;
+}
+
+/** Un mois de l'historique : ce qui est entré dans le parc, ce qui a été décidé. */
+export interface BiHistoryRow {
+  month: string; // 'YYYY-MM'
+  declared: number;
+  submitted: number;
+  compliant: number;
+  partiallyCompliant: number;
+  nonCompliant: number;
+}
+
+/**
+ * Tableaux de bord BI — historique et utilisation du parc d'applications IA.
+ *
+ * Complément du rapport FinOps, qui répond « combien ça coûte » : celui-ci
+ * répond « où en est le parc, comment il évolue, et où ça coince ».
+ * Toutes les données respectent la visibilité des brouillons de l'utilisateur.
+ */
+export interface BiReportDto {
+  /** Profondeur d'historique analysée, en mois. */
+  months: number;
+  /** Mois le plus récent de la fenêtre. */
+  currentMonth: string;
+
+  /** État du parc au moment du calcul, applications supprimées exclues. */
+  portfolio: {
+    total: number;
+    /** Part des applications décidées qui sont conformes (0 à 1), `null` si aucune décision. */
+    complianceRate: number | null;
+    byStatus: BiCountRow[];
+    byDomain: BiCountRow[];
+    bySensitivity: BiCountRow[];
+    byAiType: BiCountRow[];
+  };
+
+  /** Un point par mois de la fenêtre, mois vides compris. */
+  history: BiHistoryRow[];
+
+  /** Ce que disent les évaluations soumises pendant la fenêtre. */
+  quality: {
+    submitted: number;
+    /** Moyenne des scores sur 100, `null` si aucune évaluation soumise. */
+    averageScore: number | null;
+    /** Thèmes du questionnaire les plus faibles, du plus faible au moins faible. */
+    weakestSections: { code: string; label: string; averageScore: number; evaluations: number }[];
+    /** Questions le plus souvent répondues « Non », avec leur nombre d'occurrences. */
+    topGaps: { code: string; section: string; wording: string; missed: number }[];
+  };
+
+  /** Plans d'action générés par les évaluations. */
+  actions: {
+    open: number;
+    done: number;
+    /** Actions ouvertes dont l'échéance est dépassée. */
+    overdue: number;
+  };
+
+  /** Suivi de la règle « la conformité vaut un an ». */
+  compliance: {
+    /** Conformités qui expirent dans les 90 jours, de la plus proche à la plus lointaine. */
+    expiringSoon: { id: number; code: string; name: string; validUntil: string; daysLeft: number }[];
+    /** Applications déjà repassées en audit après expiration, sur la fenêtre. */
+    expired: number;
+  };
+
+  /**
+   * Utilisation de la plateforme, d'après le journal d'audit.
+   * Ce n'est pas l'usage des applications IA elles-mêmes : Poryg'AI ne collecte
+   * aucune télémétrie sur les outils inventoriés.
+   */
+  activity: {
+    byMonth: { month: string; events: number }[];
+    byAction: BiCountRow[];
+    /** Personnes distinctes ayant agi sur la fenêtre. */
+    activeUsers: number;
+  };
+
+  /** Coût IA du mois courant, `null` si l'utilisateur n'a pas accès au FinOps. */
+  monthlyCostEur: number | null;
+}

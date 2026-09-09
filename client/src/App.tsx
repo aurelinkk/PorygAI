@@ -20,6 +20,7 @@ import { ApplicationsPage } from './pages/ApplicationsPage';
 import { DeclareAppPage } from './pages/DeclareAppPage';
 import { EditAppPage } from './pages/EditAppPage';
 import { EvaluationPage } from './pages/EvaluationPage';
+import { DashboardsPage } from './pages/DashboardsPage';
 import { FinopsPage } from './pages/FinopsPage';
 import { HomePage } from './pages/HomePage';
 import { LoginPage } from './pages/LoginPage';
@@ -71,6 +72,9 @@ const router = createBrowserRouter([
           </RequirePermission>
         ),
       },
+      // `dashboard:read` est ouvert à tous les rôles : pas de garde ici, la page
+      // s'adapte (le coût n'est renvoyé qu'à ceux qui ont `finops:read`).
+      { path: 'tableaux-de-bord', element: <DashboardsPage /> },
       {
         path: 'finops',
         element: (

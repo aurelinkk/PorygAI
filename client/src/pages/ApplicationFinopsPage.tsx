@@ -135,7 +135,7 @@ export function ApplicationFinopsPage() {
 
       <div className="finops-grid">
         <Card title="Évolution mensuelle" titleId="app-monthly-title">
-          <MonthlyBars months={report.monthly} labelledBy="app-monthly-title" />
+          <MonthlyBars months={report.monthly.map((entry) => ({ month: entry.month, value: entry.amountEur }))} labelledBy="app-monthly-title" />
         </Card>
 
         <Card title="Par source" titleId="app-source-title">
@@ -148,7 +148,7 @@ export function ApplicationFinopsPage() {
             items={report.bySource.map((row) => ({
               key: row.key,
               label: row.label,
-              amountEur: row.amountEur,
+              value: row.amountEur,
               share: row.share,
             }))}
             emptyMessage="Aucun coût sur la période."

@@ -123,7 +123,7 @@ poryg-ai/
 │  │  ├─ jobs/             expiration annuelle des conformités
 │  │  ├─ db/               connexion node:sqlite, migrations SQL, seed, CLI
 │  │  └─ lib/              erreurs HTTP, validation, dates
-│  └─ tests/               Vitest — 131 tests
+│  └─ tests/               Vitest — 142 tests
 ├─ client/         Front React + Vite
 │  └─ src/
 │     ├─ App.tsx           routes
@@ -205,16 +205,14 @@ avec un assistant.
 | 1b  | SSO Google + comptes de l'équipe                                                            | ✅ livré |
 | 2   | Inventaire filtrable, fiche application, édition, envoi à l'audit, suppression logique, historique | ✅ livré |
 | 3   | Questionnaire d'évaluation v2 : cadrage dynamique, score /100, blocs par pays, verdict à 3 niveaux | ✅ livré |
+| 3b  | Questionnaire v2.1 : thème « Biais cognitifs et algorithmiques » (BI1–BI8)                    | ✅ livré |
 | 4   | Plan d'action généré automatiquement, suivi des actions correctives                          | ✅ livré |
 | 5   | FinOps : saisie des coûts, rapport global et rapport par application                         | ✅ livré |
-| 6   | Dashboards BI et historique                                                                 | à faire  |
+| 6   | Tableaux de bord BI : historique du parc, thèmes faibles, échéances, activité                | ✅ livré |
 | 7   | Durcissement : polices auto-hébergées, revue sécurité, mise en production                   | à faire  |
 
 **Prochaines étapes identifiées**
 
-- **Biais cognitifs** : des questions sur les biais cognitifs doivent rejoindre le thème
-  « Équité & biais » du questionnaire (`section: 'E'` dans `shared/src/questionnaire.ts`). La
-  structure `showIf` permet de les conditionner au type d'usage ; rien d'autre n'est à toucher.
 - **Validation juridique** du contenu réglementaire du questionnaire (AI Act, RGPD, lois d'État
   américaines, mesures chinoises) — rédigé sans conseil et à dater.
 - **Import de coûts** FinOps (CSV, facture cloud) : la colonne `finops_costs.source` est déjà là

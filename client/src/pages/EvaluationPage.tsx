@@ -14,10 +14,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
-  BUSINESS_CRITICALITIES, CRITICAL_CAP, VERDICT_LABELS,
+  BUSINESS_CRITICALITIES, CRITICAL_CAP, MINUTES_PER_QUESTION, QUESTIONNAIRE_VERSION, VERDICT_LABELS,
   applicableQuestions, applicableSections, scoreEvaluation, submitEvaluationSchema,
   type ActionPlanDto, type AnswerValue, type Answers, type ApplicationDto, type EvaluationDto,
-  type ScoringResult, type Section, type SectionScore,
+  type ScoringResult, type Section, type SectionCode, type SectionScore,
 } from '@poryg/shared';
 import { api, ApiError } from '../api/client';
 import { useApi } from '../api/useApi';
@@ -48,6 +48,9 @@ type Step = { kind: 'section'; section: Section } | { kind: 'result' };
 
 /** Libellé court d'un bloc pays pour les barres. */
 const shortLabel = (label: string) => label.replace('Réglementation — ', '');
+
+/** Pourcentage entier, sans division par zéro. */
+const percent = (part: number, whole: number) => (whole > 0 ? Math.round((part / whole) * 100) : 0);
 
 export function EvaluationPage() {
   const { id } = useParams<{ id: string }>();
@@ -215,7 +218,7 @@ export function EvaluationPage() {
       <div className="page-header">
         <div>
           <p className="eyebrow mono">
-            {app.code} · questionnaire v2 · étape {stepIndex + 1}/{steps.length}
+            {app.code} · questionnaire {QUESTIONNAIRE_VERSION} · étape {stepIndex + 1}/{steps.length}
           </p>
           <h1 className="page-title">Évaluation de conformité</h1>
         </div>
@@ -382,12 +385,90 @@ export function EvaluationPage() {
               </p>
             </Card>
           )}
+          {step.kind === 'section' && step.section.code !== 'framing' && (
+            <Card title="Votre avancement" titleId="progress-title" className="eval-side">
+              <ProgressPanel result={result} section={step.section.code} answered={answeredCount} />
+            </Card>
+          )}
           <Card title="Score en direct" titleId="live-score-title" className="eval-side">
             <ScorePanel result={result} answered={answeredCount} compact />
           </Card>
         </aside>
       </div>
     </>
+  );
+}
+
+// --- Panneau d'avancement -----------------------------------------------------
+
+/**
+ * Où en est la saisie, sur les étapes notées.
+ *
+ * Deux barres — l'étape affichée, puis l'ensemble du questionnaire — et la liste
+ * des étapes qu'il reste à remplir. Le cadrage garde son propre encadré (nombre de
+ * questions et durée) : il n'est pas noté, il n'a rien à compter ici.
+ *
+ * Le compte porte sur les questions **applicables** : il descend quand une réponse
+ * de cadrage masque des questions, ce qui est le comportement voulu.
+ */
+function ProgressPanel({
+  result, section, answered,
+}: { result: ScoringResult; section: SectionCode; answered: number }) {
+  const current = result.sections.find((entry) => entry.code === section);
+  const total = result.applicable.length;
+  const remaining = total - answered;
+  const todo = result.sections.filter((entry) => entry.answered < entry.total);
+  const minutesLeft = Math.max(1, Math.round(remaining * MINUTES_PER_QUESTION));
+
+  return (
+    <>
+      <ul className="section-bars">
+        {current && (
+          <ProgressBar label="Cette étape" done={current.answered} total={current.total} />
+        )}
+        <ProgressBar label="Tout le questionnaire" done={answered} total={total} />
+      </ul>
+
+      <p className="muted score__hint progress__summary" role="status">
+        {remaining === 0
+          ? 'Toutes les questions applicables sont renseignées.'
+          : `Il reste ${remaining} question${remaining > 1 ? 's' : ''} à remplir, ` +
+            `environ ${minutesLeft} minute${minutesLeft > 1 ? 's' : ''}.`}
+      </p>
+
+      {todo.length > 0 && (
+        <>
+          <h3 className="subsection-title">Étapes incomplètes</h3>
+          <ul className="todo-list">
+            {todo.map((entry) => (
+              <li key={entry.code} className={cx('todo-list__item', entry.code === section && 'todo-list__item--current')}>
+                <span>
+                  {shortLabel(entry.label)}
+                  {/* Le fond rose est décoratif : l'étape en cours est aussi dite en toutes lettres. */}
+                  {entry.code === section && <span className="visually-hidden"> — étape en cours</span>}
+                </span>
+                <span className="mono">
+                  {entry.total - entry.answered} restante{entry.total - entry.answered > 1 ? 's' : ''}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+    </>
+  );
+}
+
+/** Une barre « x sur y ». La barre est décorative : le compte est écrit à côté. */
+function ProgressBar({ label, done, total }: { label: string; done: number; total: number }) {
+  return (
+    <li className="section-bar">
+      <span className="section-bar__label">{label}</span>
+      <span className="section-bar__value mono">{done}/{total}</span>
+      <span className="section-bar__track" aria-hidden="true">
+        <span className="section-bar__fill" style={{ width: `${percent(done, total)}%` }} />
+      </span>
+    </li>
   );
 }
 

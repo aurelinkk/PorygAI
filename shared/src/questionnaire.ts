@@ -19,7 +19,14 @@
  * le client (score en direct) et par le serveur (calcul qui fait foi).
  */
 
-export const QUESTIONNAIRE_VERSION = 'v2';
+/**
+ * Version du jeu de questions, écrite dans chaque évaluation soumise.
+ *
+ * Le chiffre avant le point est la *famille* : v2.1 ajoute des questions à v2
+ * sans en renommer aucune. Un brouillon commencé en v2 garde donc ses réponses
+ * (voir `getOrCreateDraft`) ; seul un changement de famille les invalide.
+ */
+export const QUESTIONNAIRE_VERSION = 'v2.1';
 
 // ---------------------------------------------------------------------------
 // Modèle
@@ -74,7 +81,8 @@ export interface Question {
   legacy?: string;
 }
 
-export type SectionCode = 'framing' | 'N' | 'D' | 'T' | 'S' | 'E' | 'SE' | 'F' | 'UE' | 'US' | 'CN' | 'AU';
+export type SectionCode =
+  | 'framing' | 'N' | 'D' | 'T' | 'S' | 'E' | 'BI' | 'SE' | 'F' | 'UE' | 'US' | 'CN' | 'AU';
 
 export interface Section {
   code: SectionCode;
@@ -92,6 +100,11 @@ export const SECTIONS: Section[] = [
   { code: 'T', label: 'Transparence et explicabilité', intro: 'Les personnes savent-elles qu’une IA intervient, et peut-on expliquer ses résultats ?' },
   { code: 'S', label: 'Supervision humaine et robustesse', intro: 'Qui garde la main, et que se passe-t-il quand l’IA se trompe ?' },
   { code: 'E', label: 'Équité et biais', intro: 'L’IA traite-t-elle tout le monde de la même façon ?' },
+  {
+    code: 'BI',
+    label: 'Biais cognitifs et algorithmiques',
+    intro: "D'où viennent les biais du système, comment on les repère, et ce qu'on en fait.",
+  },
   { code: 'SE', label: 'Sécurité', intro: 'Accès, attaques propres à l’IA, engagements du fournisseur.' },
   { code: 'F', label: 'Frugalité et FinOps', intro: 'Coût financier et empreinte carbone de l’IA.' },
   { code: 'UE', label: 'Réglementation — Union européenne', intro: 'AI Act et RGPD.', country: 'eu' },
@@ -112,6 +125,8 @@ const hasPersonalData: Condition = { q: 'C4', anyOf: ['yes'] };
 const generatesOrInteracts: Condition = { q: 'C5', anyOf: ['generate', 'interact', 'both'] };
 const generatesContent: Condition = { q: 'C5', anyOf: ['generate', 'both'] };
 const usesThirdPartyApi: Condition = { q: 'C6', anyOf: ['api'] };
+/** Le modèle est entraîné ou ajusté par nous : ses données d'apprentissage sont sous notre main. */
+const trainedByUs: Condition = { q: 'C6', noneOf: ['api'] };
 const deployedIn = (country: string): Condition => ({ q: 'C1', anyOf: [country] });
 
 export const SCALE_OPTIONS: Option[] = [
@@ -477,7 +492,7 @@ export const QUESTIONS: Question[] = [
     remediation: "Rédiger un plan d'incident : qui décide d'arrêter, comment on revient en arrière, qui informe les personnes.",
   },
 
-  // --- 5. Équité et biais (extensible : biais cognitifs à venir) -----------------
+  // --- 5. Équité et biais ---------------------------------------------------------
   {
     code: 'E1',
     section: 'E',
@@ -510,7 +525,120 @@ export const QUESTIONS: Question[] = [
     remediation: 'Intégrer un module « limites et bonnes pratiques » à la formation des utilisateurs.',
   },
 
-  // --- 6. Sécurité -------------------------------------------------------------------
+  // --- 6. Biais cognitifs et algorithmiques ---------------------------------------
+  // Deux familles de biais, traitées ensemble parce qu'elles se nourrissent l'une
+  // l'autre : les biais *algorithmiques* viennent des données, du choix des
+  // variables et de l'annotation ; les biais *cognitifs* viennent des humains qui
+  // conçoivent, paramètrent et croient le système. Le thème 5 mesure le résultat
+  // (l'IA discrimine-t-elle ?), celui-ci s'intéresse aux causes et aux moyens de
+  // détection.
+  {
+    code: 'BI1',
+    section: 'BI',
+    kind: 'scale',
+    weight: 4,
+    critical: true,
+    showIf: hasCriticalDomain,
+    wording:
+      "Les données sur lesquelles repose le système ont-elles été analysées pour y chercher des biais (sur-représentation d'un groupe, décisions passées discriminatoires, période ou zone géographique non représentative) ?",
+    why: 'C’est la première cause de biais algorithmique : un modèle appris sur les décisions passées d’une organisation en reproduit les discriminations, et les applique désormais à grande échelle.',
+    options: SCALE_OPTIONS,
+    remediation:
+      "Mesurer la représentation de chaque groupe concerné dans les données et la comparer à la population réelle ; rééquilibrer ou compléter ce qui manque. Si le modèle vient d'un fournisseur, exiger sa documentation de données (fiche modèle, populations couvertes, biais connus).",
+  },
+  {
+    code: 'BI2',
+    section: 'BI',
+    kind: 'scale',
+    weight: 2,
+    showIf: trainedByUs,
+    wording:
+      "Le processus de collecte et d'annotation des données est-il documenté : qui annote, selon quelles consignes écrites, avec quel contrôle de cohérence ?",
+    why: 'Une consigne d’annotation ambiguë, ou une équipe d’annotateurs peu diverse, fabrique un biais que les tests sur le modèle ne rattrapent pas — l’erreur est déjà dans la vérité de référence.',
+    options: SCALE_OPTIONS,
+    remediation:
+      "Rédiger un guide d'annotation, faire annoter un même échantillon par deux personnes, mesurer leur taux d'accord et corriger les consignes en cas de désaccord marqué.",
+  },
+  {
+    code: 'BI3',
+    section: 'BI',
+    kind: 'single',
+    weight: 2,
+    wording:
+      "Le poids réel de chaque variable dans les résultats a-t-il été examiné, afin de repérer une variable qui pèse anormalement lourd ?",
+    why: 'Ancrage algorithmique : le modèle accorde une importance excessive à une variable dominante — le revenu initial dans un score de crédit, l’historique dans une répartition budgétaire. Les méthodes d’explicabilité (SHAP, LIME) attribuent à chaque variable sa contribution réelle à la décision.',
+    options: [
+      { value: '2', label: "Oui, avec une méthode d'explicabilité (SHAP, LIME ou équivalent)", score: 2 },
+      { value: '1', label: 'Partiellement : lecture manuelle des pondérations, sans outil', score: 1 },
+      { value: '0', label: 'Non, le poids des variables n’est pas connu', score: 0 },
+    ],
+    remediation:
+      "Analyser la contribution des variables (SHAP, LIME) sur un échantillon représentatif ; normaliser ou repondérer celles qui dominent, puis vérifier que les résultats restent stables.",
+  },
+  {
+    code: 'BI4',
+    section: 'BI',
+    kind: 'scale',
+    weight: 2,
+    showIf: generatesOrInteracts,
+    wording:
+      "Les consignes système et les exemples fournis au modèle ont-ils été testés en faisant varier leur ordre et leur formulation ?",
+    why: 'Le même ancrage, côté IA générative : un modèle de langage se cale fortement sur le premier contexte reçu. Permuter deux exemples ou reformuler une consigne suffit parfois à changer la réponse.',
+    options: SCALE_OPTIONS,
+    remediation:
+      "Constituer un jeu de cas de référence et le rejouer en permutant l'ordre des exemples et en reformulant la consigne ; documenter les écarts observés et figer la formulation retenue.",
+  },
+  {
+    code: 'BI5',
+    section: 'BI',
+    kind: 'scale',
+    weight: 2,
+    showIf: { any: [hasCriticalDomain, generatesContent] },
+    wording:
+      "L'effet d'un signe de prestige (école, diplôme, marque, service d'origine, ancienneté) sur les résultats a-t-il été testé ?",
+    why: 'Effet de halo : une impression favorable sur un seul aspect déteint sur l’appréciation d’ensemble. Un tri de CV qui privilégie une école prestigieuse en fait un critère de compétence, ce qu’elle n’est pas ; un modèle génératif écrit spontanément plus favorablement sur les marques connues.',
+    options: SCALE_OPTIONS,
+    remediation:
+      "Rejouer des cas identiques en ne changeant que le signe de prestige et vérifier que le résultat ne bouge pas ; si l'écart est significatif, réduire le poids de la variable, la retirer, ou la masquer au modèle.",
+  },
+  {
+    code: 'BI6',
+    section: 'BI',
+    kind: 'scale',
+    weight: 2,
+    wording:
+      "Les biais détectés donnent-ils lieu à une correction effectivement mise en œuvre, puis à une nouvelle mesure qui vérifie qu'elle a fonctionné ?",
+    why: 'Détecter sans corriger ne change rien, et corriger sans remesurer ne prouve rien. C’est aussi ce qui rend la démarche opposable en cas de contrôle.',
+    options: SCALE_OPTIONS,
+    remediation:
+      "Tenir un registre des biais : mesure initiale, correction appliquée (rééquilibrage des données, repondération, contrainte d'équité, filtrage), mesure après correction, date et responsable.",
+  },
+  {
+    code: 'BI7',
+    section: 'BI',
+    kind: 'scale',
+    weight: 1,
+    wording:
+      "Les personnes qui conçoivent et valident le système sont-elles sensibilisées à leurs propres biais cognitifs (confirmation, ancrage, effet de halo) ?",
+    why: 'Les biais du système commencent souvent chez l’humain : ne retenir que les variables qui confirment ce qu’on croit déjà, se fier au premier chiffre obtenu, juger un fournisseur sur sa notoriété. Aucun outil ne corrige cela : seules la formation et la relecture par un tiers le font.',
+    options: SCALE_OPTIONS,
+    remediation:
+      "Ajouter un module « biais cognitifs » à la formation de l'équipe projet, et faire relire le choix des variables et des critères par une personne extérieure au projet.",
+  },
+  {
+    code: 'BI8',
+    section: 'BI',
+    kind: 'scale',
+    weight: 1,
+    wording:
+      "Les biais sont-ils remesurés périodiquement après la mise en production, sur les données réellement traitées ?",
+    why: 'Les populations, les usages et les données évoluent : un système équitable au lancement peut cesser de l’être sans qu’aucune ligne de code n’ait changé.',
+    options: SCALE_OPTIONS,
+    remediation:
+      "Programmer une remesure au moins annuelle sur les données de production, et la rattacher à la revue de conformité (la conformité est de toute façon revue tous les 12 mois).",
+  },
+
+  // --- 7. Sécurité -------------------------------------------------------------------
   {
     code: 'SE1',
     section: 'SE',
@@ -543,7 +671,7 @@ export const QUESTIONS: Question[] = [
     remediation: "Vérifier les conditions (opt-out d'entraînement, zone de traitement, sous-traitants) et les faire valider par le juridique.",
   },
 
-  // --- 7. Frugalité et FinOps -------------------------------------------------------
+  // --- 8. Frugalité et FinOps -------------------------------------------------------
   {
     code: 'F1',
     section: 'F',
@@ -595,7 +723,7 @@ export const QUESTIONS: Question[] = [
     remediation: 'Auditer les appels sur une semaine et supprimer les redondances.',
   },
 
-  // --- 8. Réglementation — Union européenne --------------------------------------------
+  // --- 9. Réglementation — Union européenne --------------------------------------------
   {
     code: 'UE1',
     section: 'UE',
@@ -684,7 +812,7 @@ export const QUESTIONS: Question[] = [
     remediation: 'Organiser une sensibilisation adaptée aux rôles.',
   },
 
-  // --- 8. Réglementation — États-Unis ----------------------------------------------
+  // --- 9. Réglementation — États-Unis ----------------------------------------------
   {
     code: 'US1',
     section: 'US',
@@ -759,7 +887,7 @@ export const QUESTIONS: Question[] = [
     remediation: "Offrir l'opt-out et une procédure d'accès / suppression.",
   },
 
-  // --- 8. Réglementation — Chine ------------------------------------------------------
+  // --- 9. Réglementation — Chine ------------------------------------------------------
   {
     code: 'CN1',
     section: 'CN',
@@ -833,7 +961,7 @@ export const QUESTIONS: Question[] = [
     remediation: 'Constituer le dossier de provenance exigé.',
   },
 
-  // --- 8. Réglementation — autres pays ------------------------------------------------
+  // --- 9. Réglementation — autres pays ------------------------------------------------
   {
     code: 'AU1',
     section: 'AU',
@@ -872,6 +1000,9 @@ export type BusinessCriticality = (typeof BUSINESS_CRITICALITIES)[number]['code'
 // ---------------------------------------------------------------------------
 
 /** ≥ 86 : conforme (production). */
+/** Durée moyenne de saisie d'une question, en minutes. Sert aux estimations affichées. */
+export const MINUTES_PER_QUESTION = 0.5;
+
 export const COMPLIANT_MIN = 86;
 /** ≥ 61 : partiellement conforme (test / pilote). En dessous : non conforme. */
 export const PARTIAL_MIN = 61;
@@ -1088,7 +1219,7 @@ export function scoreEvaluation(answers: Answers): ScoringResult {
     verdict: blocker ? 'blocked' : verdictFor(score, cappedBy),
     sections,
     recommendations,
-    // Environ 30 secondes par question, cadrage compris.
-    estimatedMinutes: Math.max(1, Math.round((framing.length + scored.length) * 0.5)),
+    // Cadrage compris : lui aussi se remplit.
+    estimatedMinutes: Math.max(1, Math.round((framing.length + scored.length) * MINUTES_PER_QUESTION)),
   };
 }
