@@ -197,14 +197,17 @@ export function EvaluationPage() {
   const isLast = stepIndex >= steps.length - 1;
   const answeredCount = result.applicable.length - result.missing.filter((code) => result.applicable.includes(code)).length;
 
-  /** Une étape est « faite » si toutes ses questions applicables ont une réponse. */
-  function stepState(target: Step, index: number): 'done' | 'current' | 'todo' {
-    if (index === stepIndex) return 'current';
-    if (target.kind === 'result') return 'todo';
+  /**
+   * Une étape est « faite » si toutes ses questions applicables ont une réponse.
+   * Indépendant de l'étape affichée : en revenant sur un brouillon on retombe sur
+   * le cadrage, déjà rempli — il doit garder sa coche tout en étant l'étape en cours.
+   */
+  function stepDone(target: Step): boolean {
+    if (target.kind === 'result') return false;
     const codes = applicableQuestions(answers)
       .filter((question) => question.section === target.section.code)
       .map((question) => question.code);
-    return codes.length > 0 && codes.every((code) => !result.missing.includes(code)) ? 'done' : 'todo';
+    return codes.length > 0 && codes.every((code) => !result.missing.includes(code));
   }
 
   return (
@@ -239,20 +242,28 @@ export function EvaluationPage() {
         <nav className="stepper" aria-label="Étapes du questionnaire">
           <ol className="stepper__list">
             {steps.map((target, index) => {
-              const state = stepState(target, index);
+              const done = stepDone(target);
+              const current = index === stepIndex;
               const label = target.kind === 'result' ? 'Résultat' : target.section.label;
               return (
                 <li key={target.kind === 'result' ? 'result' : target.section.code}>
                   <button
                     type="button"
-                    className={cx('stepper__item', `stepper__item--${state}`)}
-                    aria-current={state === 'current' ? 'step' : undefined}
+                    className={cx(
+                      'stepper__item',
+                      done && 'stepper__item--done',
+                      current && 'stepper__item--current',
+                      !done && !current && 'stepper__item--todo',
+                    )}
+                    aria-current={current ? 'step' : undefined}
                     onClick={() => void goTo(index)}
                   >
                     <span className="stepper__index mono" aria-hidden="true">
-                      {state === 'done' ? '✓' : index + 1}
+                      {done ? '✓' : index + 1}
                     </span>
                     <span className="stepper__label">{shortLabel(label)}</span>
+                    {/* La coche est décorative : l'état est aussi dit en toutes lettres. */}
+                    {done && <span className="visually-hidden">— étape terminée</span>}
                   </button>
                 </li>
               );
@@ -324,13 +335,6 @@ export function EvaluationPage() {
                   />
                 ))}
 
-              {step.section.code === 'framing' && result.applicable.length > 0 && (
-                <p className="notice notice--info" role="status">
-                  Avec ces réponses, <strong>{result.applicable.length} questions</strong> vous concernent — environ{' '}
-                  {result.estimatedMinutes} minute{result.estimatedMinutes > 1 ? 's' : ''}.
-                </p>
-              )}
-
               <div className="wizard__nav">
                 <Button variant="ghost" onClick={() => void goTo(stepIndex - 1)} disabled={stepIndex === 0 || saving}>
                   ← Précédent
@@ -362,8 +366,22 @@ export function EvaluationPage() {
           )}
         </div>
 
-        {/* --- Score en direct ---------------------------------------------- */}
+        {/* --- Bandeau de droite : parcours (cadrage) puis score en direct ---- */}
         <aside className="wizard__side">
+          {step.kind === 'section' && step.section.code === 'framing' && result.applicable.length > 0 && (
+            <Card title="Votre parcours" titleId="parcours-title" className="eval-side">
+              <p role="status">
+                <strong>
+                  {result.applicable.length} question{result.applicable.length > 1 ? 's' : ''}
+                </strong>{' '}
+                vous concernent — environ {result.estimatedMinutes} minute
+                {result.estimatedMinutes > 1 ? 's' : ''}.
+              </p>
+              <p className="muted">
+                Le cadrage détermine les questions affichées : ce nombre change à chaque réponse.
+              </p>
+            </Card>
+          )}
           <Card title="Score en direct" titleId="live-score-title" className="eval-side">
             <ScorePanel result={result} answered={answeredCount} compact />
           </Card>
@@ -399,8 +417,8 @@ function ScorePanel({ result, answered, compact }: { result: ScoringResult; answ
               : `Verdict prévu : ${VERDICT_LABELS[result.verdict].split(' — ')[0]}`}
       </p>
       <p className="muted score__hint">
-        Conforme dès 86, test de 61 à 85. {answered}/{result.applicable.length} question
-        {result.applicable.length > 1 ? 's' : ''} renseignée{answered > 1 ? 's' : ''}.
+        Conforme dès 86, test de 61 à 85. {answered} question{answered > 1 ? 's' : ''} renseignée
+        {answered > 1 ? 's' : ''} sur {result.applicable.length}.
       </p>
 
       {result.cappedBy.length > 0 && (
@@ -432,9 +450,7 @@ function SectionBars({ sections }: { sections: SectionScore[] }) {
       {sections.map((section) => (
         <li key={section.code} className="section-bar">
           <span className="section-bar__label">{shortLabel(section.label)}</span>
-          <span className="section-bar__value mono">
-            {section.pointsObtained.toLocaleString('fr-FR')}/{section.pointsApplicable}
-          </span>
+          <span className="section-bar__value mono">{section.score ?? 0} %</span>
           <span className="section-bar__track" aria-hidden="true">
             <span className="section-bar__fill" style={{ width: `${section.score ?? 0}%` }} />
           </span>
@@ -466,6 +482,10 @@ function ResultStep({
   const top = result.recommendations.slice(0, 5);
   const answered = result.applicable.length - result.missing.filter((code) => result.applicable.includes(code)).length;
 
+  /** Points bruts convertis sur l'échelle du score : le barème brut n'est pas montré. */
+  const scoreGain = (points: number) =>
+    result.pointsApplicable > 0 ? Math.round((points / result.pointsApplicable) * 100) : 0;
+
   return (
     <Card>
       <h2 ref={headingRef} tabIndex={-1} className="wizard__title">
@@ -494,7 +514,8 @@ function ResultStep({
             {top.map((recommendation) => (
               <li key={recommendation.code} className={cx('recommendation', recommendation.critical && 'recommendation--critical')}>
                 <span className="recommendation__gain mono">
-                  +{recommendation.pointsRecoverable.toLocaleString('fr-FR')} pt
+                  +{scoreGain(recommendation.pointsRecoverable)} pt
+                  {scoreGain(recommendation.pointsRecoverable) > 1 ? 's' : ''}
                 </span>
                 <span className="recommendation__body">
                   <strong>{recommendation.code}</strong> — {recommendation.remediation}

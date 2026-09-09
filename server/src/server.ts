@@ -4,10 +4,19 @@
 import { buildApp } from './app.js';
 import { purgeExpiredSessions } from './auth/session.js';
 import { config } from './config.js';
+import { seedDatabase } from './db/seed.js';
 import { scheduleComplianceExpiry } from './jobs/compliance-expiry.js';
 
 const app = await buildApp();
 const log = (message: string) => app.log.info(message);
+
+/**
+ * Base fraîche en développement : le démarrage applique les migrations mais ne
+ * semait rien, alors que la page de connexion propose les comptes de démo. Ils
+ * n'existaient donc pas et la connexion par mot de passe échouait.
+ * `seedDatabase` ne fait rien dès que la base contient une application.
+ */
+if (!config.isProduction) await seedDatabase(app.db, log);
 
 const stopComplianceJob = scheduleComplianceExpiry(app.db, log);
 

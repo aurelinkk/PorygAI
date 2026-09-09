@@ -127,7 +127,9 @@ application `compliant` dont `compliance_valid_until` est dépassé, avec une li
   (table `_migrations`). Toujours **ajouter** un fichier, jamais modifier un fichier joué.
 - **Suppression logique** : `status = 'deleted'` + `deleted_by` + `deleted_at`. Des triggers
   `BEFORE DELETE` refusent la suppression physique sur `users`, `applications`, `finops_costs`, `audit_log`.
-- **Seed** (`db/seed.ts`) : idempotent, utilisé par `npm run db:seed` et par les tests.
+- **Seed** (`db/seed.ts`) : idempotent (il ne fait rien dès que la base contient une application),
+  utilisé par `npm run db:seed`, par les tests, et par `server.ts` au démarrage hors production —
+  sinon une base fraîche n'aurait que le schéma et les comptes de démo n'existeraient pas.
 
 Schéma actuel :
 - migration 001 — `users`, `sessions`, `applications`, `finops_costs`, `audit_log` ;

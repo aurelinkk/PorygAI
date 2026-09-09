@@ -110,7 +110,7 @@ autorisées explicitement), `frame-ancestors 'none'`, `X-Content-Type-Options: n
 ## Vérifier
 
 ```bash
-npm test          # 129 tests : auth, SSO, CSRF, RBAC, propriété, filtres, scoring, triggers
+npm test          # 131 tests : auth, SSO, CSRF, RBAC, propriété, filtres, scoring, triggers
 npm audit         # vulnérabilités connues des dépendances
 ```
 

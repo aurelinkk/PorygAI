@@ -2,8 +2,9 @@
  * Une question du questionnaire v2, quel que soit son type.
  *
  * Éléments natifs : un <fieldset> par question, des boutons radio (ou des cases
- * à cocher pour un choix multiple) dans des <label>. Le score de chaque option
- * est affiché : l'utilisateur voit ce que sa réponse vaut.
+ * à cocher pour un choix multiple) dans des <label>. Le barème n'est pas affiché :
+ * il n'aide pas la personne qui répond et l'incite à viser la note plutôt qu'à
+ * décrire la réalité. Seuls le score global et les points critiques sont montrés.
  *
  * Deux états mis en évidence : une réponse bloquante (l'évaluation s'arrête)
  * et un critère critique à « Non » (plafond à 60).
@@ -26,12 +27,6 @@ function asList(value: AnswerValue | undefined): string[] {
   return Array.isArray(value) ? value : [String(value)];
 }
 
-/** Points d'une option, formatés (« 1 pt », « 0,5 pt »). */
-function pointsLabel(question: Question, score: 0 | 1 | 2): string {
-  const points = ((question.weight ?? 0) * score) / 2;
-  return `${points.toLocaleString('fr-FR')} pt`;
-}
-
 export function QuestionCard({ question, value, comment, disabled, onAnswer, onComment }: QuestionCardProps) {
   const isMulti = question.kind === 'multi';
   const selected = asList(value);
@@ -47,6 +42,11 @@ export function QuestionCard({ question, value, comment, disabled, onAnswer, onC
     const without = selected.filter((item) => item !== optionValue && item !== 'none');
     onAnswer(selected.includes(optionValue) ? without : [...without, optionValue]);
   }
+
+  // Options nombreuses ou libellés longs (« Oui : coûts complets et gains chiffrés… ») :
+  // en colonne, sinon les pastilles se coupent au milieu d'une phrase.
+  const stacked =
+    (question.options?.length ?? 0) > 3 || (question.options ?? []).some((option) => option.label.length > 40);
 
   return (
     <fieldset
@@ -71,7 +71,7 @@ export function QuestionCard({ question, value, comment, disabled, onAnswer, onC
         </details>
       )}
 
-      <div className={cx('question__choices', question.options && question.options.length > 3 && 'question__choices--stacked')}>
+      <div className={cx('question__choices', stacked && 'question__choices--stacked')}>
         {(question.options ?? []).map((option) => {
           const optionId = `${question.code}-${option.value}`;
           const checked = selected.includes(option.value);
@@ -87,9 +87,6 @@ export function QuestionCard({ question, value, comment, disabled, onAnswer, onC
                 onChange={() => (isMulti ? toggleMulti(option.value) : onAnswer(option.value))}
               />
               <span className="choice__label">{option.label}</span>
-              {option.score !== undefined && question.weight !== undefined && (
-                <span className="choice__points mono">{pointsLabel(question, option.score)}</span>
-              )}
             </label>
           );
         })}

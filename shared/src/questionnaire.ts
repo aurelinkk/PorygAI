@@ -87,7 +87,7 @@ export interface Section {
 
 export const SECTIONS: Section[] = [
   { code: 'framing', label: 'Cadrage', intro: 'Six questions pour adapter le questionnaire à votre application. Elles ne sont pas notées.' },
-  { code: 'N', label: 'Nécessité et proportionnalité', intro: "L'IA est-elle le bon outil, et à la bonne taille ?" },
+  { code: 'N', label: 'Nécessité et proportionnalité', intro: "L'IA est-elle le bon outil, à la bonne taille, et pour un gain réel ?" },
   { code: 'D', label: 'Données et vie privée', intro: 'Ce que l’application collecte, où elle l’héberge, et avec quelles garanties.' },
   { code: 'T', label: 'Transparence et explicabilité', intro: 'Les personnes savent-elles qu’une IA intervient, et peut-on expliquer ses résultats ?' },
   { code: 'S', label: 'Supervision humaine et robustesse', intro: 'Qui garde la main, et que se passe-t-il quand l’IA se trompe ?' },
@@ -244,6 +244,70 @@ export const QUESTIONS: Question[] = [
     wording: "La finalité est-elle précise, écrite et limitée — l'usage réel ne dérive pas de l'usage déclaré ?",
     options: SCALE_OPTIONS,
     remediation: "Rédiger une finalité limitative et prévoir une revue à chaque évolution d'usage.",
+  },
+  {
+    code: 'N4',
+    section: 'N',
+    kind: 'single',
+    weight: 2,
+    wording:
+      "La tâche présente-t-elle les caractéristiques qui rendent une IA pertinente : volume important, données non structurées (texte, image, son), grande variabilité des cas, absence de règles explicites ?",
+    why: 'Une IA n’apporte quelque chose que si la tâche est trop variable ou trop volumineuse pour être écrite en règles. Sinon une règle métier fait mieux, pour moins cher et sans risque de dérive.',
+    options: [
+      { value: '2', label: 'Oui : au moins deux de ces caractéristiques, constatées et écrites', score: 2 },
+      { value: '1', label: 'En partie : une seule caractéristique, ou constat non documenté', score: 1 },
+      { value: '0', label: 'Non : la tâche se décrit en règles explicites', score: 0 },
+    ],
+    remediation:
+      'Décrire la tâche par des chiffres (volume mensuel, nature des données, part de cas atypiques) et vérifier qu’une règle métier ou un traitement statistique ne suffirait pas.',
+  },
+  {
+    code: 'N5',
+    section: 'N',
+    kind: 'single',
+    weight: 2,
+    wording:
+      "Le gain attendu est-il chiffré, avec une mesure de référence prise avant l'IA (temps passé, taux d'erreur, volume traité) ?",
+    why: 'Sans mesure avant / après, l’utilité de l’application ne peut être ni prouvée ni contestée : on ne saura pas si elle mérite d’être maintenue.',
+    options: [
+      { value: '2', label: 'Oui : mesure de référence et cible chiffrées', score: 2 },
+      { value: '1', label: 'Un gain est annoncé, mais sans mesure de référence', score: 1 },
+      { value: '0', label: 'Non, le gain attendu n’est pas chiffré', score: 0 },
+    ],
+    remediation:
+      'Mesurer la situation actuelle (temps, coût, qualité) sur un échantillon représentatif, puis fixer une cible chiffrée avant le déploiement.',
+  },
+  {
+    code: 'N6',
+    section: 'N',
+    kind: 'single',
+    weight: 2,
+    wording:
+      "Le retour sur investissement a-t-il été estimé : coûts de mise en œuvre et coûts récurrents (licences, appels d'API, infrastructure, supervision humaine, maintenance) comparés aux gains chiffrés ?",
+    why: 'Le coût d’une IA ne s’arrête pas à sa mise en place : les appels, la supervision et la maintenance courent tous les mois. Les coûts récurrents sont ceux suivis dans le module FinOps.',
+    options: [
+      { value: '2', label: 'Oui : coûts complets et gains chiffrés, avec un horizon de rentabilité', score: 2 },
+      { value: '1', label: 'Estimation partielle : coûts de mise en œuvre seuls, ou gains non chiffrés', score: 1 },
+      { value: '0', label: 'Non, aucune estimation', score: 0 },
+    ],
+    remediation:
+      'Poser un calcul simple sur 12 à 24 mois : coûts de mise en œuvre et coûts récurrents (repris du suivi FinOps) face aux gains mesurés, en indiquant à partir de quand l’application devient rentable.',
+  },
+  {
+    code: 'N7',
+    section: 'N',
+    kind: 'single',
+    weight: 1,
+    wording:
+      'Le bénéfice réel sera-t-il mesuré après la mise en production, avec une décision explicite (poursuivre, corriger, arrêter) si la cible n’est pas atteinte ?',
+    why: 'C’est ce qui distingue une IA utile d’une IA qu’on garde par habitude : une date de revue, et le droit d’arrêter.',
+    options: [
+      { value: '2', label: 'Oui : date de revue fixée et critère d’arrêt écrit', score: 2 },
+      { value: '1', label: 'Un suivi est prévu, sans date ni critère d’arrêt', score: 1 },
+      { value: '0', label: 'Non, aucun bilan prévu', score: 0 },
+    ],
+    remediation:
+      'Programmer une revue à trois ou six mois : comparer les gains mesurés à la cible, et acter la suite (poursuite, correction ou arrêt).',
   },
 
   // --- 2. Données et vie privée ---------------------------------------------------
