@@ -78,7 +78,14 @@ export const submitEvaluationSchema = saveEvaluationSchema.extend({
 });
 export type SubmitEvaluationInput = z.infer<typeof submitEvaluationSchema>;
 
-/** Saisie d'un coût mensuel pour une application. */
+/**
+ * Saisie mensuelle d'une application : coût, énergie et carbone.
+ *
+ * Les deux dernières sont facultatives : toutes les équipes ne savent pas encore
+ * mesurer leur consommation : mais elles font partie de la même saisie : demander
+ * l'empreinte au moment où l'on saisit la facture est le seul moyen qu'elle soit
+ * renseignée un jour.
+ */
 export const saveCostSchema = z.object({
   periodMonth: z
     .string()
@@ -87,6 +94,16 @@ export const saveCostSchema = z.object({
     .number({ invalid_type_error: 'Montant invalide' })
     .min(0, 'Le montant ne peut pas être négatif')
     .max(100_000_000, 'Montant hors limites'),
+  energyKwh: z.coerce
+    .number({ invalid_type_error: 'Consommation invalide' })
+    .min(0, 'La consommation ne peut pas être négative')
+    .max(1_000_000_000, 'Consommation hors limites')
+    .default(0),
+  co2Kg: z.coerce
+    .number({ invalid_type_error: 'Empreinte invalide' })
+    .min(0, "L'empreinte ne peut pas être négative")
+    .max(1_000_000_000, 'Empreinte hors limites')
+    .default(0),
 });
 export type SaveCostInput = z.infer<typeof saveCostSchema>;
 

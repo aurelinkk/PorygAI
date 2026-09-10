@@ -17,7 +17,7 @@ if (existsSync(envFile)) process.loadEnvFile(envFile);
 /**
  * Lit une variable d'environnement en traitant la chaîne vide comme "non définie".
  * Indispensable : un `.env` copié depuis `.env.example` contient des lignes comme
- * `COOKIE_SECRET=` — sans ce filtre, `??` renverrait la chaîne vide au lieu du défaut.
+ * `COOKIE_SECRET=` : sans ce filtre, `??` renverrait la chaîne vide au lieu du défaut.
  */
 const read = (name: string, fallback: string): string => {
   const value = process.env[name];

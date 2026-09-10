@@ -1,12 +1,17 @@
-# Questionnaire d'évaluation v2 — conception
+# Questionnaire d'évaluation v2 : conception
 
 > Statut : **proposition à valider** avant implémentation. Les questions v1 pertinentes sont
 > reprises (marquées `← A1` etc.). Les questions sur les biais cognitifs viendront dans une
 > version ultérieure : le thème « Équité & biais » est prévu pour les accueillir.
 >
-> **v2.1 (2026-09-09)** — ajout du thème 6 « Biais cognitifs et algorithmiques » (BI1–BI8),
+> **v2.1 (2026-09-09)** : ajout du thème 6 « Biais cognitifs et algorithmiques » (BI1–BI8),
 > d'après le cours 5. Aucun code de question existant n'a changé ; les thèmes suivants sont
 > renumérotés.
+>
+> **v2.3 (2026-09-10)** : thème **Gouvernance FinOps** (GF1–GF7), d'après le brief métier.
+> Il ne compte pas dans le score sur 100 : il produit un **ajustement** de −4 à +4 points, et
+> alimente l'**estimation d'empreinte** affichée à l'étape « Résultat ». Il remplace le F6 de la
+> v2.2, qui traitait le même sujet de façon moins précise.
 
 ## 1. Principes
 
@@ -32,12 +37,12 @@ Le poids d'une question dépend de son importance :
 | Mineur | 1 | Bonnes pratiques |
 
 **Score = 100 × points obtenus / points applicables.** Une question masquée par le cadrage ne compte
-ni au numérateur ni au dénominateur — un outil interne simple a moins d'obligations qu'un système
+ni au numérateur ni au dénominateur : un outil interne simple a moins d'obligations qu'un système
 à haut risque, et c'est normal. Les sous-scores par thème et par pays se calculent de la même
 façon sur leur périmètre.
 
 > **Le barème ne s'affiche pas.** Les poids ci-dessus servent au calcul, pas à la saisie : le
-> formulaire ne met plus de pastille « 4 pt » sur les réponses. Deux raisons — la personne qui
+> formulaire ne met plus de pastille « 4 pt » sur les réponses. Deux raisons : la personne qui
 > répond n'a pas à viser la note plutôt qu'à décrire la réalité, et les points bruts se
 > contredisaient visuellement avec le score (une réponse à 4 pt fait monter un parcours de 48
 > points de 8, pas de 4). L'interface ne parle donc que d'une seule échelle, celle sur 100 :
@@ -87,7 +92,7 @@ THÈMES NOTÉS
 
 ---
 
-## 3. Étape 0 — Cadrage (non noté)
+## 3. Étape 0 : Cadrage (non noté)
 
 | Code | Question | Réponses | Effet |
 | --- | --- | --- | --- |
@@ -107,16 +112,16 @@ de la v1, qui restent : outil & éditeur, finalité, criticité métier).
 
 Légende : **●** critique (4 pts, plafond 60 si Non) · ○ standard (2 pts) · · mineur (1 pt) · `[si …]` condition d'affichage
 
-### Thème 1 — Nécessité et proportionnalité
+### Thème 1 : Nécessité et proportionnalité
 
 | Code | Q | Question | Recommandation si insuffisant |
 | --- | --- | --- | --- |
 | N1 | ● | **Un algorithme d'IA est-il vraiment nécessaire ?** Une approche plus simple (règles métier, statistiques classiques, processus humain) a-t-elle été comparée ? *Oui, l'IA est justifiée après comparaison / Partiellement, sans comparaison formelle / Non, une solution plus simple suffirait* | Documenter la comparaison avec une solution non-IA ; si elle est équivalente, la privilégier : moins de risque, de coût et d'empreinte. |
 | N2 | ○ | Le modèle est-il proportionné au besoin ? (pas de LLM massif pour une classification simple) `← D2` | Comparer à des alternatives plus légères à qualité équivalente et documenter le choix. |
-| N3 | ○ | La finalité est-elle précise, écrite et limitée — l'usage réel ne dérive pas de l'usage déclaré ? | Rédiger une finalité limitative et prévoir une revue à chaque évolution d'usage. |
+| N3 | ○ | La finalité est-elle précise, écrite et limitée : l'usage réel ne dérive pas de l'usage déclaré ? | Rédiger une finalité limitative et prévoir une revue à chaque évolution d'usage. |
 | N4 | ○ | La tâche présente-t-elle les caractéristiques qui rendent une IA pertinente : volume important, données non structurées, grande variabilité des cas, absence de règles explicites ? *Au moins deux, écrites / une seule ou non documentée / la tâche se décrit en règles* | Décrire la tâche par des chiffres (volume mensuel, nature des données, part de cas atypiques) et vérifier qu'une règle métier ne suffirait pas. |
 | N5 | ○ | Le gain attendu est-il chiffré, avec une mesure de référence prise avant l'IA (temps passé, taux d'erreur, volume traité) ? *Référence et cible chiffrées / gain annoncé sans référence / non chiffré* | Mesurer la situation actuelle sur un échantillon représentatif et fixer une cible chiffrée avant le déploiement. |
-| N6 | ○ | **ROI** — coûts de mise en œuvre et coûts récurrents (licences, appels d'API, infrastructure, supervision, maintenance) comparés aux gains chiffrés ? *Coûts complets et horizon de rentabilité / estimation partielle / aucune* | Poser un calcul sur 12 à 24 mois : coûts (repris du suivi FinOps) face aux gains mesurés, et à partir de quand l'application devient rentable. |
+| N6 | ○ | **ROI** : coûts de mise en œuvre et coûts récurrents (licences, appels d'API, infrastructure, supervision, maintenance) comparés aux gains chiffrés ? *Coûts complets et horizon de rentabilité / estimation partielle / aucune* | Poser un calcul sur 12 à 24 mois : coûts (repris du suivi FinOps) face aux gains mesurés, et à partir de quand l'application devient rentable. |
 | N7 | · | Le bénéfice réel sera-t-il mesuré après mise en production, avec une décision explicite (poursuivre, corriger, arrêter) si la cible n'est pas atteinte ? | Programmer une revue à trois ou six mois : comparer les gains mesurés à la cible et acter la suite. |
 
 > **Utilité et ROI (N4–N7).** N1 seul répondait « oui/non » à une question qui n'est pas binaire.
@@ -124,7 +129,7 @@ Légende : **●** critique (4 pts, plafond 60 si Non) · ○ standard (2 pts) �
 > le gain est-il mesuré avant (N5), le coût complet est-il rapproché du gain (N6), et le bilan
 > sera-t-il fait après (N7). N6 se lit avec le module FinOps, qui porte les coûts réels mensuels.
 
-### Thème 2 — Données et vie privée
+### Thème 2 : Données et vie privée
 
 | Code | Q | Question | Recommandation |
 | --- | --- | --- | --- |
@@ -135,7 +140,7 @@ Légende : **●** critique (4 pts, plafond 60 si Non) · ○ standard (2 pts) �
 | D5 | ○ | `[si C6 ≠ API tierce]` Données d'entraînement : provenance licite, droits d'usage vérifiés, documentation disponible ? | Constituer une fiche de provenance des jeux de données (source, licence, date, biais connus). |
 | D6 | · | `[si C4]` Durée de conservation définie et droits des personnes (accès, effacement, opposition) opérationnels ? | Définir les durées et une procédure de réponse aux demandes sous un mois. |
 
-### Thème 3 — Transparence et explicabilité
+### Thème 3 : Transparence et explicabilité
 
 | Code | Q | Question | Recommandation |
 | --- | --- | --- | --- |
@@ -144,7 +149,7 @@ Légende : **●** critique (4 pts, plafond 60 si Non) · ○ standard (2 pts) �
 | T3 | ○ | `[si C5 génère]` Les contenus générés sont-ils marqués (filigrane, métadonnées, mention) ? | Activer le marquage natif du fournisseur ou ajouter une mention systématique. |
 | T4 | · | Une documentation technique existe-t-elle (fiche modèle, performances mesurées, limites connues) ? | Rédiger une fiche modèle d'une page, mise à jour à chaque version. |
 
-### Thème 4 — Supervision humaine et robustesse
+### Thème 4 : Supervision humaine et robustesse
 
 | Code | Q | Question | Recommandation |
 | --- | --- | --- | --- |
@@ -154,7 +159,7 @@ Légende : **●** critique (4 pts, plafond 60 si Non) · ○ standard (2 pts) �
 | S4 | ○ | Les décisions et sorties de l'IA sont-elles journalisées de façon à permettre un audit a posteriori ? | Journaliser entrée, sortie, version du modèle et horodatage, avec une durée de conservation définie. |
 | S5 | ○ | `[si C3 ≠ Aucun]` Un plan existe-t-il en cas d'erreur ou d'indisponibilité de l'IA (procédure dégradée, correction, communication) ? | Rédiger un plan d'incident : qui décide d'arrêter, comment on revient en arrière, qui informe les personnes. |
 
-### Thème 5 — Équité et biais
+### Thème 5 : Équité et biais
 
 | Code | Q | Question | Recommandation |
 | --- | --- | --- | --- |
@@ -165,7 +170,7 @@ Légende : **●** critique (4 pts, plafond 60 si Non) · ○ standard (2 pts) �
 > Les biais **cognitifs** (ancrage, effet de halo) et l'origine des biais algorithmiques font
 > l'objet du thème 6, ajouté en v2.1.
 
-### Thème 6 — Biais cognitifs et algorithmiques
+### Thème 6 : Biais cognitifs et algorithmiques
 
 Ajouté en v2.1, d'après le cours 5 « Impact sociétal et éthique ». Le thème 5 mesure le
 **résultat** (l'IA discrimine-t-elle ?) ; celui-ci s'intéresse aux **causes** et aux **moyens de
@@ -194,7 +199,7 @@ détection**. Deux familles de biais, traitées ensemble parce qu'elles se nourr
 > les applique désormais à grande échelle. La question n'est posée qu'en domaine à fort enjeu
 > (C3), là où la conséquence est directe pour les personnes.
 >
-> **Répartition.** 16 points au maximum, soit environ 15 % du score sur les parcours types —
+> **Répartition.** 16 points au maximum, soit environ 15 % du score sur les parcours types :
 > comparable au thème « Données & vie privée ». Cinq questions sur huit sont posées sur tous les
 > parcours ; les trois autres suivent le cadrage.
 >
@@ -202,7 +207,7 @@ détection**. Deux familles de biais, traitées ensemble parce qu'elles se nourr
 > quelles populations*, E3 porte sur l'excès de confiance des utilisateurs (automation bias). Le
 > thème 6 demande *d'où vient le biais* et *comment on le voit*.
 
-### Thème 7 — Sécurité
+### Thème 7 : Sécurité
 
 | Code | Q | Question | Recommandation |
 | --- | --- | --- | --- |
@@ -210,7 +215,7 @@ détection**. Deux familles de biais, traitées ensemble parce qu'elles se nourr
 | SE2 | ○ | `[si C5 ≠ Ni l'un ni l'autre]` L'application est-elle protégée contre les attaques propres à l'IA (injection de prompt, extraction de données, contournement des consignes) ? | Filtrer les entrées, cloisonner les données accessibles au modèle, tester les injections connues. |
 | SE3 | ○ | `[si C6 = API tierce]` Le contrat avec le fournisseur interdit-il l'usage de nos données pour entraîner ses modèles et couvre-t-il la confidentialité ? | Vérifier les conditions (opt-out d'entraînement, zone de traitement, sous-traitants) et les faire valider par le juridique. |
 
-### Thème 8 — Frugalité et FinOps
+### Thème 8 : Frugalité et FinOps
 
 | Code | Q | Question | Recommandation |
 | --- | --- | --- | --- |
@@ -219,8 +224,42 @@ détection**. Deux familles de biais, traitées ensemble parce qu'elles se nourr
 | F3 | ○ | Où tourne l'IA ? *On-premise ou cloud en région bas-carbone / Cloud sans critère carbone / Inconnu* | Choisir une région à faible intensité carbone ; documenter le choix. |
 | F4 | · | Des optimisations réduisent-elles la consommation (cache des réponses, traitement par lots, modèle distillé ou quantifié) ? | Mettre en place un cache et évaluer un modèle plus petit sur les cas simples. |
 | F5 | · | Le volume d'appels est-il maîtrisé (pas d'appels redondants ou inutiles) ? | Auditer les appels sur une semaine et supprimer les redondances. |
+### Thème 9 : Gouvernance FinOps *(hors score)*
 
-### Thème 9 — Réglementation par pays
+Ce thème **ne compte pas dans le score sur 100**. Les quatre premières questions produisent un
+**ajustement** de −4 à +4 points appliqué au score ; les trois dernières ne sont pas notées du tout,
+elles alimentent l'estimation d'empreinte. Toutes sont **exigées à la soumission**.
+
+| Code | Question | Effet |
+| --- | --- | --- |
+| GF1 | Type de reporting FinOps prévu ? *Tableau de bord automatique / rapport manuel / aucun* | +1 / 0 / −1 |
+| GF2 | À quelle fréquence ? *Mensuelle ou plus / trimestrielle ou annuelle / aucune* | +1 / 0 / −1 |
+| GF3 | Quelles mesures sont suivies ? *Coût · Énergie · CO₂* (choix multiple) | +1 si les trois · −1 si aucune |
+| GF4 | À qui le reporting est-il diffusé ? *Gouvernance / équipe projet / personne* | +1 / 0 / −1 |
+| GF5 | Fréquence d'entraînement ? *Jamais / une fois / périodique / continu* | alimente l'estimation |
+| GF6 | Volume d'inférence mensuel ? *< 1 000 / < 100 k / < 10 M / > 10 M* | alimente l'estimation |
+| GF7 | Région d'hébergement ? *On-premise / cloud bas carbone / standard / forte intensité / inconnu* | alimente l'estimation |
+| GF8 | Taille du modèle ? *Petit < 1 Md / moyen 1–20 Md / grand > 20 Md / inconnue* | alimente l'estimation |
+| GF9 | Taille exacte, si connue *(champ chiffré, facultatif)* | remplace la tranche de GF8 |
+
+> **« L'approche FinOps ajoute ou supprime des points, mais ne rend pas la solution non conforme. »**
+> Deux garde-fous appliquent cette règle dans `scoreEvaluation` :
+>
+> 1. un malus ne fait **jamais** passer sous le seuil de conformité partielle une application qui
+>    était au-dessus (`finops.floored` le signale) ;
+> 2. un bonus ne défait **jamais** le plafond d'un critère critique manqué : le plafond est appliqué
+>    en dernier.
+>
+> Le score de base reste visible à côté du score ajusté (`finops.baseScore`) : l'écart doit se lire.
+
+> **Les options nomment ce qu'elles recouvrent.** GF7 ne demande pas « une région bas carbone » sans
+> dire laquelle : chaque option cite des régions réelles (Stockholm, Dublin, Varsovie…) et
+> **l'intensité carbone que le calcul retiendra**. Idem pour GF8, qui donne des exemples de modèles
+> par tranche. Ces précisions sont rattachées au bouton radio par `aria-describedby`, pas seulement
+> posées à côté. Un test vérifie que chaque option de GF7 a sa précision et une intensité connue du
+> modèle de calcul : une option qui ne calculerait rien serait un piège.
+
+### Thème 9 : Réglementation par pays
 
 Un sous-bloc par pays coché en C1. Chaque sous-bloc a **sa barre d'avancement** (en pourcentage de son
 périmètre) et **ses recommandations**. Pour le score global, le thème compte comme les autres (ses
@@ -230,20 +269,20 @@ points s'ajoutent), et un pays faible se voit immédiatement.
 > (calendrier d'application de l'AI Act, lois d'État américaines, mesures chinoises). Le
 > questionnaire pointe les sujets ; il ne remplace pas une analyse juridique.
 
-#### Bloc UE — AI Act et RGPD
+#### Bloc UE : AI Act et RGPD
 
 | Code | Q | Question | Recommandation |
 | --- | --- | --- | --- |
 | UE1 | **BLOCAGE** | L'application met-elle en œuvre une **pratique interdite** (art. 5 AI Act) : notation sociale, manipulation ou exploitation de vulnérabilités, catégorisation biométrique par attributs sensibles, reconnaissance des émotions au travail ou en formation, identification biométrique à distance en temps réel dans l'espace public, constitution de bases faciales par moissonnage ? | **Oui → évaluation refusée** : « Pratique interdite dans l'UE (art. 5 AI Act) ». |
 | UE2 | ○ | La classification de risque AI Act a-t-elle été faite et documentée (risque inacceptable / haut / limité / minimal) ? | Réaliser et écrire la classification ; en cas de doute, consulter le juridique. |
-| UE3 | ● | `[si C3 ≠ Aucun]` Système probablement à **haut risque** (annexe III) : les obligations sont-elles couvertes — gestion des risques, gouvernance des données, documentation technique, enregistrement dans la base UE, évaluation de conformité ? | Lancer le chantier de conformité haut risque avec le juridique ; ne pas déployer avant. |
+| UE3 | ● | `[si C3 ≠ Aucun]` Système probablement à **haut risque** (annexe III) : les obligations sont-elles couvertes : gestion des risques, gouvernance des données, documentation technique, enregistrement dans la base UE, évaluation de conformité ? | Lancer le chantier de conformité haut risque avec le juridique ; ne pas déployer avant. |
 | UE4 | ○ | `[si C5 ≠ Ni l'un ni l'autre]` Obligations de transparence (art. 50) : information des personnes, marquage des contenus synthétiques et des hypertrucages ? | Ajouter l'information et le marquage prévus par l'art. 50. |
 | UE5 | ○ | `[si C4]` RGPD : traitement inscrit au registre, base légale, AIPD si requise, DPO consulté ? | Compléter le registre et consulter le DPO. |
 | UE6 | ○ | `[si C4]` Les transferts de données hors UE sont-ils encadrés (décision d'adéquation, clauses contractuelles types) ? | Cartographier les transferts et mettre en place les garanties. |
 | UE7 | · | `[si C6 = API tierce ou modèle ouvert]` Le fournisseur du modèle général respecte-t-il ses obligations GPAI (documentation, politique droits d'auteur, résumé des données d'entraînement) ? | Demander la documentation GPAI au fournisseur. |
 | UE8 | · | Le personnel qui utilise ou supervise l'IA a-t-il reçu une formation (maîtrise de l'IA, art. 4) ? | Organiser une sensibilisation adaptée aux rôles. |
 
-#### Bloc États-Unis — patchwork fédéral et lois d'État
+#### Bloc États-Unis : patchwork fédéral et lois d'État
 
 | Code | Q | Question | Recommandation |
 | --- | --- | --- | --- |
@@ -255,7 +294,7 @@ points s'ajoutent), et un pays faible se voit immédiatement.
 | US6 | ○ | La communication sur les capacités de l'IA est-elle exacte et non trompeuse (FTC Act §5) ? | Relire les supports marketing et documentations avec le juridique. |
 | US7 | ○ | `[si C4]` Droits des consommateurs (CCPA/CPRA et lois d'État) : opt-out des décisions automatisées, accès, suppression ? | Offrir l'opt-out et une procédure d'accès / suppression. |
 
-#### Bloc Chine — CAC, PIPL, localisation
+#### Bloc Chine : CAC, PIPL, localisation
 
 | Code | Q | Question | Recommandation |
 | --- | --- | --- | --- |
@@ -281,9 +320,9 @@ points s'ajoutent), et un pays faible se voit immédiatement.
 
 | Score | Verdict | Statut de l'application | Échéance |
 | --- | --- | --- | --- |
-| **86–100** | Conforme — déployable en production | `compliant` | réévaluation à 12 mois |
-| **61–85** | Partiellement conforme — autorisé en test / pilote | `partially_compliant` *(nouveau)* | réévaluation à **6 mois** |
-| **0–60**, ou plafonné, ou bloqué | Non conforme — non déployable | `non_compliant` | plan d'action |
+| **86–100** | Conforme : déployable en production | `compliant` | réévaluation à 12 mois |
+| **61–85** | Partiellement conforme : autorisé en test / pilote | `partially_compliant` *(nouveau)* | réévaluation à **6 mois** |
+| **0–60**, ou plafonné, ou bloqué | Non conforme : non déployable | `non_compliant` | plan d'action |
 
 Un blocage (C2, UE1) donne le verdict « Refusé » avec le motif ; le score n'est pas calculé.
 
@@ -291,7 +330,7 @@ Un blocage (C2, UE1) donne le verdict « Refusé » avec le motif ; le score n'e
 
 - **Par question** : chaque réponse en dessous du maximum porte sa recommandation (colonne de droite
   des tableaux) ; elle devient une action corrective, assignée au Process Owner.
-- **Synthèse classée** : « Pour gagner des points » — les actions triées par gain, les critiques
+- **Synthèse classée** : « Pour gagner des points » : les actions triées par gain, les critiques
   d'abord ; le gain est annoncé sur l'échelle du score (« +8 pts »). Les cinq premières sont mises
   en avant sur la fiche, toutes sont dans le plan.
 - **Par pays** : sous chaque barre de pays, les recommandations de ce bloc uniquement.
@@ -312,7 +351,7 @@ Un **assistant par étapes** (une étape par thème), et non plus une page uniqu
 
 - **Cadrage d'abord** ; le nombre de questions retenues et la durée estimée s'affichent dans la
   colonne de droite (« 27 questions vous concernent, environ 15 minutes »), recalculés à chaque réponse.
-- Une **liste d'étapes** à gauche : faites (✓), en cours, à venir — les blocs masqués n'y figurent
+- Une **liste d'étapes** à gauche : faites (✓), en cours, à venir : les blocs masqués n'y figurent
   pas. Une étape complète garde sa coche même quand on s'y trouve : en reprenant un brouillon on
   retombe sur le cadrage, déjà rempli.
 - **Une question à la fois** visuellement (carte), réponses en gros boutons, « Pourquoi cette question ? »
@@ -320,11 +359,17 @@ Un **assistant par étapes** (une étape par thème), et non plus une page uniqu
 - **Enregistrement automatique** à chaque changement d'étape : on peut s'interrompre et reprendre.
 - **Avancement** sur toutes les étapes notées : une barre pour l'étape affichée (« 3/8 »), une pour
   l'ensemble (« 3/46 »), le nombre de questions restantes avec la durée correspondante, et la liste
-  des étapes incomplètes — celle où l'on se trouve y est mise en avant. Le compte porte sur les
+  des étapes incomplètes : celle où l'on se trouve y est mise en avant. Le compte porte sur les
   questions *applicables* : il descend quand une réponse de cadrage en masque.
-- **Score en direct** dans la colonne de droite, avec le verdict prévu, les plafonds actifs et les
-  barres par pays.
-- **Étape finale** : récapitulatif, top 5 des actions pour gagner des points, puis soumission.
+- **Pas de score pendant la saisie.** Le voir monter pousse à répondre pour la note plutôt qu'à
+  décrire la réalité : le score, le verdict prévu et les barres par thème et par pays n'apparaissent
+  qu'à l'étape « Résultat ». Deux exceptions, signalées sous la question concernée parce qu'elles
+  décident de ce qui pourra être déployé et non d'un nombre de points : une réponse **bloquante**
+  (l'évaluation sera refusée) et un **critère critique** à « Non » (plafond à 60).
+- **Étape finale** : récapitulatif, **impact FinOps** en deux lectures : l'estimation calculée depuis
+  le type d'IA, l'usage et l'hébergement (hypothèses affichées), puis le relevé réel s'il existe,
+  avec l'écart entre les deux : l'effet de la gouvernance sur le score, le top 5 des actions, puis
+  la soumission.
 - Clavier : les réponses sont des boutons radio natifs, on avance à la touche Entrée ; le focus se place
   sur la première question de chaque étape.
 
@@ -332,7 +377,7 @@ Un **assistant par étapes** (une étape par thème), et non plus une page uniqu
 
 ## 7. Décisions à trancher
 
-1. **Nouveau statut « Partiellement conforme »** dans le cycle de vie des applications — recommandé
+1. **Nouveau statut « Partiellement conforme »** dans le cycle de vie des applications : recommandé
    (c'est ce que le barème implique), mais c'est un statut de plus que le brief initial.
-2. **Plafond à 60 pour les critiques** au lieu du zéro de la v1 — recommandé : on garde l'information.
-3. **Échéance de 6 mois** pour le statut partiel (12 mois pour conforme) — proposition.
+2. **Plafond à 60 pour les critiques** au lieu du zéro de la v1 : recommandé : on garde l'information.
+3. **Échéance de 6 mois** pour le statut partiel (12 mois pour conforme) : proposition.

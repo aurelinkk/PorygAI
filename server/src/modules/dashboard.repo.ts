@@ -1,5 +1,5 @@
 /**
- * Tableaux de bord BI — historique et utilisation du parc d'applications IA.
+ * Tableaux de bord BI : historique et utilisation du parc d'applications IA.
  *
  * Le rapport FinOps répond « combien ça coûte » ; celui-ci répond « où en est le
  * parc, comment il évolue, et où ça coince ». Trois partis pris repris du FinOps :
@@ -8,7 +8,7 @@
  *    vides et à calculer les parts ;
  *  - la visibilité des brouillons s'applique partout, pour qu'un tableau de bord
  *    ne révèle pas l'existence du brouillon d'un autre ;
- *  - le coût n'est calculé que si l'utilisateur a `finops:read` — on ne renvoie
+ *  - le coût n'est calculé que si l'utilisateur a `finops:read` : on ne renvoie
  *    pas une donnée pour la masquer ensuite côté client.
  *
  * Les sous-scores par thème sont relus depuis `evaluations.sections_json`, écrit

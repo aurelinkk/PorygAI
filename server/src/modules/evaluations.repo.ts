@@ -6,7 +6,7 @@
  * calcul en direct pour guider la saisie, mais il ne décide de rien.
  */
 import {
-  QUESTIONNAIRE_VERSION, getQuestion, scoreEvaluation, questionWording,
+  DECIDED_STATUSES, QUESTIONNAIRE_VERSION, getQuestion, scoreEvaluation, questionWording,
   type ActionPlanDto, type AnswerValue, type Answers, type EvaluationDto,
   type SaveEvaluationInput, type SectionScore, type UserDto, type Verdict,
 } from '@poryg/shared';
@@ -228,7 +228,7 @@ export function submitEvaluation(
         `INSERT INTO action_plans (application_id, evaluation_id, question_code, title, description, owner_id, due_date)
          VALUES (?, ?, ?, ?, ?, ?, NULL)`,
         applicationId, draft.id, result.blockedBy,
-        `${result.blockedBy} — évaluation refusée`,
+        `${result.blockedBy} : évaluation refusée`,
         result.blockMessage ?? "L'application ne peut pas être déployée.",
         applicationBefore.processOwner.id,
       );
@@ -240,7 +240,7 @@ export function submitEvaluation(
           `INSERT INTO action_plans (application_id, evaluation_id, question_code, title, description, owner_id, due_date)
            VALUES (?, ?, ?, ?, ?, ?, ?)`,
           applicationId, draft.id, recommendation.code,
-          `${recommendation.code} — ${questionWording(recommendation.code)}`,
+          `${recommendation.code} : ${questionWording(recommendation.code)}`,
           recommendation.remediation,
           applicationBefore.processOwner.id,
           // Échéance par défaut : 90 jours pour un critère critique, 180 sinon.
@@ -327,6 +327,18 @@ export function getActionPlan(db: Db, id: number): ActionPlanDto | null {
 }
 
 /** Marque une action corrective comme terminée (ou la rouvre). */
+/**
+ * Coche (ou décoche) une action corrective.
+ *
+ * Cocher une action change la réalité de l'application : le motif qui avait fait
+ * baisser le score n'est plus le même, le verdict rendu ne vaut plus. L'application
+ * **repart donc en audit** (`in_progress`) et son échéance de conformité tombe ;
+ * elle ne retrouvera un statut qu'après une nouvelle évaluation, préremplie avec
+ * les réponses de la précédente.
+ *
+ * Décocher ne fait pas le chemin inverse : on ne peut pas deviner quel verdict
+ * restaurer, et un verdict ne se rend que par une évaluation.
+ */
 export function setActionPlanDone(db: Db, id: number, done: boolean, actor: UserDto, ip?: string): ActionPlanDto {
   return transaction(db, () => {
     run(
@@ -339,6 +351,23 @@ export function setActionPlanDone(db: Db, id: number, done: boolean, actor: User
       actorId: actor.id, entity: 'application', entityId: plan.applicationId, action: 'action_plan_done', ip,
       after: { actionPlanId: id, questionCode: plan.questionCode, done },
     });
+
+    const application = getApplication(db, plan.applicationId)!;
+    if (done && DECIDED_STATUSES.includes(application.status)) {
+      run(
+        db,
+        `UPDATE applications
+            SET status = 'in_progress', compliance_valid_until = NULL, updated_by = ?, updated_at = ?
+          WHERE id = ?`,
+        actor.id, nowIso(), plan.applicationId,
+      );
+      recordAudit(db, {
+        actorId: actor.id, entity: 'application', entityId: plan.applicationId,
+        action: 'reevaluation_required', ip,
+        before: { status: application.status, complianceValidUntil: application.complianceValidUntil },
+        after: { status: 'in_progress', trigger: { actionPlanId: id, questionCode: plan.questionCode } },
+      });
+    }
     return plan;
   });
 }

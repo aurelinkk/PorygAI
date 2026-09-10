@@ -1,5 +1,5 @@
 -- ============================================================================
--- 003 — Fiche d'évaluation de conformité IA et plans d'action.
+-- 003 : Fiche d'évaluation de conformité IA et plans d'action.
 --
 -- Une application a au plus UNE évaluation en cours (statut 'draft') ; les
 -- évaluations soumises sont conservées, ce qui donne l'historique des audits

@@ -1,5 +1,5 @@
 /**
- * Lot 2 — inventaire : filtres, modification, envoi à l'audit,
+ * Lot 2 : inventaire : filtres, modification, envoi à l'audit,
  * suppression logique, restauration, historique.
  */
 import type { FastifyInstance } from 'fastify';

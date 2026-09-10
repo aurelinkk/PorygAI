@@ -36,7 +36,7 @@ le code, pas en surcouche : éléments natifs, relations explicites, focus gér�
 
 - L'en-tête cliquable est un vrai `<button>` dans le `<th>` : atteignable au clavier, annoncé comme
   bouton, cible de 44 px de haut.
-- Le `<th>` porte `aria-sort="ascending" | "descending" | "none"` — c'est ce que les lecteurs d'écran
+- Le `<th>` porte `aria-sort="ascending" | "descending" | "none"` : c'est ce que les lecteurs d'écran
   annoncent. Une seule colonne est active à la fois.
 - La flèche (▲ ▼ ↕) n'est qu'un renfort visuel, marquée `aria-hidden` : l'information ne passe jamais
   par le seul symbole.
@@ -44,11 +44,22 @@ le code, pas en surcouche : éléments natifs, relations explicites, focus gér�
 - Le tri par statut suit l'ordre du cycle de vie (Draft → In progress → Conforme → Non conforme →
   Deleted), plus utile qu'un ordre alphabétique.
 
+### Graphiques
+
+Les graphiques en colonnes sont **décoratifs** (`aria-hidden="true"`) et ne contiennent aucun
+élément focalisable : la donnée est fournie par le tableau qui les accompagne : masqué visuellement
+pour `MonthlyBars`, affiché pour `HistoryChart`. L'axe gradué et l'infobulle de survol sont des
+conforts visuels, ils n'apportent rien qui ne soit déjà dans le tableau.
+
+L'infobulle respecte le critère 1.4.13 « Contenu au survol ou au focus » par l'exemption
+« ne masque pas d'autre contenu » : elle s'affiche dans une marge haute réservée à l'intérieur du
+tracé, et se cale sur le bord aux extrémités pour ne pas déborder de la carte.
+
 ### Couleurs et contrastes
 
 - Le statut n'est **jamais** porté par la couleur seule : pastille décorative (`aria-hidden`) + libellé.
 - Même règle dans la liste d'étapes du questionnaire : la coche « ✓ » est décorative, l'état est
-  doublé d'un texte `visually-hidden` (« — étape terminée ») ; `aria-current="step"` marque l'étape
+  doublé d'un texte `visually-hidden` (« : étape terminée ») ; `aria-current="step"` marque l'étape
   affichée, indépendamment de son achèvement.
 - Application supprimée : grisée **par la couleur** (pas par une opacité) et barrée.
 - Contrastes vérifiés (formule WCAG, arrondis) :
@@ -98,7 +109,7 @@ Checklist manuelle à dérouler sur `/login`, `/`, `/applications/nouvelle` :
 2. **Lecteur d'écran** (NVDA sous Windows, VoiceOver sous macOS) : titre de page annoncé, rôles
    des boutons/liens corrects, libellé + aide + erreur lus sur chaque champ, statut lu avec son libellé.
 3. **Zoom 200 %** et fenêtre 375 px de large : rien de tronqué, pas de défilement horizontal de la page.
-4. **Outil automatique** : extension navigateur *axe DevTools* ou *Lighthouse › Accessibility* — objectif
+4. **Outil automatique** : extension navigateur *axe DevTools* ou *Lighthouse › Accessibility* : objectif
    0 violation critique/sérieuse. (Les avertissements sur les polices externes n'en font pas partie.)
 
 ## Reste à faire

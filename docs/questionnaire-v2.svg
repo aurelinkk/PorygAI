@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="3228" height="3820" viewBox="20 -40 3228 3820" font-family="Segoe UI, Helvetica, Arial, sans-serif">
-<rect x="20" y="-40" width="3228" height="3820" fill="#fdf3f6"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="3616" height="3820" viewBox="20 -40 3616 3820" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+<rect x="20" y="-40" width="3616" height="3820" fill="#fdf3f6"/>
 <defs><marker id="fleche" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto"><path d="M0,0 L9,3.5 L0,7" fill="none" stroke="context-stroke" stroke-width="1.5"/></marker></defs>
 <rect x="60" y="150" width="400" height="56" rx="12" fill="#8b7be8" stroke="#1a1526" stroke-width="3"/>
 <rect x="60" y="280" width="2372" height="259" rx="12" fill="#f0e7ee" stroke="#6b6280" stroke-width="1" stroke-dasharray="9 7"/>
@@ -59,7 +59,17 @@
 <rect x="2806" y="1126" width="372" height="61" rx="12" fill="#ffffff" stroke="#1a1526" stroke-width="2"/>
 <rect x="2806" y="1198" width="372" height="89" rx="12" fill="#ffffff" stroke="#1a1526" stroke-width="2"/>
 <rect x="2806" y="1296" width="372" height="75" rx="12" fill="#ffffff" stroke="#1a1526" stroke-width="2"/>
-<rect x="60" y="864" width="3148" height="1050" rx="12" fill="#d9f1fb" stroke="#6b6280" stroke-width="1" stroke-dasharray="9 7"/>
+<rect x="3194" y="894" width="372" height="50" rx="12" fill="#d9f1fb" stroke="#1a1526" stroke-width="3"/>
+<rect x="3194" y="956" width="372" height="75" rx="12" fill="#ffffff" stroke="#1a1526" stroke-width="2"/>
+<rect x="3194" y="1041" width="372" height="61" rx="12" fill="#ffffff" stroke="#1a1526" stroke-width="2"/>
+<rect x="3194" y="1112" width="372" height="61" rx="12" fill="#ffffff" stroke="#1a1526" stroke-width="2"/>
+<rect x="3194" y="1184" width="372" height="61" rx="12" fill="#ffffff" stroke="#1a1526" stroke-width="2"/>
+<rect x="3194" y="1255" width="372" height="75" rx="12" fill="#ffffff" stroke="#1a1526" stroke-width="2"/>
+<rect x="3194" y="1340" width="372" height="75" rx="12" fill="#ffffff" stroke="#1a1526" stroke-width="2"/>
+<rect x="3194" y="1425" width="372" height="61" rx="12" fill="#ffffff" stroke="#1a1526" stroke-width="2"/>
+<rect x="3194" y="1496" width="372" height="61" rx="12" fill="#ffffff" stroke="#1a1526" stroke-width="2"/>
+<rect x="3194" y="1568" width="372" height="75" rx="12" fill="#ffffff" stroke="#1a1526" stroke-width="2"/>
+<rect x="60" y="864" width="3536" height="1050" rx="12" fill="#d9f1fb" stroke="#6b6280" stroke-width="1" stroke-dasharray="9 7"/>
 <rect x="90" y="2014" width="372" height="50" rx="12" fill="#ffe3ec" stroke="#1a1526" stroke-width="3"/>
 <rect x="90" y="2076" width="372" height="171" rx="12" fill="#ffe0e0" stroke="#e5384f" stroke-width="2"/>
 <rect x="90" y="2258" width="372" height="102" rx="12" fill="#ffffff" stroke="#6b6280" stroke-width="2"/>
@@ -87,7 +97,7 @@
 <rect x="866" y="2834" width="372" height="102" rx="12" fill="#ffffff" stroke="#6b6280" stroke-width="2"/>
 <rect x="1254" y="2014" width="372" height="50" rx="12" fill="#ffe3ec" stroke="#1a1526" stroke-width="3"/>
 <rect x="1254" y="2076" width="372" height="116" rx="12" fill="#ffffff" stroke="#6b6280" stroke-width="2"/>
-<rect x="60" y="1984" width="3148" height="1188" rx="12" fill="#ffe3ec" stroke="#6b6280" stroke-width="1" stroke-dasharray="9 7"/>
+<rect x="60" y="1984" width="3536" height="1188" rx="12" fill="#ffe3ec" stroke="#6b6280" stroke-width="1" stroke-dasharray="9 7"/>
 <rect x="90" y="3241" width="1148" height="140" rx="12" fill="#ffffff" stroke="#1a1526" stroke-width="3"/>
 <rect x="90" y="3495" width="372" height="107" rx="12" fill="#d6f5e8" stroke="#1a1526" stroke-width="3"/>
 <rect x="478" y="3495" width="372" height="107" rx="12" fill="#ffe3ec" stroke="#1a1526" stroke-width="3"/>
@@ -100,12 +110,12 @@
 <line x1="400" y1="3381" x2="276" y2="3489" stroke="#1a1526" stroke-width="2" marker-end="url(#fleche)"/>
 <line x1="400" y1="3381" x2="664" y2="3489" stroke="#1a1526" stroke-width="2" marker-end="url(#fleche)"/>
 <line x1="400" y1="3381" x2="1052" y2="3489" stroke="#1a1526" stroke-width="2" marker-end="url(#fleche)"/>
-<text x="60" y="34.9" font-size="34" fill="#1a1526" text-anchor="start" font-weight="700">Questionnaire d'évaluation Poryg'AI — arbre complet</text>
+<text x="60" y="34.9" font-size="34" fill="#1a1526" text-anchor="start" font-weight="700">Questionnaire d'évaluation Poryg'AI : arbre complet</text>
 <text x="60" y="66.3" font-size="14" fill="#6b6280" text-anchor="start" font-weight="400">Toutes les questions du formulaire, dans leur formulation exacte (source : shared/src/questionnaire.ts).</text>
 <text x="60" y="83.8" font-size="14" fill="#6b6280" text-anchor="start" font-weight="400">●  question critique : un « Non » plafonne le score à 60          ⛔  question bloquante : l'évaluation est refusée</text>
 <text x="60" y="101.3" font-size="14" fill="#6b6280" text-anchor="start" font-weight="400">Un encadré gris clair n'est posé que si sa condition est remplie ; une question non posée ne compte pas dans le score.</text>
 <text x="260" y="184.0" font-size="15" fill="#1a1526" text-anchor="middle" font-weight="400">ÉVALUATION D'UNE APPLICATION</text>
-<text x="78" y="269.5" font-size="19" fill="#1a1526" text-anchor="start" font-weight="700">①  CADRAGE — 6 questions posées à tout le monde, non notées : elles décident de la suite</text>
+<text x="78" y="269.5" font-size="19" fill="#1a1526" text-anchor="start" font-weight="700">①  CADRAGE : 6 questions posées à tout le monde, non notées : elles décident de la suite</text>
 <text x="100" y="358.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">C1</text>
 <text x="100" y="372.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
 <text x="100" y="386.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">Dans quels pays ou zones l'application sera-t-elle</text>
@@ -182,7 +192,7 @@
 <text x="100" y="1117.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">massif pour une simple classification de texte) ?</text>
 <text x="100" y="1161.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">N3   ·   2 pts</text>
 <text x="100" y="1175.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
-<text x="100" y="1188.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">La finalité est-elle précise, écrite et limitée —</text>
+<text x="100" y="1188.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">La finalité est-elle précise, écrite et limitée :</text>
 <text x="100" y="1202.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">l'usage réel ne dérive pas de l'usage déclaré ?</text>
 <text x="100" y="1246.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">N4   ·   2 pts</text>
 <text x="100" y="1260.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
@@ -407,7 +417,40 @@
 <text x="2816" y="1331.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
 <text x="2816" y="1345.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">Le volume d'appels est-il maîtrisé (pas d'appels</text>
 <text x="2816" y="1358.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">redondants ou inutiles) ?</text>
-<text x="78" y="853.2" font-size="19" fill="#1a1526" text-anchor="start" font-weight="700">②  QUESTIONS NOTÉES — 8 thèmes, toujours parcourus (certaines questions restent masquées)</text>
+<text x="3380" y="916.1" font-size="13" fill="#1a1526" text-anchor="middle" font-weight="400">⑨ Gouvernance FinOps</text>
+<text x="3380" y="932.3" font-size="13" fill="#1a1526" text-anchor="middle" font-weight="400">GF   ·   0 pts</text>
+<text x="3204" y="977.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">GF1</text>
+<text x="3204" y="991.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="3204" y="1005.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">Quel type de reporting FinOps est prévu pour cette</text>
+<text x="3204" y="1018.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">application ?</text>
+<text x="3204" y="1062.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">GF2</text>
+<text x="3204" y="1076.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="3204" y="1090.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">À quelle fréquence ce reporting est-il produit ?</text>
+<text x="3204" y="1133.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">GF3</text>
+<text x="3204" y="1147.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="3204" y="1161.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">Quelles mesures sont suivies ?</text>
+<text x="3204" y="1205.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">GF4</text>
+<text x="3204" y="1218.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="3204" y="1232.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">À qui ce reporting est-il diffusé ?</text>
+<text x="3204" y="1276.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">GF5</text>
+<text x="3204" y="1290.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="3204" y="1303.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">À quelle fréquence le modèle est-il entraîné ou</text>
+<text x="3204" y="1317.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">réentraîné ?</text>
+<text x="3204" y="1361.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">GF6</text>
+<text x="3204" y="1375.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="3204" y="1388.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">Quel volume d'inférence l'application traite-t-elle par</text>
+<text x="3204" y="1402.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">mois ?</text>
+<text x="3204" y="1446.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">GF7</text>
+<text x="3204" y="1460.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="3204" y="1473.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">Où l'application est-elle hébergée ?</text>
+<text x="3204" y="1517.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">GF8</text>
+<text x="3204" y="1531.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="3204" y="1545.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">Quelle est la taille du modèle utilisé ?</text>
+<text x="3204" y="1588.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">GF9</text>
+<text x="3204" y="1602.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="3204" y="1616.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">Si vous la connaissez, indiquez la taille exacte du</text>
+<text x="3204" y="1630.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">modèle.</text>
+<text x="78" y="853.2" font-size="19" fill="#1a1526" text-anchor="start" font-weight="700">②  QUESTIONS NOTÉES : 9 thèmes, toujours parcourus (certaines questions restent masquées)</text>
 <text x="276" y="2036.1" font-size="13" fill="#1a1526" text-anchor="middle" font-weight="400">Union européenne</text>
 <text x="276" y="2052.3" font-size="13" fill="#1a1526" text-anchor="middle" font-weight="400">si UE coché en C1   ·   14 pts</text>
 <text x="100" y="2097.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">UE1  ⛔</text>
@@ -430,7 +473,7 @@
 <text x="100" y="2391.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">UE3  ●   ·   4 pts</text>
 <text x="100" y="2405.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
 <text x="100" y="2418.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">Système probablement à haut risque (annexe III) : les</text>
-<text x="100" y="2432.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">obligations sont-elles couvertes — gestion des risques,</text>
+<text x="100" y="2432.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">obligations sont-elles couvertes : gestion des risques,</text>
 <text x="100" y="2446.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">gouvernance des données, documentation technique,</text>
 <text x="100" y="2460.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">enregistrement dans la base européenne, évaluation de</text>
 <text x="100" y="2473.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">conformité ?</text>
@@ -581,7 +624,7 @@
 <text x="1264" y="2152.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">concerné ?</text>
 <text x="1264" y="2166.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
 <text x="1264" y="2180.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">→ posée si : déployé en autre pays</text>
-<text x="78" y="1973.2" font-size="19" fill="#1a1526" text-anchor="start" font-weight="700">③  RÉGLEMENTATION — un bloc par pays coché en C1, chacun avec sa propre barre d'avancement</text>
+<text x="78" y="1973.2" font-size="19" fill="#1a1526" text-anchor="start" font-weight="700">③  RÉGLEMENTATION : un bloc par pays coché en C1, chacun avec sa propre barre d'avancement</text>
 <text x="100" y="3267.6" font-size="13" fill="#1a1526" text-anchor="start" font-weight="400">④   SCORE  =  100  ×  points obtenus  ÷  points applicables</text>
 <text x="100" y="3283.8" font-size="13" fill="#1a1526" text-anchor="start" font-weight="400"></text>
 <text x="100" y="3300.1" font-size="13" fill="#1a1526" text-anchor="start" font-weight="400">Une question non posée ne compte ni au numérateur, ni au dénominateur : le score reste comparable</text>

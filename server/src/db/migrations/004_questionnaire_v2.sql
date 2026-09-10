@@ -1,6 +1,6 @@
 -- migrate: no-transaction
 -- ============================================================================
--- 004 — Questionnaire v2 : score sur 100, verdict à trois niveaux, nouveau
+-- 004 : Questionnaire v2 : score sur 100, verdict à trois niveaux, nouveau
 -- statut « partiellement conforme ».
 --
 -- SQLite ne sait pas modifier une contrainte CHECK : on reconstruit les tables

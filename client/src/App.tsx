@@ -20,6 +20,7 @@ import { ApplicationsPage } from './pages/ApplicationsPage';
 import { DeclareAppPage } from './pages/DeclareAppPage';
 import { EditAppPage } from './pages/EditAppPage';
 import { EvaluationPage } from './pages/EvaluationPage';
+import { EvaluationReportPage } from './pages/EvaluationReportPage';
 import { DashboardsPage } from './pages/DashboardsPage';
 import { FinopsPage } from './pages/FinopsPage';
 import { HomePage } from './pages/HomePage';
@@ -61,6 +62,14 @@ const router = createBrowserRouter([
         element: (
           <RequirePermission permission="evaluation:read">
             <EvaluationPage />
+          </RequirePermission>
+        ),
+      },
+      {
+        path: 'applications/:id/rapport',
+        element: (
+          <RequirePermission permission="evaluation:read">
+            <EvaluationReportPage />
           </RequirePermission>
         ),
       },

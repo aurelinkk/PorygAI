@@ -6,7 +6,7 @@
  *                 │     └──► non_compliant          │
  *                 └────────(après 1 an)─────────────┘
  *
- *   partially_compliant : autorisée en test / pilote, sans échéance automatique —
+ *   partially_compliant : autorisée en test / pilote, sans échéance automatique :
  *                         elle y reste jusqu'à une nouvelle évaluation.
  *   deleted : suppression logique, depuis n'importe quel statut (jamais de DELETE SQL).
  */

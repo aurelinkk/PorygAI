@@ -1,6 +1,6 @@
 /**
  * Petit cache mémoire pour les lectures GET, avec déduplication des requêtes
- * en vol. Une trentaine de lignes, aucune dépendance — inutile de sortir une
+ * en vol. Une trentaine de lignes, aucune dépendance : inutile de sortir une
  * bibliothèque de gestion de données pour ce besoin.
  *
  * Il résout trois choses :
@@ -11,7 +11,7 @@
  *
  * Cohérence : toute écriture (POST/PUT) vide l'intégralité du cache
  * (`clearCache()` appelé depuis api/client.ts). C'est grossier, mais sûr et
- * sans surprise — à l'échelle de cette application, rien ne justifie une
+ * sans surprise : à l'échelle de cette application, rien ne justifie une
  * invalidation plus fine.
  */
 

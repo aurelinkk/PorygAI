@@ -1,5 +1,5 @@
 -- ============================================================================
--- 001 — Schéma initial : utilisateurs, sessions, applications, coûts, audit.
+-- 001 : Schéma initial : utilisateurs, sessions, applications, coûts, audit.
 -- Dates : texte ISO 8601 UTC (ex. 2026-09-08T14:03:12.345Z), triable en SQL.
 -- ============================================================================
 

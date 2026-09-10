@@ -17,7 +17,7 @@ interface State<T> {
 
 /**
  * Résultat de `useApi`. Type exporté pour qu'une page puisse lancer une requête
- * et en passer le résultat à un sous-composant — c'est ce qui permet de faire
+ * et en passer le résultat à un sous-composant : c'est ce qui permet de faire
  * partir plusieurs requêtes en parallèle plutôt qu'en cascade.
  */
 export interface ApiQuery<T> extends State<T> {

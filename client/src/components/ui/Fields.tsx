@@ -91,7 +91,7 @@ type SelectFieldProps = FieldBase &
     placeholder?: string;
   };
 
-export function SelectField({ id, label, hint, error, required, options, placeholder = '— Choisir —', className, ...select }: SelectFieldProps) {
+export function SelectField({ id, label, hint, error, required, options, placeholder = ': Choisir :', className, ...select }: SelectFieldProps) {
   return (
     <FieldWrapper id={id} label={label} hint={hint} error={error} required={required}>
       <select

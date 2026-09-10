@@ -111,12 +111,16 @@ export interface ActionPlanDto {
   doneAt: string | null;
 }
 
-/** Un coût mensuel saisi pour une application. */
+/** Une saisie mensuelle : ce que l'application a coûté, consommé et émis. */
 export interface ApplicationCostDto {
   id: number;
   applicationId: number;
   periodMonth: string; // 'YYYY-MM'
   amountEur: number;
+  /** Énergie consommée sur le mois, en kWh. 0 = non déclarée. */
+  energyKwh: number;
+  /** Empreinte du mois, en kg CO₂ équivalent. 0 = non déclarée. */
+  co2Kg: number;
   source: string;
   createdBy: UserRef | null;
   createdAt: string;
@@ -127,13 +131,56 @@ export interface FinopsBreakdownRow {
   key: string;
   label: string;
   amountEur: number;
-  /** Part du total, entre 0 et 1. */
+  energyKwh: number;
+  co2Kg: number;
+  /** Part du total **en euros**, entre 0 et 1. */
   share: number;
   applications: number;
 }
 
+/** Un total sur une période : les trois grandeurs du FinOps responsable. */
+export interface FinopsTotals {
+  amountEur: number;
+  energyKwh: number;
+  co2Kg: number;
+}
+
 /**
- * Rapport FinOps — phase « Inform » : répartir la dépense et la rendre lisible.
+ * Impact FinOps annoncé à la fin du questionnaire.
+ *
+ * C'est une **projection**, pas une prévision : la moyenne des mois réellement
+ * déclarés, ramenée à douze mois. Rien n'est inventé : sans donnée déclarée,
+ * `monthsObserved` vaut 0 et il n'y a pas d'impact à annoncer, ce qui est
+ * précisément ce que la question F6 demande de corriger.
+ */
+export interface FinopsImpactDto {
+  /** Nombre de mois portant des données, sur la fenêtre observée. */
+  monthsObserved: number;
+  /** Moyenne mensuelle observée. */
+  monthly: FinopsTotals;
+  /** Cette moyenne ramenée à douze mois. */
+  yearly: FinopsTotals;
+  /**
+   * L'empreinte a-t-elle été **calculée** depuis la consommation, faute d'avoir
+   * été déclarée ? Le dire évite de faire passer un calcul pour une mesure.
+   */
+  co2Derived: boolean;
+}
+
+/**
+ * Un levier d'optimisation que les données justifient.
+ * `code` renvoie à `FINOPS_LEVERS` (libellé et explication partagés).
+ */
+export interface FinopsLeverDto {
+  code: string;
+  /** Applications concernées, de la plus coûteuse à la moins coûteuse. */
+  applications: { id: number; code: string; name: string; amountEur: number; reason: string }[];
+  /** Dépense mensuelle portée par ces applications. */
+  amountEur: number;
+}
+
+/**
+ * Rapport FinOps : phase « Inform » : répartir la dépense et la rendre lisible.
  * Tous les montants sont en euros, sur les applications non supprimées.
  */
 export interface FinopsReportDto {
@@ -146,19 +193,43 @@ export interface FinopsReportDto {
   variationPct: number | null;
   /** Total sur toute la fenêtre analysée. */
   windowTotal: number;
+  /** Énergie et carbone du mois courant, et de toute la fenêtre. */
+  current: FinopsTotals;
+  window: FinopsTotals;
   /** Série mensuelle complète, mois sans dépense inclus (à zéro). */
-  monthly: { month: string; amountEur: number }[];
+  monthly: { month: string; amountEur: number; energyKwh: number; co2Kg: number }[];
   /** Applications les plus coûteuses sur le mois courant, de la plus chère à la moins chère. */
   byApplication: (FinopsBreakdownRow & { applicationId: number; code: string; status: AppStatus })[];
   byDomain: FinopsBreakdownRow[];
   /** Le croisement clé : combien coûte ce qui n'est pas conforme. */
   byStatus: FinopsBreakdownRow[];
-  /** Qualité de la donnée : applications actives sans coût saisi pour le mois courant. */
+  /**
+   * Qualité de la donnée : le principe de **visibilité** : ce qui n'est pas mesuré
+   * ne peut pas être arbitré. Deux couvertures distinctes, parce que déclarer un
+   * montant est devenu courant et déclarer une empreinte ne l'est pas encore.
+   */
   coverage: {
     withCost: number;
+    /** Applications dont l'énergie du mois est renseignée (> 0). */
+    withFootprint: number;
     total: number;
     missing: { id: number; code: string; name: string }[];
   };
+  /**
+   * Frugalité du parc, reprise du thème « Frugalité et FinOps » (F) du
+   * questionnaire : le lien entre ce qui coûte cher et ce qui est mal noté.
+   */
+  frugality: {
+    /** Moyenne des sous-scores du thème F, `null` si aucune évaluation soumise. */
+    averageScore: number | null;
+    evaluated: number;
+    /** Les plus coûteuses parmi les moins frugales, du plus cher au moins cher. */
+    worstOffenders: {
+      id: number; code: string; name: string; amountEur: number; frugalityScore: number;
+    }[];
+  };
+  /** Leviers d'optimisation que les données justifient, du plus lourd au plus léger. */
+  levers: FinopsLeverDto[];
 }
 
 /**
@@ -175,9 +246,14 @@ export interface ApplicationFinopsDto {
   variationPct: number | null;
   /** Total sur la fenêtre analysée. */
   windowTotal: number;
-  monthly: { month: string; amountEur: number }[];
+  /** Énergie et carbone du mois courant, et de toute la fenêtre. */
+  current: FinopsTotals;
+  window: FinopsTotals;
+  monthly: { month: string; amountEur: number; energyKwh: number; co2Kg: number }[];
   /** Répartition par source de coût, sur toute la fenêtre. */
   bySource: FinopsBreakdownRow[];
+  /** Sous-score du thème « Frugalité et FinOps » de la dernière évaluation soumise. */
+  frugalityScore: number | null;
   /** Dépense IA totale de l'entreprise sur le mois courant, pour situer l'application. */
   companyTotal: number;
   /** Part de cette application dans cette dépense (0 à 1). */
@@ -212,6 +288,7 @@ export const AUDIT_ACTION_LABELS: Record<string, string> = {
   evaluation_saved: "Évaluation enregistrée (brouillon)",
   evaluation_submitted: 'Évaluation soumise',
   action_plan_done: "Action corrective terminée",
+  reevaluation_required: 'Retour en audit pour réévaluation',
 };
 
 /** Format d'erreur unique renvoyé par l'API. */
@@ -248,7 +325,7 @@ export interface BiHistoryRow {
 }
 
 /**
- * Tableaux de bord BI — historique et utilisation du parc d'applications IA.
+ * Tableaux de bord BI : historique et utilisation du parc d'applications IA.
  *
  * Complément du rapport FinOps, qui répond « combien ça coûte » : celui-ci
  * répond « où en est le parc, comment il évolue, et où ça coince ».

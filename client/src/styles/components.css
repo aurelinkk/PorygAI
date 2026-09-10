@@ -1,5 +1,5 @@
 /* ============================================================================
-   Composants — rendu "croustillant" de la charte : contour noir, ombre dure,
+   Composants : rendu "croustillant" de la charte : contour noir, ombre dure,
    rayons généreux. Classes en BEM léger (bloc__element--modificateur).
    ============================================================================ */
 
@@ -813,7 +813,7 @@ legend.field__label {
 /* --- Chargement -------------------------------------------------------------
    Barre indéterminée : un segment en dégradé qui traverse une piste. Sous
    `prefers-reduced-motion`, l'animation est neutralisée par base.css et la
-   barre reste un simple bandeau — le texte porte alors toute l'information. */
+   barre reste un simple bandeau : le texte porte alors toute l'information. */
 .loading-bar {
   display: block;
   width: 100%;
@@ -1152,6 +1152,29 @@ legend.field__label {
 }
 
 /* Barres de répartition (BreakdownBars) */
+/*
+ * Répartition : trois colonnes, pas cinq. Le `min-width: 780px` de `.table` est
+ * fait pour l'inventaire ; appliqué ici, il forçait un défilement horizontal dans
+ * une carte de demi-largeur et poussait la colonne « Part » hors du cadre.
+ * Largeurs fixes : le libellé passe à la ligne, la barre garde de la place.
+ */
+.breakdown {
+  min-width: 0;
+  table-layout: fixed;
+}
+.breakdown th:first-child,
+.breakdown td:first-child {
+  width: 45%;
+}
+.breakdown th:nth-child(2),
+.breakdown td:nth-child(2) {
+  width: 38%;
+}
+.breakdown th:last-child,
+.breakdown td:last-child {
+  width: 17%;
+  text-align: right;
+}
 .breakdown .breakdown__label {
   display: block;
 }
@@ -1163,7 +1186,6 @@ legend.field__label {
   display: block;
   height: 8px;
   margin-top: 6px;
-  min-width: 120px;
   background: var(--gris-fond);
   border: 2px solid var(--encre);
   border-radius: var(--radius-badge);
@@ -1196,8 +1218,7 @@ legend.field__label {
   display: flex;
   align-items: flex-end;
   gap: 6px;
-  height: 160px;
-  padding-top: 8px;
+  height: 100%;
 }
 .sparkline__col {
   flex: 1;
@@ -1386,8 +1407,8 @@ legend.field__label {
   .eval-layout,
   .finops-grid {
     /* `minmax(0, 1fr)` et non `1fr` : la largeur minimale d'une piste `1fr` est
-       celle de son contenu, si bien qu'un tableau large poussait la carte —
-       et donc la page — au-delà de l'écran malgré son conteneur défilant. */
+       celle de son contenu, si bien qu'un tableau large poussait la carte :
+       et donc la page : au-delà de l'écran malgré son conteneur défilant. */
     grid-template-columns: minmax(0, 1fr);
   }
   .eval-side {
@@ -1470,7 +1491,7 @@ legend.field__label {
 }
 
 /* Tuile KPI cliquable : le lien n'entoure que la valeur, mais son pseudo-élément
-   couvre toute la tuile — une seule cible, souris comme clavier. */
+   couvre toute la tuile : une seule cible, souris comme clavier. */
 .kpi--link {
   position: relative;
   transition: transform 0.12s, box-shadow 0.12s;
@@ -1632,8 +1653,20 @@ legend.field__label {
 .question__choices--stacked .choice {
   border-radius: var(--radius-field);
 }
+.choice__text {
+  flex: 1;
+  display: grid;
+  gap: 2px;
+}
 .choice__label {
   flex: 1;
+}
+/* Précision d'une option : quelles régions, quelle taille de modèle. */
+.choice__hint {
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.35;
+  color: var(--texte-2);
 }
 
 /* Barres par section / pays */
@@ -1755,10 +1788,449 @@ legend.field__label {
   .stepper__item {
     width: auto;
   }
-  .stepper__label {
-    display: none;
+  /* Sous 1024 px, seule l'étape en cours montre son libellé : mais le masquer
+     avec `display: none` retirait aussi le NOM ACCESSIBLE du bouton, dont le
+     numéro est `aria-hidden` : chaque étape s'annonçait alors « bouton », sans
+     rien d'autre. Masquage à l'œil seulement. */
+  .stepper__item:not(.stepper__item--current) .stepper__label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
   }
-  .stepper__item--current .stepper__label {
-    display: inline;
+}
+
+/* --- Impact FinOps estimé (fin du questionnaire) ---------------------------- */
+.impact {
+  margin-top: var(--gutter);
+}
+.impact__figures {
+  list-style: none;
+  margin: 14px 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+.impact__figure {
+  padding: 14px 16px;
+  border: var(--border-thin);
+  border-radius: var(--radius-card);
+  background: var(--gris-fond);
+}
+.impact__figure--accent {
+  background: var(--bleu-pastel);
+}
+.impact__value {
+  display: block;
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1.1;
+}
+.impact__label {
+  display: block;
+  margin-top: 4px;
+  font-size: 13px;
+  color: var(--texte-2);
+}
+.impact__frugality {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: var(--border-thin);
+}
+@media (max-width: 767px) {
+  .impact__figures {
+    grid-template-columns: minmax(0, 1fr);
   }
+}
+
+/* Blocs de l'impact FinOps : estimation, relevé, effet sur le score. */
+.impact__block + .impact__block {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: var(--border-thin);
+}
+.impact__assumptions {
+  margin-top: 12px;
+  font-size: 13px;
+}
+.impact__assumptions summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+.impact__hypotheses {
+  margin: 10px 0 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 8px 20px;
+}
+.impact__hypotheses dt {
+  color: var(--texte-2);
+  font-size: 12px;
+}
+.impact__hypotheses dd {
+  margin: 0;
+}
+.impact__adjustment {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+  font-size: 14px;
+}
+.impact__adjustment li {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.impact__delta {
+  margin-left: auto;
+  font-weight: 700;
+  font-family: var(--font-mono);
+}
+.impact__delta--plus {
+  color: var(--vert-dark);
+}
+.impact__delta--moins {
+  color: var(--rouge-dark);
+}
+.impact__delta--neutre {
+  color: var(--texte-2);
+}
+
+/* --- Graphiques en colonnes : axe gradué et détail au survol ---------------- */
+.chart {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: 10px;
+}
+/* Colonne des graduations, alignée sur les lignes du fond. */
+.chart__axis {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 180px;
+  /* Même marge haute que le tracé : les libellés tombent en face des lignes. */
+  padding-top: 40px;
+  text-align: right;
+}
+.chart__tick {
+  font-size: 11px;
+  color: var(--texte-2);
+  line-height: 1;
+  /* Recentre le libellé sur sa ligne plutôt que de l'aligner par le haut. */
+  transform: translateY(50%);
+  white-space: nowrap;
+}
+.chart__plot {
+  position: relative;
+  height: 180px;
+  /* Marge réservée à l'infobulle : elle ne recouvre donc jamais rien d'autre. */
+  padding-top: 40px;
+}
+.chart__line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 0;
+  border-top: 1px dashed var(--gris-fond);
+  pointer-events: none;
+}
+.chart__line:first-child {
+  border-top: 2px solid var(--encre);
+}
+.chart__corner {
+  display: block;
+}
+.chart__labels {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+}
+.chart__labels > * {
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+}
+
+/* L'infobulle vit dans la marge haute du tracé, au-dessus de sa colonne. */
+.chart__tip {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+  display: none;
+  min-width: 120px;
+  padding: 6px 10px;
+  background: var(--blanc);
+  border: var(--border-thin);
+  border-radius: 10px;
+  box-shadow: var(--shadow-sm);
+  font-size: 12px;
+  line-height: 1.4;
+  text-align: center;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.chart__tip strong {
+  display: block;
+}
+.chart__tip--wide {
+  min-width: 190px;
+  text-align: left;
+}
+.chart__tip-line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--texte-2);
+}
+.chart__tip-line .legend__dot {
+  width: 10px;
+  height: 10px;
+  border-width: 1px;
+  flex: none;
+}
+.sparkline__col {
+  position: relative;
+}
+.sparkline__col:hover .chart__tip {
+  display: block;
+}
+/* Aux extrémités, l'infobulle se cale sur le bord du tracé plutôt que de
+   déborder la carte : centrée, la moitié en sortirait. */
+.sparkline__col:first-child .chart__tip {
+  left: 0;
+  transform: none;
+}
+.sparkline__col:last-child .chart__tip {
+  left: auto;
+  right: 0;
+  transform: none;
+}
+/* Les colonnes voisines s'effacent : c'est ce qui rend le survol lisible. */
+.sparkline:hover .sparkline__bar,
+.sparkline:hover .stack {
+  opacity: 0.45;
+  transition: opacity 0.12s;
+}
+.sparkline__col:hover .sparkline__bar,
+.sparkline__col:hover .stack {
+  opacity: 1;
+}
+
+/* --- Leviers d'optimisation FinOps ------------------------------------------ */
+.levers {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 14px;
+}
+.lever {
+  padding: 14px 16px;
+  border: var(--border-thin);
+  border-radius: var(--radius-card);
+  background: var(--blanc);
+}
+.lever__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+.lever__title {
+  font-size: 16px;
+  margin: 0;
+}
+.lever__principle {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--texte-2);
+}
+.lever__description {
+  margin: 6px 0 0;
+  font-size: 14px;
+}
+.lever__weight {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: var(--texte-2);
+}
+.lever__apps {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+  font-size: 13px;
+}
+.lever__reason {
+  display: block;
+  color: var(--texte-2);
+}
+.measure-switch {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.finops-referentiels {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: var(--border-thin);
+  font-size: 12px;
+}
+
+/* --- Rapport d'évaluation imprimable ---------------------------------------- */
+.report {
+  display: grid;
+  gap: var(--gutter);
+}
+.report__header {
+  background: var(--blanc);
+  border: var(--border-thick);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-lg);
+  padding: 24px;
+}
+.report__title {
+  font-size: 24px;
+  margin: 0 0 16px;
+}
+.report__meta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 24px;
+  margin: 0;
+}
+.report__meta dt {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--texte-2);
+}
+.report__meta dd {
+  margin: 0;
+  font-weight: 700;
+}
+.report__purpose {
+  margin: 16px 0 0;
+  padding-top: 14px;
+  border-top: var(--border-thin);
+}
+.report__verdict {
+  font-size: 20px;
+  margin: 0 0 12px;
+}
+.report__list {
+  margin: 8px 0 0;
+  padding-left: 20px;
+  display: grid;
+  gap: 4px;
+}
+.report__answers th[scope='row'] {
+  font-weight: 400;
+  max-width: 520px;
+}
+.report__comment {
+  display: block;
+  margin-top: 4px;
+  font-style: italic;
+  color: var(--texte-2);
+}
+.report__action-title {
+  display: block;
+  font-weight: 700;
+}
+.report__action-desc {
+  display: block;
+  font-weight: 400;
+  color: var(--texte-2);
+}
+.report__footer {
+  font-size: 12px;
+  color: var(--texte-2);
+  text-align: center;
+}
+
+/* --- Impression -------------------------------------------------------------
+   Le PDF est produit par le navigateur : cette feuille est la mise en page du
+   document. On retire ce qui n'a de sens qu'à l'écran (navigation, boutons,
+   ombres) et on empêche les coupures au milieu d'un bloc. */
+@media print {
+  .app-header,
+  .app-footer,
+  .no-print,
+  .btn {
+    display: none !important;
+  }
+  body {
+    background: #fff;
+  }
+  .app-main,
+  .container {
+    padding: 0;
+    margin: 0;
+    max-width: none;
+  }
+  .card,
+  .report__header {
+    box-shadow: none;
+    border: 1px solid #000;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  .report {
+    gap: 14px;
+  }
+  .report__title {
+    font-size: 18px;
+  }
+  .table {
+    font-size: 11px;
+  }
+  .table-wrap {
+    overflow: visible;
+  }
+  tr {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  thead {
+    display: table-header-group; /* l'en-tête se répète sur chaque page */
+  }
+  a[href]::after {
+    content: ''; /* pas d'URL en clair : le rapport se lit sur papier */
+  }
+}
+
+/* Frise : suite d'événements automatiques repliée en une ligne. */
+.timeline__group > summary {
+  cursor: pointer;
+  list-style: none;
+}
+.timeline__group > summary::-webkit-details-marker {
+  display: none;
+}
+.timeline__group > summary::before {
+  content: '▸ ';
+  color: var(--texte-2);
+}
+.timeline__group[open] > summary::before {
+  content: '▾ ';
+}
+.timeline--nested {
+  margin-top: 10px;
+  padding-left: 4px;
+}
+.timeline--nested .timeline__item {
+  font-size: 13px;
 }

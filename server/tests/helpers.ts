@@ -3,6 +3,7 @@
  * migrée et peuplée avec le jeu de démo. Chaque test a sa propre base.
  */
 import type { FastifyInstance } from 'fastify';
+import { applicableQuestions, type Answers } from '@poryg/shared';
 import { buildApp } from '../src/app.js';
 import type { GoogleConfig } from '../src/auth/google-sso.js';
 import { one } from '../src/db/connection.js';
@@ -56,4 +57,43 @@ export function validApplication(app: FastifyInstance) {
     aiType: 'genai',
     processOwnerId: userId(app, ACCOUNTS.appManager),
   };
+}
+
+// --- Questionnaire -----------------------------------------------------------
+
+/**
+ * Réponses de gouvernance FinOps **volontairement neutres** : leur ajustement de
+ * score vaut zéro. Les tests qui portent sur le score du questionnaire ne sont
+ * ainsi pas perturbés par le bonus/malus FinOps, qui a ses propres tests.
+ */
+export const NEUTRAL_GOVERNANCE: Answers = {
+  GF1: 'manual',
+  GF2: 'quarterly',
+  GF3: ['cost', 'energy'],
+  GF4: 'team',
+  GF5: 'none',
+  GF6: 'low',
+  GF7: 'onprem',
+};
+
+/**
+ * Remplit toutes les questions applicables : les questions notées au niveau
+ * demandé, les questions obligatoires non notées avec la valeur neutre.
+ *
+ * La boucle tourne jusqu'à stabilité : répondre à une question peut en révéler
+ * d'autres (`showIf`).
+ */
+export function answerAll(framing: Answers, level: '0' | '1' | '2' = '2', overrides: Answers = {}): Answers {
+  const answers: Answers = { ...framing, ...NEUTRAL_GOVERNANCE, ...overrides };
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (const question of applicableQuestions(answers)) {
+      if (answers[question.code] !== undefined) continue;
+      if (question.weight === undefined && !question.required) continue;
+      answers[question.code] = question.weight === undefined ? '' : level;
+      changed = true;
+    }
+  }
+  return answers;
 }

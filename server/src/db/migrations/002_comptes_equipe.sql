@@ -1,5 +1,5 @@
 -- ============================================================================
--- 002 — Comptes de l'équipe, connectés via le SSO Google.
+-- 002 : Comptes de l'équipe, connectés via le SSO Google.
 --
 -- `password_hash` est NULL : ces comptes ne peuvent PAS se connecter par mot de
 -- passe (le provider local refuse tout compte sans empreinte). Ils passent

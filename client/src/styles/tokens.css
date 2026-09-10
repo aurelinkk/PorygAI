@@ -1,12 +1,12 @@
 /* ============================================================================
-   Design tokens — transcription de la charte graphique Poryg'AI v1.0
+   Design tokens : transcription de la charte graphique Poryg'AI v1.0
    (docs/charte/). Ne pas coder de couleur ou de rayon en dur ailleurs :
    utiliser ces variables.
    ============================================================================ */
 :root {
   /* Palette */
-  --rose: #ff6f9c;          /* Rose Poryg — fond de bouton primaire, badges */
-  --rose-dark: #e24e85;     /* Rose foncé — dégradés, bordures, accents NON textuels */
+  --rose: #ff6f9c;          /* Rose Poryg : fond de bouton primaire, badges */
+  --rose-dark: #e24e85;     /* Rose foncé : dégradés, bordures, accents NON textuels */
   /* Rose des liens de texte. La charte prévoit #E24E85, qui ne donne en réalité
      que 3,71:1 sur blanc : insuffisant pour du texte (4,5:1 requis). Cette
      variante plus profonde tient 5,32:1 sur blanc et 4,90:1 sur crème.
@@ -18,11 +18,11 @@
   --bleu-dark: #1f7e9e;
   --bleu-text: #12586f;     /* texte sur bleu pastel */
   --bleu-pastel: #d9f1fb;
-  --violet: #8b7be8;        /* Violet Lien — focus, statut Draft */
-  --encre: #1a1526;         /* Encre — texte, contours, ombres */
+  --violet: #8b7be8;        /* Violet Lien : focus, statut Draft */
+  --encre: #1a1526;         /* Encre : texte, contours, ombres */
   --texte-2: #6b6280;       /* texte secondaire (4,6:1 sur crème) */
   --texte-3: #3a3050;
-  --creme: #fdf3f6;         /* Crème Rosée — fond de page */
+  --creme: #fdf3f6;         /* Crème Rosée : fond de page */
   --blanc: #ffffff;
   --vert: #1fb287;
   --vert-dark: #0f6b4f;

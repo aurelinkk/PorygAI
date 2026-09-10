@@ -1,19 +1,23 @@
 /**
- * Saisie d'un coût mensuel depuis la fiche d'une application, sans passer par
- * l'onglet FinOps. L'application étant connue, il ne reste que deux champs :
- * le mois et le montant.
+ * Saisie mensuelle depuis la fiche d'une application, sans passer par l'onglet
+ * FinOps. L'application étant connue, il reste le mois et les trois grandeurs du
+ * FinOps responsable : coût, énergie et carbone.
+ *
+ * L'énergie et le carbone sont facultatifs : toutes les équipes ne savent pas
+ * encore mesurer : mais ils sont demandés **ici**, au moment où l'on saisit la
+ * facture : c'est le seul moment où quelqu'un a le chiffre sous les yeux.
  *
  * Le formulaire est masqué derrière un bouton pour ne pas alourdir la fiche, et
- * prévient toujours de ce qui est déjà enregistré pour le mois choisi — sans
+ * prévient toujours de ce qui est déjà enregistré pour le mois choisi : sans
  * quoi le total affiché ensuite serait incompréhensible (les coûts s'ajoutent
  * par source, voir docs/architecture.md § « Le rapport FinOps »).
  */
 import { useRef, useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
-import { saveCostSchema, type ApplicationCostDto } from '@poryg/shared';
+import { CO2_KG_PER_KWH, estimateCo2, saveCostSchema, type ApplicationCostDto } from '@poryg/shared';
 import { api, ApiError } from '../api/client';
 import type { ApiQuery } from '../api/useApi';
-import { formatEur, formatMonth } from '../lib/format';
+import { formatEur, formatKwh, formatCo2, formatMonth } from '../lib/format';
 import { zodFieldErrors, type FieldErrors } from '../lib/forms';
 import { Alert } from './ui/Alert';
 import { Button } from './ui/Button';
@@ -40,7 +44,12 @@ export function ExistingCostNotice({ costs, periodMonth }: { costs: ApplicationC
   return (
     <p className="notice notice--info" role="status">
       Déjà enregistré pour {formatMonth(periodMonth)} :{' '}
-      {monthCosts.map((cost) => `${formatEur(cost.amountEur)} (${cost.source})`).join(' + ')}.{' '}
+      {monthCosts
+        .map((cost) => {
+          const empreinte = cost.energyKwh > 0 ? `, ${formatKwh(cost.energyKwh)}` : '';
+          return `${formatEur(cost.amountEur)}${empreinte} (${cost.source})`;
+        })
+        .join(' + ')}.{' '}
       {hasManual
         ? 'Votre saisie remplacera la saisie manuelle existante.'
         : "Votre saisie s'ajoutera à ces montants."}
@@ -62,6 +71,8 @@ export function CostCard({ applicationId, query, editable, onSaved }: CostCardPr
   const [open, setOpen] = useState(false);
   const [periodMonth, setPeriodMonth] = useState(currentMonth);
   const [amountEur, setAmountEur] = useState('');
+  const [energyKwh, setEnergyKwh] = useState('');
+  const [co2Kg, setCo2Kg] = useState('');
   const [errors, setErrors] = useState<FieldErrors>({});
   const [globalError, setGlobalError] = useState<string | null>(null);
   const [flash, setFlash] = useState<string | null>(null);
@@ -75,6 +86,8 @@ export function CostCard({ applicationId, query, editable, onSaved }: CostCardPr
     if (next) {
       setPeriodMonth(currentMonth());
       setAmountEur('');
+      setEnergyKwh('');
+      setCo2Kg('');
       setErrors({});
       // Le focus suit l'ouverture, sinon la navigation au clavier repart du bouton.
       setTimeout(() => monthRef.current?.focus(), 0);
@@ -86,7 +99,12 @@ export function CostCard({ applicationId, query, editable, onSaved }: CostCardPr
     setGlobalError(null);
     setFlash(null);
 
-    const parsed = saveCostSchema.safeParse({ periodMonth, amountEur });
+    const parsed = saveCostSchema.safeParse({
+      periodMonth,
+      amountEur,
+      energyKwh: energyKwh || 0,
+      co2Kg: co2Kg || 0,
+    });
     if (!parsed.success) {
       setErrors(zodFieldErrors(parsed.error));
       return;
@@ -96,7 +114,7 @@ export function CostCard({ applicationId, query, editable, onSaved }: CostCardPr
     setBusy(true);
     try {
       await api.put(`/api/applications/${applicationId}/costs`, parsed.data);
-      setFlash(`Coût enregistré pour ${formatMonth(parsed.data.periodMonth)}.`);
+      setFlash(`Saisie enregistrée pour ${formatMonth(parsed.data.periodMonth)}.`);
       setOpen(false);
       onSaved();
     } catch (caught) {
@@ -124,9 +142,10 @@ export function CostCard({ applicationId, query, editable, onSaved }: CostCardPr
 
   const canEdit = data.permissions.edit && editable;
   const thisMonth = currentMonth();
-  const thisMonthTotal = data.costs
-    .filter((cost) => cost.periodMonth === thisMonth)
-    .reduce((sum, cost) => sum + cost.amountEur, 0);
+  const monthCosts = data.costs.filter((cost) => cost.periodMonth === thisMonth);
+  const thisMonthTotal = monthCosts.reduce((sum, cost) => sum + cost.amountEur, 0);
+  const thisMonthKwh = monthCosts.reduce((sum, cost) => sum + cost.energyKwh, 0);
+  const thisMonthCo2 = monthCosts.reduce((sum, cost) => sum + cost.co2Kg, 0);
 
   // Trois derniers mois renseignés, du plus récent au plus ancien.
   const recentMonths = [...new Set(data.costs.map((cost) => cost.periodMonth))]
@@ -157,6 +176,14 @@ export function CostCard({ applicationId, query, editable, onSaved }: CostCardPr
         {thisMonthTotal > 0 ? (
           <>
             <strong className="cost-total">{formatEur(thisMonthTotal)}</strong> pour {formatMonth(thisMonth)}
+            {thisMonthKwh > 0 ? (
+              <span className="muted">
+                {' · '}
+                {formatKwh(thisMonthKwh)} · {formatCo2(thisMonthCo2)}
+              </span>
+            ) : (
+              <span className="muted"> · empreinte non déclarée</span>
+            )}
           </>
         ) : (
           <span className="muted">Aucun coût saisi pour {formatMonth(thisMonth)}.</span>
@@ -197,11 +224,41 @@ export function CostCard({ applicationId, query, editable, onSaved }: CostCardPr
               error={errors.amountEur}
               hint="Licences, requêtes API, compute."
             />
+            <TextField
+              id="costEnergyKwh"
+              label="Énergie (kWh)"
+              type="number"
+              min={0}
+              step={1}
+              inputMode="decimal"
+              value={energyKwh}
+              onChange={(event) => {
+                setEnergyKwh(event.target.value);
+                // Proposition, pas calcul caché : le champ reste modifiable, et
+                // c'est la valeur validée qui est enregistrée.
+                const kwh = Number(event.target.value);
+                setCo2Kg(Number.isFinite(kwh) && kwh > 0 ? String(estimateCo2(kwh)) : '');
+              }}
+              error={errors.energyKwh}
+              hint="Entraînement + inférence. Laisser vide si non mesuré."
+            />
+            <TextField
+              id="costCo2Kg"
+              label="Empreinte (kg CO₂ éq.)"
+              type="number"
+              min={0}
+              step={0.01}
+              inputMode="decimal"
+              value={co2Kg}
+              onChange={(event) => setCo2Kg(event.target.value)}
+              error={errors.co2Kg}
+              hint={`Proposé d'après le mix français (${CO2_KG_PER_KWH} kg/kWh) : à corriger si l'hébergement est ailleurs.`}
+            />
           </div>
 
           <div className="form-actions">
             <Button type="submit" disabled={busy}>
-              {busy ? 'Enregistrement…' : 'Enregistrer le coût'}
+              {busy ? 'Enregistrement…' : 'Enregistrer'}
             </Button>
             <Button variant="ghost" onClick={toggle} disabled={busy}>
               Annuler

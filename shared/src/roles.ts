@@ -2,8 +2,8 @@
  * Rôles et permissions de Poryg'AI.
  *
  * Règle d'or : cette matrice est la SEULE source de vérité.
- *  - Le serveur l'applique (refus 403) via `requirePermission()` — c'est la sécurité.
- *  - Le client l'utilise pour masquer les actions interdites — c'est du confort.
+ *  - Le serveur l'applique (refus 403) via `requirePermission()` : c'est la sécurité.
+ *  - Le client l'utilise pour masquer les actions interdites : c'est du confort.
  *
  * Un utilisateur a exactement UN rôle (décision de simplicité, voir docs/roles-et-permissions.md).
  */
@@ -75,7 +75,7 @@ export function ownsApplication(user: { id: number }, application: ApplicationSu
 
 /**
  * Modification : il faut la permission de base, ne pas viser une application
- * supprimée, et — sauf pour les rôles ayant `application:update_any` — en être
+ * supprimée, et : sauf pour les rôles ayant `application:update_any` : en être
  * propriétaire (Process Owner ou déclarant).
  *
  * Vérifié côté serveur (sécurité) et côté client (masquage des actions).

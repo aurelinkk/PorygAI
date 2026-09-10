@@ -1,7 +1,7 @@
 /**
  * Identité vérifiée, quel que soit le moyen de connexion.
  *
- * Règle d'architecture : un fournisseur d'identité répond à UNE question —
+ * Règle d'architecture : un fournisseur d'identité répond à UNE question :
  * « qui est cette personne ? ». Tout le reste (sessions, rôle, permissions)
  * appartient à Poryg'AI et vit en base. Le rôle ne vient donc JAMAIS de
  * l'extérieur : c'est l'AI Officer qui l'attribue.

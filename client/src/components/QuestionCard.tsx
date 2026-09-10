@@ -4,10 +4,17 @@
  * Éléments natifs : un <fieldset> par question, des boutons radio (ou des cases
  * à cocher pour un choix multiple) dans des <label>. Le barème n'est pas affiché :
  * il n'aide pas la personne qui répond et l'incite à viser la note plutôt qu'à
- * décrire la réalité. Seuls le score global et les points critiques sont montrés.
+ * décrire la réalité. Le score global ne l'est pas davantage, et pour la même
+ * raison : il n'apparaît qu'à la dernière étape.
  *
- * Deux états mis en évidence : une réponse bloquante (l'évaluation s'arrête)
- * et un critère critique à « Non » (plafond à 60).
+ * Une option peut porter une **précision** (`hint`) : c'est ce qui permet de dire
+ * quelles régions comptent comme « bas carbone » ou ce qu'est un « grand modèle ».
+ * Elle est rattachée au bouton par `aria-describedby`, pas seulement posée à côté.
+ *
+ * Deux états font exception, parce qu'ils décident de ce qui pourra être déployé
+ * et non d'un nombre de points : une réponse bloquante (l'évaluation s'arrête) et
+ * un critère critique à « Non » (plafond à 60). Ils sont signalés ici, sous la
+ * question concernée.
  */
 import { CRITICAL_CAP, type AnswerValue, type Question } from '@poryg/shared';
 import { cx } from '../lib/format';
@@ -28,6 +35,7 @@ function asList(value: AnswerValue | undefined): string[] {
 }
 
 export function QuestionCard({ question, value, comment, disabled, onAnswer, onComment }: QuestionCardProps) {
+  const isNumber = question.kind === 'number';
   const isMulti = question.kind === 'multi';
   const selected = asList(value);
   const isBlockingAnswer = question.blockingValue !== undefined && selected.includes(question.blockingValue);
@@ -46,7 +54,8 @@ export function QuestionCard({ question, value, comment, disabled, onAnswer, onC
   // Options nombreuses ou libellés longs (« Oui : coûts complets et gains chiffrés… ») :
   // en colonne, sinon les pastilles se coupent au milieu d'une phrase.
   const stacked =
-    (question.options?.length ?? 0) > 3 || (question.options ?? []).some((option) => option.label.length > 40);
+    (question.options?.length ?? 0) > 3
+    || (question.options ?? []).some((option) => option.label.length > 40 || option.hint);
 
   return (
     <fieldset
@@ -71,26 +80,48 @@ export function QuestionCard({ question, value, comment, disabled, onAnswer, onC
         </details>
       )}
 
-      <div className={cx('question__choices', stacked && 'question__choices--stacked')}>
-        {(question.options ?? []).map((option) => {
-          const optionId = `${question.code}-${option.value}`;
-          const checked = selected.includes(option.value);
-          return (
-            <label key={option.value} htmlFor={optionId} className="choice">
-              <input
-                id={optionId}
-                type={isMulti ? 'checkbox' : 'radio'}
-                name={question.code}
-                value={option.value}
-                checked={checked}
-                disabled={disabled}
-                onChange={() => (isMulti ? toggleMulti(option.value) : onAnswer(option.value))}
-              />
-              <span className="choice__label">{option.label}</span>
-            </label>
-          );
-        })}
-      </div>
+      {isNumber ? (
+        <TextField
+          id={`value-${question.code}`}
+          label={question.unit ?? 'Valeur'}
+          type="number"
+          min={0}
+          step={1}
+          inputMode="decimal"
+          disabled={disabled}
+          value={value === undefined ? '' : String(value)}
+          onChange={(event) => onAnswer(event.target.value)}
+        />
+      ) : (
+        <div className={cx('question__choices', stacked && 'question__choices--stacked')}>
+          {(question.options ?? []).map((option) => {
+            const optionId = `${question.code}-${option.value}`;
+            const checked = selected.includes(option.value);
+            return (
+              <label key={option.value} htmlFor={optionId} className="choice">
+                <input
+                  id={optionId}
+                  type={isMulti ? 'checkbox' : 'radio'}
+                  name={question.code}
+                  value={option.value}
+                  checked={checked}
+                  disabled={disabled}
+                  onChange={() => (isMulti ? toggleMulti(option.value) : onAnswer(option.value))}
+                  aria-describedby={option.hint ? `${optionId}-hint` : undefined}
+                />
+                <span className="choice__text">
+                  <span className="choice__label">{option.label}</span>
+                  {option.hint && (
+                    <span id={`${optionId}-hint`} className="choice__hint">
+                      {option.hint}
+                    </span>
+                  )}
+                </span>
+              </label>
+            );
+          })}
+        </div>
+      )}
 
       {isBlockingAnswer && (
         <p className="notice notice--danger" role="status">

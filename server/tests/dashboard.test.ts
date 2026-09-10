@@ -3,7 +3,7 @@
  *
  * Ce qui est vérifié : les agrégats sont cohérents avec l'inventaire, la fenêtre
  * d'historique est complète (mois vides compris), une évaluation soumise remonte
- * dans l'historique et dans les thèmes faibles, et — le plus important — un
+ * dans l'historique et dans les thèmes faibles, et : le plus important : un
  * tableau de bord ne laisse pas fuiter ce que l'utilisateur n'a pas le droit de
  * voir : ni le brouillon d'un autre, ni les coûts pour qui n'a pas `finops:read`.
  */
@@ -13,30 +13,12 @@ import {
   APP_STATUSES, applicableQuestions, monthKey, shiftMonth, type Answers, type BiReportDto,
 } from '@poryg/shared';
 import { one } from '../src/db/connection.js';
-import { ACCOUNTS, createTestApp, loginAs, userId, validApplication } from './helpers.js';
+import { ACCOUNTS, createTestApp, loginAs, userId, validApplication, answerAll } from './helpers.js';
 
-/**
- * Réponses complètes à toutes les questions applicables, au niveau demandé.
- * La boucle tourne jusqu'à stabilité : répondre à une question peut en révéler
- * d'autres (`showIf`).
- */
-function answerAll(framing: Answers, level: '0' | '1' | '2' = '2'): Answers {
-  const answers: Answers = { ...framing };
-  let changed = true;
-  while (changed) {
-    changed = false;
-    for (const question of applicableQuestions(answers)) {
-      if (question.weight === undefined || answers[question.code] !== undefined) continue;
-      answers[question.code] = level;
-      changed = true;
-    }
-  }
-  return answers;
-}
 
 const FRAMING: Answers = { C1: ['eu'], C2: 'no', C3: ['none'], C4: 'no', C5: 'none', C6: 'internal' };
 const PRELIMINARY = {
-  toolVendor: 'Outil interne — équipe Data',
+  toolVendor: 'Outil interne : équipe Data',
   purpose: "Résumé automatique des comptes rendus d'entretien.",
   businessCriticality: 'medium',
 };

@@ -8,7 +8,7 @@
  * centaines de lignes, il faudrait trier en SQL et paginer.
  *
  * Accessibilité : chaque en-tête triable est un vrai <button> dans un <th>, et
- * le <th> porte `aria-sort` — c'est ce que les lecteurs d'écran annoncent. La
+ * le <th> porte `aria-sort` : c'est ce que les lecteurs d'écran annoncent. La
  * flèche n'est qu'un renfort visuel (aria-hidden).
  *
  * Une application supprimée reste affichée, grisée et barrée, avec « par qui / quand ».
@@ -156,7 +156,7 @@ export function ApplicationsTable({ applications, labelledBy }: ApplicationsTabl
               </td>
               {showCost && (
                 <td className="mono cost-cell">
-                  {app.monthlyCostEur ? formatEur(app.monthlyCostEur) : <span className="muted">—</span>}
+                  {app.monthlyCostEur ? formatEur(app.monthlyCostEur) : <span className="muted">:</span>}
                 </td>
               )}
               <td>

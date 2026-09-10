@@ -2,7 +2,7 @@
   "name": "@poryg/client",
   "private": true,
   "version": "0.1.0",
-  "description": "Front Poryg'AI — React + Vite, CSS pur selon la charte graphique",
+  "description": "Front Poryg'AI : React + Vite, CSS pur selon la charte graphique",
   "type": "module",
   "scripts": {
     "dev": "vite",

@@ -1,8 +1,8 @@
 /**
  * Indicateur clé. À utiliser dans un <dl className="kpi-grid">.
  *
- * Avec `to`, la tuile devient cliquable. Le lien n'entoure que la valeur — un
- * <a> ne peut pas envelopper les <dt>/<dd> d'une liste de définitions — mais un
+ * Avec `to`, la tuile devient cliquable. Le lien n'entoure que la valeur : un
+ * <a> ne peut pas envelopper les <dt>/<dd> d'une liste de définitions : mais un
  * pseudo-élément le fait couvrir toute la tuile : une seule cible pour la souris
  * comme pour le clavier, sans casser la structure HTML.
  */
@@ -33,7 +33,7 @@ export function Kpi({ label, value, hint, tone = 'default', to, linkLabel }: Kpi
           {to ? (
             <Link to={to} className="kpi__link">
               {value}
-              {linkLabel && <span className="visually-hidden"> — {linkLabel}</span>}
+              {linkLabel && <span className="visually-hidden"> : {linkLabel}</span>}
             </Link>
           ) : (
             value

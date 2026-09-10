@@ -1,5 +1,5 @@
 /**
- * Tableaux de bord BI — historique et utilisation du parc (lot 6).
+ * Tableaux de bord BI : historique et utilisation du parc (lot 6).
  *
  * Le rapport FinOps répond « combien ça coûte ». Cette page répond « où en est le
  * parc, comment il évolue, et où ça coince » : historique des décisions, forme du
@@ -85,13 +85,13 @@ export function DashboardsPage() {
         />
         <Kpi
           label="Taux de conformité"
-          value={portfolio.complianceRate === null ? '—' : `${Math.round(portfolio.complianceRate * 100)} %`}
+          value={portfolio.complianceRate === null ? ':' : `${Math.round(portfolio.complianceRate * 100)} %`}
           hint="des applications évaluées"
           tone="success"
         />
         <Kpi
           label="Score moyen"
-          value={quality.averageScore === null ? '—' : `${quality.averageScore}/100`}
+          value={quality.averageScore === null ? ':' : `${quality.averageScore}/100`}
           hint={`${quality.submitted} évaluation${quality.submitted > 1 ? 's' : ''} sur la période`}
         />
         <Kpi
@@ -243,7 +243,7 @@ export function DashboardsPage() {
 
       <Card title="Échéances de conformité" titleId="bi-expiry-title" className="finops-card">
         <p className="muted">
-          Une conformité vaut douze mois. Passé ce délai, l'application repasse d'elle-même en audit —
+          Une conformité vaut douze mois. Passé ce délai, l'application repasse d'elle-même en audit :
           {compliance.expired > 0
             ? ` ${compliance.expired} l'${compliance.expired > 1 ? 'ont' : 'a'} déjà fait sur la période.`
             : " aucune ne l'a fait sur la période."}

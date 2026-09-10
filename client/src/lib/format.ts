@@ -26,3 +26,15 @@ export const firstName = (displayName: string) => displayName.split(' ')[0] ?? d
 
 /** Concatène des classes CSS en ignorant les valeurs vides. */
 export const cx = (...classes: (string | false | null | undefined)[]) => classes.filter(Boolean).join(' ');
+
+/** Énergie en kWh, ou en MWh au-delà de mille : « 42 000 kWh » se lit mal. */
+export function formatKwh(kwh: number): string {
+  if (kwh >= 1000) return `${(kwh / 1000).toLocaleString('fr-FR', { maximumFractionDigits: 1 })} MWh`;
+  return `${kwh.toLocaleString('fr-FR', { maximumFractionDigits: 0 })} kWh`;
+}
+
+/** Empreinte carbone, en kg ou en tonnes de CO₂ équivalent. */
+export function formatCo2(kg: number): string {
+  if (kg >= 1000) return `${(kg / 1000).toLocaleString('fr-FR', { maximumFractionDigits: 1 })} t CO₂`;
+  return `${kg.toLocaleString('fr-FR', { maximumFractionDigits: 0 })} kg CO₂`;
+}

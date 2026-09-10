@@ -32,7 +32,7 @@ a {
   text-underline-offset: 3px;
 }
 a:hover {
-  color: var(--bleu-text); /* 7,9:1 — le bleu vif de la charte ne tiendrait pas sur crème */
+  color: var(--bleu-text); /* 7,9:1 : le bleu vif de la charte ne tiendrait pas sur crème */
 }
 
 /* Titres : Baloo 2, poids 600–800 (H1 44 / H2 30 / H3 22) */

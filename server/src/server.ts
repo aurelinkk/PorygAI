@@ -39,4 +39,4 @@ process.on('SIGINT', () => void shutdown('SIGINT'));
 process.on('SIGTERM', () => void shutdown('SIGTERM'));
 
 await app.listen({ host: config.host, port: config.port });
-log(`Poryg'AI API prête — mode ${config.nodeEnv}, base ${config.dbPath}`);
+log(`Poryg'AI API prête : mode ${config.nodeEnv}, base ${config.dbPath}`);

@@ -3,7 +3,7 @@
  *
  * C'est un vrai tableau HTML : les chiffres restent lisibles pour tout le monde,
  * la barre n'est qu'un renfort visuel (`aria-hidden`). Aucune bibliothèque de
- * graphiques — quelques lignes de CSS suffisent, et le rendu reste accessible.
+ * graphiques : quelques lignes de CSS suffisent, et le rendu reste accessible.
  *
  * La valeur est un nombre quelconque : des euros pour le FinOps (format par
  * défaut), un nombre d'applications ou d'événements pour les tableaux de bord BI.

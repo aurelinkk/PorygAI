@@ -54,7 +54,7 @@ export function resolveSession(db: Db, sessionId: string, ttlHours: number): Use
 
   // Expiration glissante, mais on n'écrit pas à CHAQUE requête : une page en
   // charge plusieurs, et chaque écriture touche le journal WAL pour rien. On ne
-  // prolonge que lorsqu'il reste moins de la moitié de la durée de vie — le
+  // prolonge que lorsqu'il reste moins de la moitié de la durée de vie : le
   // comportement pour l'utilisateur est identique.
   const halfLife = addHours(now, ttlHours / 2);
   if (row.expires_at < halfLife) {

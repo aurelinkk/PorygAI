@@ -3,13 +3,18 @@
  *
  * Même parti pris que `MonthlyBars` et `BreakdownBars` : le graphique est
  * décoratif (`aria-hidden`), la donnée est un vrai tableau HTML juste en dessous.
- * Ici le tableau est visible et non masqué — c'est lui qui porte l'information
+ * Ici le tableau est visible et non masqué : c'est lui qui porte l'information
  * (six colonnes ne se lisent pas dans des barres), le graphique donne la forme.
+ *
+ * Le graphique porte un axe vertical gradué et donne le détail du mois au
+ * survol d'une colonne. L'infobulle se loge dans la marge haute réservée : elle
+ * ne recouvre rien, ce qui la dispense d'un mécanisme de fermeture (WCAG 1.4.13).
  *
  * Aucune bibliothèque : trois <span> par mois et un peu de flexbox.
  */
 import type { BiHistoryRow } from '@poryg/shared';
 import { formatMonth } from '../lib/format';
+import { niceScale } from '../lib/charts';
 
 interface HistoryChartProps {
   history: BiHistoryRow[];
@@ -25,7 +30,7 @@ const PARTS = [
 ] as const;
 
 export function HistoryChart({ history, labelledBy }: HistoryChartProps) {
-  const max = Math.max(...history.map((row) => row.submitted), 1);
+  const { top, ticks } = niceScale(Math.max(...history.map((row) => row.submitted), 0));
   const totals = {
     declared: history.reduce((sum, row) => sum + row.declared, 0),
     submitted: history.reduce((sum, row) => sum + row.submitted, 0),
@@ -37,21 +42,61 @@ export function HistoryChart({ history, labelledBy }: HistoryChartProps) {
 
   return (
     <>
-      <div className="sparkline" aria-hidden="true">
-        {history.map((row) => (
-          <div key={row.month} className="sparkline__col">
-            <span className="stack" style={{ height: `${Math.max((row.submitted / max) * 100, 2)}%` }}>
-              {PARTS.map((part) => (
-                <span
-                  key={part.key}
-                  className={`stack__part stack__part--${part.key}`}
-                  style={{ flexGrow: row[part.key] }}
-                />
-              ))}
+      <div className="chart" aria-hidden="true">
+        <div className="chart__axis">
+          {[...ticks].reverse().map((tick) => (
+            <span key={tick} className="chart__tick mono">
+              {tick}
             </span>
-            <span className="sparkline__label mono">{row.month.slice(5)}</span>
+          ))}
+        </div>
+
+        <div className="chart__plot">
+          {ticks.map((tick) => (
+            <span key={tick} className="chart__line" style={{ bottom: `${(tick / top) * 100}%` }} />
+          ))}
+
+          <div className="sparkline">
+            {history.map((row) => (
+              <div key={row.month} className="sparkline__col">
+                <span
+                  className="stack"
+                  style={{ height: row.submitted > 0 ? `${(row.submitted / top) * 100}%` : '2px' }}
+                >
+                  {PARTS.map((part) => (
+                    <span
+                      key={part.key}
+                      className={`stack__part stack__part--${part.key}`}
+                      style={{ flexGrow: row[part.key] }}
+                    />
+                  ))}
+                </span>
+                <span className="chart__tip chart__tip--wide">
+                  {formatMonth(row.month)}
+                  <strong>
+                    {row.submitted} évaluation{row.submitted > 1 ? 's' : ''} · {row.declared} déclarée
+                    {row.declared > 1 ? 's' : ''}
+                  </strong>
+                  {PARTS.map((part) => (
+                    <span key={part.key} className="chart__tip-line">
+                      <span className={`legend__dot stack__part--${part.key}`} />
+                      {part.label} : {row[part.key]}
+                    </span>
+                  ))}
+                </span>
+              </div>
+            ))}
           </div>
-        ))}
+        </div>
+
+        <span className="chart__corner" />
+        <div className="chart__labels">
+          {history.map((row) => (
+            <span key={row.month} className="sparkline__label mono">
+              {row.month.slice(5)}
+            </span>
+          ))}
+        </div>
       </div>
 
       <ul className="legend">

@@ -1,5 +1,5 @@
 /**
- * Questionnaire d'évaluation de conformité IA — version 2.
+ * Questionnaire d'évaluation de conformité IA : version 2.
  *
  * Conception détaillée : docs/questionnaire-v2.md. En résumé :
  *
@@ -16,7 +16,9 @@
  *    ≤ 60 non conforme (non déployable).
  *
  * Le calcul (`scoreEvaluation`) est une fonction pure, exécutée à l'identique par
- * le client (score en direct) et par le serveur (calcul qui fait foi).
+ * le client (questions applicables, avancement, critères critiques manqués) et par
+ * le serveur (calcul qui fait foi). Le score lui-même n'est montré à la personne
+ * qui répond qu'à la dernière étape du formulaire.
  */
 
 /**
@@ -26,7 +28,7 @@
  * sans en renommer aucune. Un brouillon commencé en v2 garde donc ses réponses
  * (voir `getOrCreateDraft`) ; seul un changement de famille les invalide.
  */
-export const QUESTIONNAIRE_VERSION = 'v2.1';
+export const QUESTIONNAIRE_VERSION = 'v2.3';
 
 // ---------------------------------------------------------------------------
 // Modèle
@@ -55,7 +57,8 @@ export type QuestionKind =
   | 'scale' // Oui / Partiellement / Non
   | 'single' // un choix parmi des options (noté si les options portent un score)
   | 'multi' // plusieurs choix (cadrage uniquement, non noté)
-  | 'yesno'; // Oui / Non (cadrage ou blocage, non noté)
+  | 'yesno' // Oui / Non (cadrage ou blocage, non noté)
+  | 'number'; // valeur chiffrée libre, jamais notée (précise une réponse voisine)
 
 export type Weight = 1 | 2 | 4;
 
@@ -64,10 +67,16 @@ export interface Question {
   section: SectionCode;
   kind: QuestionKind;
   wording: string;
-  /** « Pourquoi cette question ? » — affiché dépliable dans le formulaire. */
+  /** « Pourquoi cette question ? » : affiché dépliable dans le formulaire. */
   why?: string;
-  /** Points maximum. Absent = question non notée (cadrage). */
+  /** Points maximum. Absent = question non notée (cadrage, gouvernance FinOps). */
   weight?: Weight;
+  /**
+   * Question non notée mais **exigée à la soumission**. Sert au bloc de
+   * gouvernance FinOps, qui ne pèse pas sur le score sur 100 mais dont les
+   * réponses conditionnent l'ajustement et l'estimation d'empreinte.
+   */
+  required?: boolean;
   /** Répondue au minimum (Non / score 0), plafonne le score global à 60. */
   critical?: boolean;
   /** Valeur qui arrête l'évaluation (blocage), et message associé. */
@@ -75,6 +84,8 @@ export interface Question {
   blockMessage?: string;
   options?: Option[];
   showIf?: Condition;
+  /** Unité affichée à côté d'un champ `number` (« paramètres », « kWh »…). */
+  unit?: string;
   /** Action corrective proposée quand la réponse n'est pas au maximum. */
   remediation?: string;
   /** Code de la question v1 reprise, pour mémoire. */
@@ -82,7 +93,8 @@ export interface Question {
 }
 
 export type SectionCode =
-  | 'framing' | 'N' | 'D' | 'T' | 'S' | 'E' | 'BI' | 'SE' | 'F' | 'UE' | 'US' | 'CN' | 'AU';
+  | 'framing' | 'N' | 'D' | 'T' | 'S' | 'E' | 'BI' | 'SE' | 'F' | 'GF'
+  | 'UE' | 'US' | 'CN' | 'AU';
 
 export interface Section {
   code: SectionCode;
@@ -107,10 +119,17 @@ export const SECTIONS: Section[] = [
   },
   { code: 'SE', label: 'Sécurité', intro: 'Accès, attaques propres à l’IA, engagements du fournisseur.' },
   { code: 'F', label: 'Frugalité et FinOps', intro: 'Coût financier et empreinte carbone de l’IA.' },
-  { code: 'UE', label: 'Réglementation — Union européenne', intro: 'AI Act et RGPD.', country: 'eu' },
-  { code: 'US', label: 'Réglementation — États-Unis', intro: 'Lois sectorielles, lois d’État et FTC.', country: 'us' },
-  { code: 'CN', label: 'Réglementation — Chine', intro: 'Enregistrement CAC, marquage, PIPL et localisation des données.', country: 'cn' },
-  { code: 'AU', label: 'Réglementation — autres pays', intro: 'Revue juridique locale.', country: 'other' },
+  {
+    code: 'GF',
+    label: 'Gouvernance FinOps',
+    intro:
+      "Comment le coût et l'empreinte de cette application seront suivis, et de quoi dépend son impact. "
+      + 'Ce thème ajoute ou retire des points au score, sans jamais rendre une application non conforme.',
+  },
+  { code: 'UE', label: 'Réglementation : Union européenne', intro: 'AI Act et RGPD.', country: 'eu' },
+  { code: 'US', label: 'Réglementation : États-Unis', intro: 'Lois sectorielles, lois d’État et FTC.', country: 'us' },
+  { code: 'CN', label: 'Réglementation : Chine', intro: 'Enregistrement CAC, marquage, PIPL et localisation des données.', country: 'cn' },
+  { code: 'AU', label: 'Réglementation : autres pays', intro: 'Revue juridique locale.', country: 'other' },
 ];
 
 // ---------------------------------------------------------------------------
@@ -256,7 +275,7 @@ export const QUESTIONS: Question[] = [
     section: 'N',
     kind: 'scale',
     weight: 2,
-    wording: "La finalité est-elle précise, écrite et limitée — l'usage réel ne dérive pas de l'usage déclaré ?",
+    wording: "La finalité est-elle précise, écrite et limitée : l'usage réel ne dérive pas de l'usage déclaré ?",
     options: SCALE_OPTIONS,
     remediation: "Rédiger une finalité limitative et prévoir une revue à chaque évolution d'usage.",
   },
@@ -554,7 +573,7 @@ export const QUESTIONS: Question[] = [
     showIf: trainedByUs,
     wording:
       "Le processus de collecte et d'annotation des données est-il documenté : qui annote, selon quelles consignes écrites, avec quel contrôle de cohérence ?",
-    why: 'Une consigne d’annotation ambiguë, ou une équipe d’annotateurs peu diverse, fabrique un biais que les tests sur le modèle ne rattrapent pas — l’erreur est déjà dans la vérité de référence.',
+    why: 'Une consigne d’annotation ambiguë, ou une équipe d’annotateurs peu diverse, fabrique un biais que les tests sur le modèle ne rattrapent pas : l’erreur est déjà dans la vérité de référence.',
     options: SCALE_OPTIONS,
     remediation:
       "Rédiger un guide d'annotation, faire annoter un même échantillon par deux personnes, mesurer leur taux d'accord et corriger les consignes en cas de désaccord marqué.",
@@ -566,7 +585,7 @@ export const QUESTIONS: Question[] = [
     weight: 2,
     wording:
       "Le poids réel de chaque variable dans les résultats a-t-il été examiné, afin de repérer une variable qui pèse anormalement lourd ?",
-    why: 'Ancrage algorithmique : le modèle accorde une importance excessive à une variable dominante — le revenu initial dans un score de crédit, l’historique dans une répartition budgétaire. Les méthodes d’explicabilité (SHAP, LIME) attribuent à chaque variable sa contribution réelle à la décision.',
+    why: 'Ancrage algorithmique : le modèle accorde une importance excessive à une variable dominante : le revenu initial dans un score de crédit, l’historique dans une répartition budgétaire. Les méthodes d’explicabilité (SHAP, LIME) attribuent à chaque variable sa contribution réelle à la décision.',
     options: [
       { value: '2', label: "Oui, avec une méthode d'explicabilité (SHAP, LIME ou équivalent)", score: 2 },
       { value: '1', label: 'Partiellement : lecture manuelle des pondérations, sans outil', score: 1 },
@@ -722,8 +741,188 @@ export const QUESTIONS: Question[] = [
     options: SCALE_OPTIONS,
     remediation: 'Auditer les appels sur une semaine et supprimer les redondances.',
   },
+  // --- 9. Gouvernance FinOps ---------------------------------------------------------
+  // Bloc à part, qui ne compte PAS dans le score sur 100 : il produit un
+  // **ajustement** de −4 à +4 points (voir `finopsAdjustment`). Une gouvernance
+  // FinOps exemplaire fait gagner des points, son absence en fait perdre, mais
+  // elle ne rend jamais une application non conforme à elle seule.
+  //
+  // Les quatre premières questions décrivent la gouvernance (reporting,
+  // fréquence, mesures, diffusion) ; les trois dernières ne sont pas notées du
+  // tout : elles alimentent l'estimation d'empreinte affichée à la fin.
+  {
+    code: 'GF1',
+    section: 'GF',
+    kind: 'single',
+    required: true,
+    wording: 'Quel type de reporting FinOps est prévu pour cette application ?',
+    why: "Sans support de restitution, un suivi des coûts reste une intention : personne ne le lit, donc personne n'arbitre.",
+    options: [
+      { value: 'automated', label: "Tableau de bord alimenté automatiquement (Poryg'AI, outil FinOps du fournisseur)" },
+      { value: 'manual', label: 'Rapport ou fichier rédigé à la main' },
+      { value: 'none', label: 'Aucun reporting prévu' },
+    ],
+    remediation:
+      "Brancher le suivi sur un tableau de bord alimenté automatiquement : le rapport FinOps de Poryg'AI se remplit dès qu'un coût mensuel est saisi.",
+  },
+  {
+    code: 'GF2',
+    section: 'GF',
+    kind: 'single',
+    required: true,
+    wording: 'À quelle fréquence ce reporting est-il produit ?',
+    why: 'Une dérive de coût se voit sur un mois ; sur un rapport annuel, elle se découvre un an trop tard.',
+    options: [
+      { value: 'monthly', label: 'Mensuelle ou plus fréquente' },
+      { value: 'quarterly', label: 'Trimestrielle ou annuelle' },
+      { value: 'none', label: 'Aucune périodicité définie' },
+    ],
+    remediation: 'Fixer un relevé mensuel et désigner la personne qui le produit.',
+  },
+  {
+    code: 'GF3',
+    section: 'GF',
+    kind: 'multi',
+    required: true,
+    wording: 'Quelles mesures sont suivies ?',
+    why: "Le FinOps responsable en suit trois : la facture ne dit rien de l'énergie, et l'énergie ne dit rien du carbone tant que l'intensité du mix n'est pas connue.",
+    options: [
+      { value: 'cost', label: 'Coût (k€)' },
+      { value: 'energy', label: 'Énergie consommée (kWh)' },
+      { value: 'co2', label: 'Empreinte carbone (kg CO₂ éq.)' },
+      { value: 'none', label: 'Aucune mesure suivie' },
+    ],
+    remediation:
+      "Compléter le relevé mensuel avec l'énergie et le carbone : le module FinOps attend les trois, et l'estimation ci-dessous s'affine dès qu'ils sont saisis.",
+  },
+  {
+    code: 'GF4',
+    section: 'GF',
+    kind: 'single',
+    required: true,
+    wording: 'À qui ce reporting est-il diffusé ?',
+    why: "Un reporting qui ne sort pas de l'équipe projet ne déclenche aucun arbitrage : l'AI Officer et le contrôle de gestion sont ceux qui peuvent décider d'arrêter ou de réduire.",
+    options: [
+      { value: 'governance', label: 'Process Owner, AI Officer et direction / contrôle de gestion' },
+      { value: 'team', label: "À l'équipe projet uniquement" },
+      { value: 'none', label: 'À personne, ou non défini' },
+    ],
+    remediation:
+      "Adresser le rapport à l'AI Officer et au contrôle de gestion, au minimum trimestriellement.",
+  },
+  {
+    code: 'GF5',
+    section: 'GF',
+    kind: 'single',
+    required: true,
+    wording: "À quelle fréquence le modèle est-il entraîné ou réentraîné ?",
+    why: "L'entraînement concentre l'essentiel de l'empreinte d'un modèle : une passe d'apprentissage pèse souvent plus que des mois d'inférence.",
+    options: [
+      { value: 'none', label: "Jamais : le modèle est utilisé tel quel (API ou modèle pré-entraîné)" },
+      { value: 'once', label: 'Une fois : entraînement ou fine-tuning initial' },
+      { value: 'periodic', label: 'Périodiquement : réentraînement mensuel ou trimestriel' },
+      { value: 'continuous', label: 'En continu : apprentissage permanent' },
+    ],
+  },
+  {
+    code: 'GF6',
+    section: 'GF',
+    kind: 'single',
+    required: true,
+    wording: "Quel volume d'inférence l'application traite-t-elle par mois ?",
+    why: "L'inférence est unitairement peu coûteuse, mais elle tourne tous les jours : c'est le volume qui fait l'empreinte.",
+    options: [
+      { value: 'low', label: 'Moins de 1 000 traitements par mois' },
+      { value: 'medium', label: 'De 1 000 à 100 000' },
+      { value: 'high', label: 'De 100 000 à 10 millions' },
+      { value: 'very_high', label: 'Plus de 10 millions' },
+    ],
+  },
+  {
+    code: 'GF7',
+    section: 'GF',
+    kind: 'single',
+    required: true,
+    wording: "Où l'application est-elle hébergée ?",
+    why:
+      "À consommation égale, l'empreinte varie d'un facteur vingt selon le mix électrique de la région. Les régions citées sont des exemples courants chez les grands fournisseurs ; l'intensité indiquée est celle retenue par le calcul d'estimation.",
+    options: [
+      {
+        value: 'onprem',
+        label: 'On-premise, sur nos propres serveurs',
+        hint: 'Centre de données de l’entreprise, en France : environ 0,06 kg CO₂/kWh (mix français).',
+      },
+      {
+        value: 'cloud_low_carbon',
+        label: 'Cloud, région à faible intensité carbone',
+        hint:
+          'Suède (Stockholm), Finlande (Helsinki), Norvège (Oslo), France (Paris), Canada (Montréal) : hydraulique, éolien ou nucléaire : environ 0,03 kg CO₂/kWh.',
+      },
+      {
+        value: 'cloud',
+        label: 'Cloud, région standard',
+        hint:
+          'Irlande (Dublin), Pays-Bas (Amsterdam), Allemagne (Francfort), États-Unis Est (Virginie), Japon (Tokyo) : environ 0,25 kg CO₂/kWh.',
+      },
+      {
+        value: 'cloud_high_carbon',
+        label: 'Cloud, région à forte intensité carbone',
+        hint:
+          'Pologne (Varsovie), Inde (Mumbai), Indonésie (Jakarta), Australie (Sydney), Afrique du Sud : électricité largement au charbon : environ 0,6 kg CO₂/kWh.',
+      },
+      {
+        value: 'unknown',
+        label: 'Inconnu',
+        hint: 'Hypothèse défavorable retenue pour le calcul : 0,25 kg CO₂/kWh, comme une région standard.',
+      },
+    ],
+    remediation:
+      "Identifier la région d'hébergement auprès du fournisseur : à service identique, en changer peut diviser l'empreinte par dix.",
+  },
+  {
+    code: 'GF8',
+    section: 'GF',
+    kind: 'single',
+    required: true,
+    wording: 'Quelle est la taille du modèle utilisé ?',
+    why:
+      "L'énergie d'une inférence comme d'un entraînement suit à peu près le nombre de paramètres : c'est le premier levier de frugalité, avant même l'hébergement.",
+    options: [
+      {
+        value: 'small',
+        label: 'Petit : moins d’un milliard de paramètres',
+        hint: 'Modèles spécialisés, distillés ou quantifiés ; modèles de scoring et de classification classiques.',
+      },
+      {
+        value: 'medium',
+        label: 'Moyen : de 1 à 20 milliards de paramètres',
+        hint: 'Modèles open-weights courants (7 B, 13 B), modèles de vision usuels.',
+      },
+      {
+        value: 'large',
+        label: 'Grand : plus de 20 milliards de paramètres',
+        hint: 'Grands modèles de langage propriétaires ou open-weights de dernière génération.',
+      },
+      {
+        value: 'unknown',
+        label: 'Inconnue',
+        hint: 'Fréquent avec une API tierce. Le calcul retient alors l’hypothèse d’un modèle moyen.',
+      },
+    ],
+    remediation:
+      "Demander la taille du modèle au fournisseur, et vérifier qu'un modèle plus petit ne suffirait pas : c'est le levier de frugalité au meilleur rapport.",
+  },
+  {
+    code: 'GF9',
+    section: 'GF',
+    kind: 'number',
+    unit: 'millions de paramètres',
+    wording: 'Si vous la connaissez, indiquez la taille exacte du modèle.',
+    why:
+      "Facultatif : une valeur précise remplace la tranche de GF8 dans le calcul d'empreinte. En millions de paramètres : 7 milliards s'écrivent 7000.",
+  },
 
-  // --- 9. Réglementation — Union européenne --------------------------------------------
+  // --- 9. Réglementation : Union européenne --------------------------------------------
   {
     code: 'UE1',
     section: 'UE',
@@ -757,7 +956,7 @@ export const QUESTIONS: Question[] = [
     critical: true,
     showIf: { all: [deployedIn('eu'), hasCriticalDomain] },
     wording:
-      "Système probablement à haut risque (annexe III) : les obligations sont-elles couvertes — gestion des risques, gouvernance des données, documentation technique, enregistrement dans la base européenne, évaluation de conformité ?",
+      "Système probablement à haut risque (annexe III) : les obligations sont-elles couvertes : gestion des risques, gouvernance des données, documentation technique, enregistrement dans la base européenne, évaluation de conformité ?",
     options: SCALE_OPTIONS,
     remediation: 'Lancer le chantier de conformité haut risque avec le juridique ; ne pas déployer avant.',
   },
@@ -812,7 +1011,7 @@ export const QUESTIONS: Question[] = [
     remediation: 'Organiser une sensibilisation adaptée aux rôles.',
   },
 
-  // --- 9. Réglementation — États-Unis ----------------------------------------------
+  // --- 9. Réglementation : États-Unis ----------------------------------------------
   {
     code: 'US1',
     section: 'US',
@@ -887,7 +1086,7 @@ export const QUESTIONS: Question[] = [
     remediation: "Offrir l'opt-out et une procédure d'accès / suppression.",
   },
 
-  // --- 9. Réglementation — Chine ------------------------------------------------------
+  // --- 9. Réglementation : Chine ------------------------------------------------------
   {
     code: 'CN1',
     section: 'CN',
@@ -961,7 +1160,7 @@ export const QUESTIONS: Question[] = [
     remediation: 'Constituer le dossier de provenance exigé.',
   },
 
-  // --- 9. Réglementation — autres pays ------------------------------------------------
+  // --- 9. Réglementation : autres pays ------------------------------------------------
   {
     code: 'AU1',
     section: 'AU',
@@ -1003,6 +1202,30 @@ export type BusinessCriticality = (typeof BUSINESS_CRITICALITIES)[number]['code'
 /** Durée moyenne de saisie d'une question, en minutes. Sert aux estimations affichées. */
 export const MINUTES_PER_QUESTION = 0.5;
 
+/**
+ * Ajustement FinOps : ce que chaque réponse de gouvernance ajoute ou retire au
+ * score, en points sur 100.
+ *
+ * Règle posée par le métier : « l'approche FinOps ajoute ou supprime des points,
+ * mais ne rend pas la solution non conforme ». D'où deux garde-fous dans
+ * `scoreEvaluation` : l'ajustement ne fait jamais passer sous le seuil de
+ * conformité partielle une application qui était au-dessus, et il ne peut pas
+ * défaire le plafond d'un critère critique manqué.
+ */
+export const FINOPS_ADJUSTMENT: Record<string, Record<string, number>> = {
+  GF1: { automated: 1, manual: 0, none: -1 },
+  GF2: { monthly: 1, quarterly: 0, none: -1 },
+  GF4: { governance: 1, team: 0, none: -1 },
+};
+
+/** Libellés courts de l'ajustement, pour l'expliquer à l'écran. */
+export const FINOPS_ADJUSTMENT_LABELS: Record<string, string> = {
+  GF1: 'Type de reporting',
+  GF2: 'Fréquence',
+  GF3: 'Mesures suivies',
+  GF4: 'Diffusion',
+};
+
 export const COMPLIANT_MIN = 86;
 /** ≥ 61 : partiellement conforme (test / pilote). En dessous : non conforme. */
 export const PARTIAL_MIN = 61;
@@ -1012,9 +1235,9 @@ export const CRITICAL_CAP = 60;
 export type Verdict = 'compliant' | 'partially_compliant' | 'non_compliant' | 'blocked';
 
 export const VERDICT_LABELS: Record<Verdict, string> = {
-  compliant: 'Conforme — déployable en production',
-  partially_compliant: 'Partiellement conforme — autorisée en test ou pilote',
-  non_compliant: 'Non conforme — non déployable',
+  compliant: 'Conforme : déployable en production',
+  partially_compliant: 'Partiellement conforme : autorisée en test ou pilote',
+  non_compliant: 'Non conforme : non déployable',
   blocked: 'Refusée',
 };
 
@@ -1096,6 +1319,27 @@ export interface Recommendation {
   critical: boolean;
 }
 
+/** Détail de l'ajustement FinOps, question par question. */
+export interface FinopsAdjustmentDetail {
+  code: string;
+  label: string;
+  /** Points ajoutés (positif) ou retirés (négatif). */
+  delta: number;
+}
+
+export interface FinopsAdjustment {
+  /** Somme des deltas, avant application des garde-fous. */
+  points: number;
+  /** Score sur 100 avant ajustement. */
+  baseScore: number;
+  /**
+   * L'ajustement a-t-il été limité pour ne pas déclasser l'application ?
+   * Vrai quand un malus aurait fait passer sous le seuil de conformité partielle.
+   */
+  floored: boolean;
+  details: FinopsAdjustmentDetail[];
+}
+
 export interface ScoringResult {
   /** Codes des questions notées applicables au parcours. */
   applicable: string[];
@@ -1104,8 +1348,10 @@ export interface ScoringResult {
   complete: boolean;
   pointsObtained: number;
   pointsApplicable: number;
-  /** 0–100 (déjà plafonné le cas échéant). `null` si bloqué. */
+  /** 0–100, ajustement FinOps compris et plafond appliqué. `null` si bloqué. */
   score: number | null;
+  /** Ajustement FinOps appliqué au score, et son détail. */
+  finops: FinopsAdjustment;
   /** Questions critiques manquées, qui plafonnent le score à 60. */
   cappedBy: string[];
   /** Question ayant déclenché un blocage, ou `null`. */
@@ -1128,6 +1374,31 @@ export function verdictFor(score: number, cappedBy: string[]): Verdict {
 }
 
 /**
+ * Ajustement FinOps : somme des points de la gouvernance déclarée.
+ *
+ * GF3 est un choix multiple : elle vaut +1 quand les trois mesures (coût,
+ * énergie, carbone) sont suivies, −1 quand aucune ne l'est, 0 entre les deux.
+ */
+export function finopsAdjustmentDetails(answers: Answers): FinopsAdjustmentDetail[] {
+  const details: FinopsAdjustmentDetail[] = [];
+
+  for (const [code, bareme] of Object.entries(FINOPS_ADJUSTMENT)) {
+    const value = answers[code];
+    if (value === undefined || Array.isArray(value)) continue;
+    const delta = bareme[String(value)];
+    if (delta !== undefined) details.push({ code, label: FINOPS_ADJUSTMENT_LABELS[code]!, delta });
+  }
+
+  const mesures = asValues(answers.GF3).filter((value) => value !== 'none');
+  if (answers.GF3 !== undefined) {
+    const delta = mesures.length >= 3 ? 1 : mesures.length === 0 ? -1 : 0;
+    details.push({ code: 'GF3', label: FINOPS_ADJUSTMENT_LABELS.GF3!, delta });
+  }
+
+  return details.sort((a, b) => a.code.localeCompare(b.code));
+}
+
+/**
  * Calcule score, verdict, sous-scores et recommandations.
  *
  * Une question applicable sans réponse compte pour 0 point obtenu (le score en
@@ -1144,7 +1415,11 @@ export function scoreEvaluation(answers: Answers): ScoringResult {
     (question) => question.blockingValue !== undefined && asValues(answers[question.code]).includes(question.blockingValue),
   );
 
-  const missing = [...framing, ...scored]
+  // Les questions de gouvernance ne pèsent pas sur le score, mais elles sont
+  // exigées à la soumission : sans elles, ni ajustement ni estimation.
+  const required = questions.filter((question) => question.required && question.weight === undefined);
+
+  const missing = [...framing, ...scored, ...required]
     .filter((question) => {
       const value = answers[question.code];
       return value === undefined || (Array.isArray(value) && value.length === 0);
@@ -1186,7 +1461,20 @@ export function scoreEvaluation(answers: Answers): ScoringResult {
   }
 
   const raw = pointsApplicable > 0 ? Math.round((pointsObtained / pointsApplicable) * 100) : 0;
-  const score = cappedBy.length > 0 ? Math.min(raw, CRITICAL_CAP) : raw;
+
+  // --- Ajustement FinOps ----------------------------------------------------
+  // Il ajoute ou retire des points, sans jamais rendre l'application non
+  // conforme : un malus ne franchit pas le seuil vers le bas, et il ne peut pas
+  // non plus défaire le plafond d'un critère critique manqué (le plafond est
+  // appliqué en dernier).
+  const details = finopsAdjustmentDetails(answers);
+  const points = details.reduce((sum, entry) => sum + entry.delta, 0);
+  let adjusted = Math.max(0, Math.min(100, raw + points));
+  const floored = raw >= PARTIAL_MIN && adjusted < PARTIAL_MIN;
+  if (floored) adjusted = PARTIAL_MIN;
+
+  const score = cappedBy.length > 0 ? Math.min(adjusted, CRITICAL_CAP) : adjusted;
+  const finops: FinopsAdjustment = { points, baseScore: raw, floored, details };
 
   recommendations.sort((a, b) => {
     if (a.critical !== b.critical) return a.critical ? -1 : 1;
@@ -1213,6 +1501,7 @@ export function scoreEvaluation(answers: Answers): ScoringResult {
     pointsObtained,
     pointsApplicable,
     score: blocker ? null : score,
+    finops,
     cappedBy,
     blockedBy: blocker?.code ?? null,
     blockMessage: blocker?.blockMessage ?? null,

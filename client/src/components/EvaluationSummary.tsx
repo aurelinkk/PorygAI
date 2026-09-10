@@ -11,8 +11,8 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  COMPLIANT_MIN, PARTIAL_MIN, VERDICT_LABELS, can, questionWording,
-  type ActionPlanDto, type EvaluationDto,
+  COMPLIANT_MIN, DECIDED_STATUSES, PARTIAL_MIN, VERDICT_LABELS, can, questionWording,
+  type ActionPlanDto, type AppStatus, type EvaluationDto, type FinopsImpactDto,
 } from '@poryg/shared';
 import { api, ApiError } from '../api/client';
 import type { ApiQuery } from '../api/useApi';
@@ -27,18 +27,22 @@ export interface EvaluationResponse {
   draft: EvaluationDto | null;
   history: EvaluationDto[];
   actionPlans: ActionPlanDto[];
+  /** Projection FinOps annoncée à la fin du questionnaire ; `null` sans `finops:read`. */
+  finopsImpact: FinopsImpactDto | null;
   permissions: { fill: boolean; submit: boolean };
 }
 
 interface EvaluationSummaryProps {
   applicationId: number;
+  /** Statut de l'application : décide si le questionnaire est ouvert ou fermé. */
+  status: AppStatus;
   /** Requête lancée par la page, pour qu'elle parte en parallèle des autres. */
   query: ApiQuery<EvaluationResponse>;
   /** Appelé après une action, pour rafraîchir la fiche (le statut peut changer). */
   onChange: () => void;
 }
 
-export function EvaluationSummary({ applicationId, query, onChange }: EvaluationSummaryProps) {
+export function EvaluationSummary({ applicationId, status, query, onChange }: EvaluationSummaryProps) {
   const user = useUser();
   const { data, error, loading } = query;
   const [busyId, setBusyId] = useState<number | null>(null);
@@ -83,18 +87,32 @@ export function EvaluationSummary({ applicationId, query, onChange }: Evaluation
       title="Conformité"
       titleId="conformity-title"
       actions={
-        data.permissions.fill ? (
-          <ButtonLink to={`/applications/${applicationId}/evaluation`} variant="secondary" small>
-            {data.draft ? 'Reprendre le questionnaire' : last ? 'Nouvelle évaluation' : 'Remplir le questionnaire'}
-          </ButtonLink>
-        ) : (
-          <ButtonLink to={`/applications/${applicationId}/evaluation`} variant="ghost" small>
-            Voir le questionnaire
-          </ButtonLink>
-        )
+        <>
+          {last && (
+            <ButtonLink to={`/applications/${applicationId}/rapport`} variant="ghost" small>
+              Rapport PDF
+            </ButtonLink>
+          )}
+          {data.permissions.fill ? (
+            <ButtonLink to={`/applications/${applicationId}/evaluation`} variant="secondary" small>
+              {data.draft ? 'Reprendre le questionnaire' : last ? 'Nouvelle évaluation' : 'Remplir le questionnaire'}
+            </ButtonLink>
+          ) : (
+            <ButtonLink to={`/applications/${applicationId}/evaluation`} variant="ghost" small>
+              Voir le questionnaire
+            </ButtonLink>
+          )}
+        </>
       }
     >
       {actionError && <Alert tone="error">{actionError}</Alert>}
+
+      {DECIDED_STATUSES.includes(status) && (
+        <p className="muted">
+          Le questionnaire est fermé tant que ce verdict est en place. Terminer une action ci-dessous remet
+          l'application en audit : le formulaire s'ouvre alors, prérempli avec les réponses de cette évaluation.
+        </p>
+      )}
 
       {!last && !data.draft && <p className="muted">Aucune évaluation n'a encore été réalisée.</p>}
       {!last && data.draft && (
@@ -106,22 +124,22 @@ export function EvaluationSummary({ applicationId, query, onChange }: Evaluation
       {last && (
         <>
           <p className="score score--inline">
-            <span className="score__value">{last.score ?? '—'}</span>
+            <span className="score__value">{last.score ?? ':'}</span>
             <span className="score__max">/ {last.maxScore}</span>
-            {last.verdict && <span className={`verdict verdict--${last.verdict}`}>{VERDICT_LABELS[last.verdict].split(' — ')[0]}</span>}
+            {last.verdict && <span className={`verdict verdict--${last.verdict}`}>{VERDICT_LABELS[last.verdict].split(' : ')[0]}</span>}
           </p>
           <p className="muted score__hint">
             {last.maxScore === 100
               ? `Conforme dès ${COMPLIANT_MIN}, test de ${PARTIAL_MIN} à ${COMPLIANT_MIN - 1}`
               : 'Questionnaire v1 : seuil 14/18'}
             {' · '}soumise par {last.submittedBy?.displayName ?? 'Système'} le{' '}
-            <span className="mono">{last.submittedAt ? formatDateTime(last.submittedAt) : '—'}</span>
+            <span className="mono">{last.submittedAt ? formatDateTime(last.submittedAt) : ':'}</span>
             {data.history.length > 1 && ` · ${data.history.length} évaluations au total`}
           </p>
 
           {last.blockedBy && (
             <div className="notice notice--danger">
-              Évaluation refusée sur la question <span className="mono">{last.blockedBy}</span> —{' '}
+              Évaluation refusée sur la question <span className="mono">{last.blockedBy}</span> :{' '}
               {questionWording(last.blockedBy)}
             </div>
           )}
@@ -133,7 +151,7 @@ export function EvaluationSummary({ applicationId, query, onChange }: Evaluation
               <ul className="redflags">
                 {last.cappedBy.map((code) => (
                   <li key={code}>
-                    <span className="mono">{code}</span> — {questionWording(code)}
+                    <span className="mono">{code}</span> : {questionWording(code)}
                   </li>
                 ))}
               </ul>
@@ -144,7 +162,7 @@ export function EvaluationSummary({ applicationId, query, onChange }: Evaluation
             <ul className="section-bars section-bars--inline">
               {countries.map((section) => (
                 <li key={section.code} className="section-bar">
-                  <span className="section-bar__label">{section.label.replace('Réglementation — ', '')}</span>
+                  <span className="section-bar__label">{section.label.replace('Réglementation : ', '')}</span>
                   <span className="section-bar__value mono">
                     {section.pointsObtained.toLocaleString('fr-FR')}/{section.pointsApplicable}
                   </span>
@@ -197,7 +215,7 @@ export function EvaluationSummary({ applicationId, query, onChange }: Evaluation
                         {isLate ? ' (dépassée)' : ''}
                       </span>
                     )}
-                    {isDone && plan.doneAt && ` · terminée par ${plan.doneBy?.displayName ?? '—'} le ${formatDate(plan.doneAt)}`}
+                    {isDone && plan.doneAt && ` · terminée par ${plan.doneBy?.displayName ?? ':'} le ${formatDate(plan.doneAt)}`}
                   </p>
                 </li>
               );

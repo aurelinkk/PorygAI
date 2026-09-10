@@ -2,7 +2,7 @@
   "name": "poryg-ai",
   "private": true,
   "version": "0.1.0",
-  "description": "Poryg'AI — registre des applications IA : inventaire, évaluation éthique, conformité, FinOps",
+  "description": "Poryg'AI : registre des applications IA : inventaire, évaluation éthique, conformité, FinOps",
   "type": "module",
   "engines": {
     "node": ">=22.13"

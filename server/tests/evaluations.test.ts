@@ -9,34 +9,16 @@ import {
   scoreEvaluation, verdictFor, type Answers, type ApplicationDto, type EvaluationDto, type ActionPlanDto,
 } from '@poryg/shared';
 import { all, one } from '../src/db/connection.js';
-import { ACCOUNTS, createTestApp, loginAs } from './helpers.js';
+import { ACCOUNTS, createTestApp, loginAs, answerAll } from './helpers.js';
 
 // --- Aides -------------------------------------------------------------------
 
-/** Cadrage « chatbot client GenAI, données perso, API tierce, UE » — un parcours médian. */
+/** Cadrage « chatbot client GenAI, données perso, API tierce, UE » : un parcours médian. */
 const FRAMING: Answers = { C1: ['eu'], C2: 'no', C3: ['none'], C4: 'yes', C5: 'both', C6: 'api' };
 
-/**
- * Répond à toutes les questions notées applicables au niveau demandé (2 = Oui).
- * Itère jusqu'à stabilité : une réponse peut en faire apparaître une autre
- * (D1 à « Non » révèle D3, l'AIPD).
- */
-function answerAll(framing: Answers, level: '0' | '1' | '2' = '2', overrides: Answers = {}): Answers {
-  const answers: Answers = { ...framing, ...overrides };
-  let changed = true;
-  while (changed) {
-    changed = false;
-    for (const question of applicableQuestions(answers)) {
-      if (question.weight === undefined || answers[question.code] !== undefined) continue;
-      answers[question.code] = level;
-      changed = true;
-    }
-  }
-  return answers;
-}
 
 const PRELIMINARY = {
-  toolVendor: 'Copilot — Microsoft',
+  toolVendor: 'Copilot : Microsoft',
   purpose: "Assistance à la rédaction des offres d'emploi.",
   businessCriticality: 'medium',
 };
@@ -370,13 +352,28 @@ describe('évaluation v2 : parcours', () => {
     expect(draft.verdict).toBeNull();
   });
 
-  it('une évaluation soumise est figée et une nouvelle en crée une autre', async () => {
+  it('une évaluation soumise est figée, et on ne réévalue pas sans repasser en audit', async () => {
     const cookie = await loginAs(app, ACCOUNTS.auditor);
     await submit(cookie, answerAll(FRAMING, '2', { D1: '0' }));
     const first = one<{ id: number }>(app.db, "SELECT id FROM evaluations WHERE status = 'submitted'")!.id;
     expect(() => app.db.prepare('UPDATE evaluations SET score = 99 WHERE id = ?').run(first)).toThrow(/ne peut plus/);
 
-    await submit(cookie, answerAll(FRAMING));
+    // L'application est non conforme : une seconde évaluation est refusée tant
+    // que rien n'a changé.
+    const refus = await submit(cookie, answerAll(FRAMING));
+    expect(refus.statusCode).toBe(400);
+    expect(refus.json().error.message).toMatch(/plan d'action/);
+
+    // Cocher une action corrective la remet en audit : la réévaluation est ouverte.
+    const planId = one<{ id: number }>(app.db, "SELECT id FROM action_plans WHERE question_code = 'D1'")!.id;
+    const manager = await loginAs(app, ACCOUNTS.appManager);
+    expect((await app.inject({
+      method: 'POST', url: `/api/action-plans/${planId}/done`, headers: { cookie: manager }, payload: { done: true },
+    })).statusCode).toBe(200);
+    expect(one<{ status: string }>(app.db, 'SELECT status FROM applications WHERE id = ?', target)?.status)
+      .toBe('in_progress');
+
+    expect((await submit(cookie, answerAll(FRAMING))).statusCode).toBe(200);
     const history = (await app.inject({
       method: 'GET', url: `/api/applications/${target}/evaluation`, headers: { cookie },
     })).json().history as EvaluationDto[];
@@ -484,6 +481,126 @@ describe("plans d'action v2", () => {
     expect((await app.inject({
       method: 'POST', url: `/api/action-plans/${planId}/done`, headers: { cookie: auditor }, payload: { done: true },
     })).statusCode).toBe(403);
+  });
+});
+
+// --- Réévaluation après action corrective ------------------------------------------
+
+describe('réévaluation après action corrective', () => {
+  let app: FastifyInstance;
+  let cible: number;
+
+  beforeEach(async () => {
+    app = await createTestApp();
+    cible = appId(app, 'Chatbot Support'); // in_progress
+  });
+  afterEach(async () => {
+    await app.close();
+  });
+
+  const soumettre = async (answers: Answers) => {
+    const cookie = await loginAs(app, ACCOUNTS.auditor);
+    return app.inject({
+      method: 'POST', url: `/api/applications/${cible}/evaluation/submit`, headers: { cookie },
+      payload: { ...PRELIMINARY, answers, comments: {} },
+    });
+  };
+  const cocher = async (planId: number, done = true) => {
+    const cookie = await loginAs(app, ACCOUNTS.appManager);
+    return app.inject({
+      method: 'POST', url: `/api/action-plans/${planId}/done`, headers: { cookie }, payload: { done },
+    });
+  };
+  const planPour = (code: string) =>
+    one<{ id: number }>(app.db, 'SELECT id FROM action_plans WHERE question_code = ?', code)!.id;
+  const application = () =>
+    one<{ status: string; valid: string | null }>(
+      app.db, 'SELECT status, compliance_valid_until AS valid FROM applications WHERE id = ?', cible,
+    )!;
+
+  /**
+   * Le cycle complet demandé : un verdict, un plan d'action, une action cochée qui
+   * ramène en audit, une réévaluation, et : l'application étant devenue conforme
+   * avec des actions encore ouvertes : une seconde action qui lève l'échéance.
+   */
+  it("cocher une action corrective ramène en audit, et lève l'échéance de conformité", async () => {
+    await soumettre(answerAll(FRAMING, '2', { T1: '0', S3: '0' }));
+    expect(application().status).toBe('non_compliant');
+
+    await cocher(planPour('T1'));
+    expect(application().status).toBe('in_progress');
+
+    // Réévaluation : tout est corrigé, l'application devient conforme avec échéance.
+    expect((await soumettre(answerAll(FRAMING))).statusCode).toBe(200);
+    const conforme = application();
+    expect(conforme.status).toBe('compliant');
+    expect(conforme.valid).not.toBeNull();
+
+    // L'action S3 du premier plan est restée ouverte : la cocher renvoie en audit
+    // et fait tomber l'échéance : la conformité rendue ne décrit plus l'application.
+    await cocher(planPour('S3'));
+    const rouverte = application();
+    expect(rouverte.status).toBe('in_progress');
+    expect(rouverte.valid, "l'échéance ne survit pas au retour en audit").toBeNull();
+
+    const trace = one<{ before_json: string }>(
+      app.db,
+      "SELECT before_json FROM audit_log WHERE action = 'reevaluation_required' AND entity_id = ? ORDER BY id DESC",
+      String(cible),
+    );
+    expect(JSON.parse(trace!.before_json).status).toBe('compliant');
+  });
+
+  it('décocher une action ne restaure pas le verdict', async () => {
+    await soumettre(answerAll(FRAMING, '2', { T1: '0' }));
+    const plan = planPour('T1');
+
+    await cocher(plan, true);
+    await cocher(plan, false);
+    // Un verdict ne se rend que par une évaluation : l'application reste en audit.
+    expect(application().status).toBe('in_progress');
+  });
+
+  it("le questionnaire est fermé tant qu'un verdict est en place, la lecture reste ouverte", async () => {
+    await soumettre(answerAll(FRAMING, '2', { T1: '0' }));
+    const cookie = await loginAs(app, ACCOUNTS.auditor);
+
+    const enregistrement = await app.inject({
+      method: 'PUT', url: `/api/applications/${cible}/evaluation`, headers: { cookie },
+      payload: { ...PRELIMINARY, answers: FRAMING, comments: {} },
+    });
+    expect(enregistrement.statusCode).toBe(400);
+    expect(enregistrement.json().error.message).toMatch(/plan d'action/);
+
+    const lecture = await app.inject({
+      method: 'GET', url: `/api/applications/${cible}/evaluation`, headers: { cookie },
+    });
+    expect(lecture.statusCode).toBe(200);
+    expect(lecture.json().permissions).toEqual({ fill: false, submit: false });
+    // Le rapport et l'historique doivent rester consultables.
+    expect(lecture.json().history).toHaveLength(1);
+    expect(lecture.json().actionPlans.length).toBeGreaterThan(0);
+  });
+
+  it("l'ancienne évaluation reste disponible pour préremplir la suivante", async () => {
+    await soumettre(answerAll(FRAMING, '2', { T1: '0' }));
+    await cocher(planPour('T1'));
+
+    const cookie = await loginAs(app, ACCOUNTS.auditor);
+    const lecture = (await app.inject({
+      method: 'GET', url: `/api/applications/${cible}/evaluation`, headers: { cookie },
+    })).json();
+
+    expect(lecture.draft).toBeNull();
+    expect(lecture.permissions).toEqual({ fill: true, submit: true });
+    // C'est cette évaluation que le formulaire recopie : réponses ET informations
+    // préliminaires doivent en faire partie.
+    const derniere: EvaluationDto = lecture.history[0];
+    expect(derniere.status).toBe('submitted');
+    expect(derniere.answers.T1).toBe('0');
+    expect(derniere.answers.C1).toEqual(['eu']);
+    expect(derniere.toolVendor).toBe(PRELIMINARY.toolVendor);
+    expect(derniere.businessCriticality).toBe(PRELIMINARY.businessCriticality);
   });
 });
 

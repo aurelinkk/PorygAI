@@ -10,7 +10,7 @@
  */
 import type { FastifyInstance } from 'fastify';
 import {
-  saveEvaluationSchema, submitEvaluationSchema, scoreEvaluation,
+  DECIDED_STATUSES, can, saveEvaluationSchema, submitEvaluationSchema, scoreEvaluation,
   type ApplicationDto, type UserDto,
 } from '@poryg/shared';
 import { z } from 'zod';
@@ -21,6 +21,7 @@ import { getApplication, isVisible } from './applications.repo.js';
 import {
   getDraftEvaluation, listActionPlans, listEvaluations, saveDraft, setActionPlanDone, submitEvaluation,
 } from './evaluations.repo.js';
+import { estimateFinopsImpact } from './finops.repo.js';
 
 const doneSchema = z.object({ done: z.boolean() });
 
@@ -36,10 +37,29 @@ export function registerEvaluationsRoutes(app: FastifyInstance, options: { db: D
   }
 
   /** Une application supprimée ou encore en brouillon ne s'évalue pas. */
+  /**
+   * Une évaluation ne se saisit que sur une application **en cours d'audit**.
+   *
+   * Un verdict déjà rendu ne se rejoue pas à volonté : pour réévaluer, il faut
+   * qu'un événement l'ait justifié : une action corrective cochée, l'expiration
+   * annuelle de la conformité, ou une modification qui remet l'application en
+   * audit. Tous ramènent le statut à `in_progress`.
+   */
+  const isEvaluable = (application: ApplicationDto): boolean =>
+    application.status !== 'deleted'
+    && application.status !== 'draft'
+    && !DECIDED_STATUSES.includes(application.status);
+
   function assertEvaluable(application: ApplicationDto): void {
     if (application.status === 'deleted') throw badRequest("Une application supprimée ne peut pas être évaluée");
     if (application.status === 'draft') {
       throw badRequest("Cette application doit d'abord être envoyée à l'audit avant d'être évaluée");
+    }
+    if (DECIDED_STATUSES.includes(application.status)) {
+      throw badRequest(
+        "Cette application a déjà reçu un verdict. Terminez une action de son plan d'action pour la remettre "
+        + 'en audit et la réévaluer.',
+      );
     }
   }
 
@@ -53,9 +73,13 @@ export function registerEvaluationsRoutes(app: FastifyInstance, options: { db: D
         draft: getDraftEvaluation(db, application.id),
         history: listEvaluations(db, application.id).filter((evaluation) => evaluation.status === 'submitted'),
         actionPlans: listActionPlans(db, application.id),
+        // Annoncé à la fin du questionnaire. `null` sans `finops:read` : on ne
+        // calcule pas une donnée pour la masquer ensuite côté client.
+        finopsImpact: can(user.role, 'finops:read') ? estimateFinopsImpact(db, application.id) : null,
+        // Le client masque ce que le serveur refuserait : mêmes conditions des deux côtés.
         permissions: {
-          fill: app.hasPermission(user, 'evaluation:fill') && application.status !== 'deleted',
-          submit: app.hasPermission(user, 'evaluation:decide') && application.status !== 'deleted',
+          fill: app.hasPermission(user, 'evaluation:fill') && isEvaluable(application),
+          submit: app.hasPermission(user, 'evaluation:decide') && isEvaluable(application),
         },
       };
     },

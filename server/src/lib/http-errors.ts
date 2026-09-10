@@ -1,6 +1,6 @@
 /**
  * Erreurs HTTP typées. Le gestionnaire global (app.ts) les transforme en
- * réponse JSON `{ error: { code, message, fields? } }` — un seul format côté client.
+ * réponse JSON `{ error: { code, message, fields? } }` : un seul format côté client.
  */
 export class HttpError extends Error {
   constructor(

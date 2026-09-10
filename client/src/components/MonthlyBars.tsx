@@ -2,13 +2,20 @@
  * Évolution mensuelle d'une mesure, en barres verticales.
  *
  * Partagé par le rapport FinOps global, celui d'une application, et l'activité
- * des tableaux de bord BI — d'où la valeur générique plutôt que des euros.
+ * des tableaux de bord BI : d'où la valeur générique plutôt que des euros.
  *
- * Accessibilité : les barres sont purement décoratives (`aria-hidden`) et les
- * valeurs sont fournies par un tableau visuellement masqué mais lu par les
- * lecteurs d'écran. Aucune bibliothèque de graphiques.
+ * Le graphique porte un **axe vertical gradué** (échelle arrondie, voir
+ * `lib/charts.ts`) et affiche le **détail au survol** d'une colonne. L'infobulle
+ * se loge dans la marge haute réservée du graphique : elle ne recouvre jamais
+ * autre chose, ce qui la dispense d'un mécanisme de fermeture (WCAG 2.2, 1.4.13).
+ *
+ * Accessibilité : le graphique reste purement décoratif (`aria-hidden`) : survol
+ * compris, qui n'apporte rien de plus. Les valeurs sont fournies par un tableau
+ * visuellement masqué mais lu par les lecteurs d'écran, et accessible au clavier.
+ * Aucune bibliothèque de graphiques.
  */
 import { formatEur, formatMonth } from '../lib/format';
+import { barHeight, niceScale } from '../lib/charts';
 
 interface MonthlyBarsProps {
   months: { month: string; value: number }[];
@@ -25,21 +32,47 @@ interface MonthlyBarsProps {
 export function MonthlyBars({
   months, labelledBy, caption = 'Coût mensuel', valueHeader = 'Coût', formatValue = formatEur,
 }: MonthlyBarsProps) {
-  const max = Math.max(...months.map((entry) => entry.value), 1);
+  const { top, ticks } = niceScale(Math.max(...months.map((entry) => entry.value), 0));
 
   return (
     <>
-      <div className="sparkline" aria-hidden="true">
-        {months.map((entry) => (
-          <div key={entry.month} className="sparkline__col">
-            <span
-              className="sparkline__bar"
-              // 2 % au minimum : un mois à zéro doit rester visible comme un trait.
-              style={{ height: `${Math.max((entry.value / max) * 100, 2)}%` }}
-            />
-            <span className="sparkline__label mono">{entry.month.slice(5)}</span>
+      <div className="chart" aria-hidden="true">
+        <div className="chart__axis">
+          {[...ticks].reverse().map((tick) => (
+            <span key={tick} className="chart__tick mono">
+              {formatValue(tick)}
+            </span>
+          ))}
+        </div>
+
+        <div className="chart__plot">
+          {ticks.map((tick) => (
+            <span key={tick} className="chart__line" style={{ bottom: `${(tick / top) * 100}%` }} />
+          ))}
+
+          <div className="sparkline">
+            {months.map((entry) => (
+              <div key={entry.month} className="sparkline__col">
+                <span className="sparkline__bar" style={{ height: barHeight(entry.value, top) }} />
+                <span className="chart__tip">
+                  {formatMonth(entry.month)}
+                  <strong>{formatValue(entry.value)}</strong>
+                </span>
+              </div>
+            ))}
           </div>
-        ))}
+        </div>
+
+        {/* Deuxième rangée de la grille : la case sous l'axe, puis les mois,
+            alignés sur les colonnes du graphique. */}
+        <span className="chart__corner" />
+        <div className="chart__labels">
+          {months.map((entry) => (
+            <span key={entry.month} className="sparkline__label mono">
+              {entry.month.slice(5)}
+            </span>
+          ))}
+        </div>
       </div>
 
       {/* Le masquage porte sur un <div> et non sur le <table> : `overflow: hidden`

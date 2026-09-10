@@ -100,7 +100,7 @@ export function ApplicationForm({
   const needsDpo = values.dataSensitivity === 'personal' || values.dataSensitivity === 'sensitive';
   const ownerOptions = (directory.data?.users ?? []).map((user) => ({
     value: String(user.id),
-    label: `${user.displayName} — ${ROLE_LABELS[user.role]}`,
+    label: `${user.displayName} : ${ROLE_LABELS[user.role]}`,
   }));
 
   return (
@@ -184,7 +184,7 @@ export function ApplicationForm({
               required
               hint="Personne responsable de l'application au quotidien."
               options={ownerOptions}
-              placeholder={directory.loading ? 'Chargement…' : '— Choisir —'}
+              placeholder={directory.loading ? 'Chargement…' : ': Choisir :'}
               value={values.processOwnerId}
               onChange={(event) => set('processOwnerId')(event.target.value)}
               error={errors.processOwnerId}

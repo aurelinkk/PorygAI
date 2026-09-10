@@ -3,6 +3,7 @@
 export * from './roles.js';
 export * from './statuses.js';
 export * from './referentiels.js';
+export * from './finops.js';
 export * from './questionnaire.js';
 export * from './schemas.js';
 export * from './types.js';

@@ -7,6 +7,7 @@
  */
 import { hashPassword } from '../auth/password.js';
 import { recordAudit } from '../audit.js';
+import { estimateCo2 } from '@poryg/shared';
 import { addMonths, currentMonth, nowIso } from '../lib/time.js';
 import { one, run, transaction, type Db } from './connection.js';
 
@@ -32,6 +33,12 @@ interface DemoApp {
   deletedBy?: string; // email
   deletedAt?: string;
   monthlyCost: number;
+  /**
+   * Consommation mensuelle en kWh. `undefined` = empreinte non déclarée : le jeu
+   * de démonstration doit contenir les deux cas, l'indicateur de couverture du
+   * rapport n'aurait rien à montrer sinon.
+   */
+  monthlyKwh?: number;
 }
 
 const DEMO_APPS: DemoApp[] = [
@@ -41,6 +48,7 @@ const DEMO_APPS: DemoApp[] = [
     domain: 'rh', sensitivity: 'personal', aiType: 'genai',
     owner: 'camille.roux@poryg.local', status: 'compliant', validUntil: '2027-04-12T00:00:00.000Z',
     monthlyCost: 18500,
+    monthlyKwh: 42000,
   },
   {
     name: 'Scoring Crédit',
@@ -48,6 +56,7 @@ const DEMO_APPS: DemoApp[] = [
     domain: 'finance', sensitivity: 'personal', aiType: 'ml_predictive',
     owner: 'camille.roux@poryg.local', status: 'non_compliant',
     monthlyCost: 9800,
+    monthlyKwh: 6500,
   },
   {
     name: 'Chatbot Support',
@@ -55,6 +64,7 @@ const DEMO_APPS: DemoApp[] = [
     domain: 'client', sensitivity: 'personal', aiType: 'genai',
     owner: 'camille.roux@poryg.local', status: 'in_progress',
     monthlyCost: 14200,
+    monthlyKwh: 31000,
   },
   {
     name: 'Prévision Stock v1',
@@ -72,6 +82,7 @@ const DEMO_APPS: DemoApp[] = [
     // Volontairement expirée : au démarrage, le job de conformité la repasse "In progress".
     validUntil: '2026-08-01T00:00:00.000Z',
     monthlyCost: 7300,
+    monthlyKwh: 9800,
   },
   {
     name: 'Résumé de réunions',
@@ -86,6 +97,7 @@ const DEMO_APPS: DemoApp[] = [
     domain: 'rh', sensitivity: 'sensitive', aiType: 'nlp',
     owner: 'camille.roux@poryg.local', status: 'in_progress',
     monthlyCost: 4600,
+    monthlyKwh: 12500,
   },
   {
     name: 'Recommandation produits',
@@ -148,13 +160,20 @@ export async function seedDatabase(db: Db, log: (message: string) => void = () =
       });
 
       // Coûts : mois courant + 2 mois d'historique (légèrement différents).
+      // L'énergie suit la même variation que le coût ; le carbone en découle avec
+      // le facteur d'intensité partagé (`estimateCo2`).
       if (app.status !== 'deleted') {
-        run(db, 'INSERT INTO finops_costs (application_id, period_month, amount_eur, source) VALUES (?, ?, ?, ?)',
-          appId, month, app.monthlyCost, 'seed');
-        previousMonths.forEach((pm, i) => {
-          run(db, 'INSERT INTO finops_costs (application_id, period_month, amount_eur, source) VALUES (?, ?, ?, ?)',
-            appId, pm, Math.round(app.monthlyCost * (0.9 - i * 0.08)), 'seed');
-        });
+        const inserer = (periode: string, facteur: number) => {
+          const kwh = app.monthlyKwh ? Math.round(app.monthlyKwh * facteur) : 0;
+          run(
+            db,
+            `INSERT INTO finops_costs (application_id, period_month, amount_eur, energy_kwh, co2_kg, source)
+             VALUES (?, ?, ?, ?, ?, ?)`,
+            appId, periode, Math.round(app.monthlyCost * facteur), kwh, estimateCo2(kwh), 'seed',
+          );
+        };
+        inserer(month, 1);
+        previousMonths.forEach((pm, i) => inserer(pm, 0.9 - i * 0.08));
       }
     });
   });

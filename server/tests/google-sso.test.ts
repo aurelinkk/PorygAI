@@ -1,6 +1,6 @@
 /**
  * Tests du SSO Google. Aucun appel réseau : l'échange du code contre l'ID token
- * est intercepté (`vi.spyOn(globalThis, 'fetch')`) et l'ID token est fabriqué —
+ * est intercepté (`vi.spyOn(globalThis, 'fetch')`) et l'ID token est fabriqué :
  * ce qui est légitime puisque nous ne vérifions pas sa signature (cf. google-sso.ts).
  */
 import type { FastifyInstance } from 'fastify';

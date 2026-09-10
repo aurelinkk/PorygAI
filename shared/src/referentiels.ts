@@ -22,7 +22,7 @@ export const DATA_SENSITIVITIES = [
   { code: 'internal', label: 'Données internes', hint: "Usage interne à l'entreprise." },
   { code: 'confidential', label: 'Données confidentielles', hint: 'Secret des affaires, données stratégiques.' },
   { code: 'personal', label: 'Données personnelles', hint: 'Données identifiant des personnes (RGPD).' },
-  { code: 'sensitive', label: 'Données sensibles', hint: 'Santé, opinions, biométrie… (RGPD art. 9) — avis DPO requis.' },
+  { code: 'sensitive', label: 'Données sensibles', hint: 'Santé, opinions, biométrie… (RGPD art. 9) : avis DPO requis.' },
 ] as const;
 export type DataSensitivity = (typeof DATA_SENSITIVITIES)[number]['code'];
 

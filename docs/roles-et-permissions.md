@@ -35,7 +35,7 @@ INSERT INTO users (email, display_name, role) VALUES ('nouveau@gmail.com', 'Pré
 ```
 
 Une adresse absente de cette table ne peut pas se connecter, même avec un compte Google valide
-(pas de création automatique — voir [securite.md](securite.md#sso-google)).
+(pas de création automatique : voir [securite.md](securite.md#sso-google)).
 
 ## Matrice
 
@@ -68,13 +68,13 @@ Règles complémentaires, au-delà de la simple permission de rôle :
   pas son existence). Appliqué **dans le SQL** (`applications.repo.ts › visibilityClause`).
 - **Propriété** : un Application Manager ne modifie et n'envoie à l'audit que les applications dont
   il est Process Owner ou déclarant. `application:update_any` (AI Officer) lève cette restriction.
-  Fonctions `canEditApplication` / `canSubmitApplication` dans `shared/src/roles.ts` — utilisées par
+  Fonctions `canEditApplication` / `canSubmitApplication` dans `shared/src/roles.ts` : utilisées par
   le serveur (403) **et** par le client (masquage des boutons).
 - **Application supprimée** : plus aucune modification possible, quel que soit le rôle.
 
 ### Ajouter une permission
 
-1. Ajouter la ligne dans `PERMISSIONS` (`shared/src/roles.ts`) — le type `Permission` se met à jour tout seul.
+1. Ajouter la ligne dans `PERMISSIONS` (`shared/src/roles.ts`) : le type `Permission` se met à jour tout seul.
 2. Protéger la route : `{ preHandler: app.requirePermission('nouvelle:permission') }`.
 3. Côté client, masquer l'action : `can(user.role, 'nouvelle:permission')`.
 4. Compléter `server/tests/permissions.test.ts` et ce document.
@@ -90,7 +90,7 @@ Règles complémentaires, au-delà de la simple permission de rôle :
                                                           │  1 an après la      │ puis nouvelle
                                                           └──── conformité ─────┘ évaluation
 
-  partially_compliant : sans échéance automatique — reste en test jusqu'à réévaluation.
+  partially_compliant : sans échéance automatique : reste en test jusqu'à réévaluation.
   deleted : depuis n'importe quel statut, par l'AI Officer. Jamais de DELETE SQL.
 ```
 
@@ -105,13 +105,13 @@ Règles complémentaires, au-delà de la simple permission de rôle :
 
 ### Règles de gestion (brief)
 
-1. **Conformité annuelle** — une application `compliant` repasse `in_progress` quand
+1. **Conformité annuelle** : une application `compliant` repasse `in_progress` quand
    `compliance_valid_until` est dépassé. Job `server/src/jobs/compliance-expiry.ts`, exécuté au
    démarrage puis toutes les 24 h ; chaque bascule est tracée (`audit_log`, acteur = système).
-2. **Pas de suppression physique** — statut `deleted` + traçabilité « par qui / quand ». Des triggers
+2. **Pas de suppression physique** : statut `deleted` + traçabilité « par qui / quand ». Des triggers
    SQL refusent tout `DELETE` sur les tables métier. La **restauration** relit le statut d'avant dans
    le journal d'audit (une application conforme supprimée puis restaurée redevient conforme).
-3. **Traçabilité** — toute action porte son auteur et son horodatage (`audit_log`, table immuable).
+3. **Traçabilité** : toute action porte son auteur et son horodatage (`audit_log`, table immuable).
    La fiche d'une application affiche cet historique, avec le détail des champs modifiés.
 
 ### Le questionnaire d'évaluation (v2)

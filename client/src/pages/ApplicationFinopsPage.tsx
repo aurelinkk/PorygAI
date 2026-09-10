@@ -1,6 +1,6 @@
 /**
  * Rapport FinOps d'une application : même lecture que le rapport global, mais
- * ramenée à une seule application, plus deux éléments propres à cette échelle —
+ * ramenée à une seule application, plus deux éléments propres à cette échelle :
  * sa place dans la dépense de l'entreprise, et le détail des saisies.
  */
 import { useEffect } from 'react';
@@ -16,7 +16,7 @@ import { Card } from '../components/ui/Card';
 import { SelectField } from '../components/ui/Fields';
 import { Kpi } from '../components/ui/Kpi';
 import { LoadingScreen } from '../components/ui/Loading';
-import { formatDateTime, formatEur, formatMonth } from '../lib/format';
+import { formatCo2, formatDateTime, formatEur, formatKwh, formatMonth } from '../lib/format';
 
 const WINDOWS = [
   { value: '6', label: '6 derniers mois' },
@@ -104,11 +104,30 @@ export function ApplicationFinopsPage() {
           label="Variation"
           value={
             report.variationPct === null
-              ? '—'
+              ? ':'
               : `${report.variationPct > 0 ? '+' : ''}${report.variationPct.toFixed(1)} %`
           }
           hint={`vs ${formatMonth(report.previousMonth)} · ${formatEur(report.previousTotal)}`}
           tone={report.variationPct !== null && report.variationPct > 0 ? 'default' : 'success'}
+        />
+        <Kpi
+          label="Énergie du mois"
+          value={report.current.energyKwh > 0 ? formatKwh(report.current.energyKwh) : ':'}
+          hint={
+            report.current.energyKwh > 0
+              ? `${formatKwh(report.window.energyKwh)} sur ${report.monthly.length} mois`
+              : 'aucune consommation déclarée'
+          }
+        />
+        <Kpi
+          label="Empreinte du mois"
+          value={report.current.co2Kg > 0 ? formatCo2(report.current.co2Kg) : ':'}
+          hint={
+            report.frugalityScore === null
+              ? 'frugalité non évaluée'
+              : `frugalité ${report.frugalityScore} % au questionnaire`
+          }
+          tone={report.current.co2Kg > 0 ? 'accent' : 'default'}
         />
         <Kpi
           label="Cumul période"
@@ -135,7 +154,16 @@ export function ApplicationFinopsPage() {
 
       <div className="finops-grid">
         <Card title="Évolution mensuelle" titleId="app-monthly-title">
-          <MonthlyBars months={report.monthly.map((entry) => ({ month: entry.month, value: entry.amountEur }))} labelledBy="app-monthly-title" />
+          <MonthlyBars
+            months={report.monthly.map((entry) => ({ month: entry.month, value: entry.amountEur }))}
+            labelledBy="app-monthly-title"
+          />
+          {report.window.energyKwh > 0 && (
+            <p className="muted">
+              Sur la période : {formatKwh(report.window.energyKwh)} consommés,{' '}
+              {formatCo2(report.window.co2Kg)} émis.
+            </p>
+          )}
         </Card>
 
         <Card title="Par source" titleId="app-source-title">
@@ -166,6 +194,8 @@ export function ApplicationFinopsPage() {
                 <tr>
                   <th scope="col">Mois</th>
                   <th scope="col">Montant</th>
+                  <th scope="col">Énergie</th>
+                  <th scope="col">Empreinte</th>
                   <th scope="col">Source</th>
                   <th scope="col">Saisi par</th>
                 </tr>
@@ -177,6 +207,12 @@ export function ApplicationFinopsPage() {
                       {entry.periodMonth}
                     </th>
                     <td className="mono">{formatEur(entry.amountEur)}</td>
+                    <td className="mono">
+                      {entry.energyKwh > 0 ? formatKwh(entry.energyKwh) : <span className="muted">:</span>}
+                    </td>
+                    <td className="mono">
+                      {entry.co2Kg > 0 ? formatCo2(entry.co2Kg) : <span className="muted">:</span>}
+                    </td>
                     <td>{entry.source}</td>
                     <td>
                       {entry.createdBy?.displayName ?? <span className="muted">Système</span>}

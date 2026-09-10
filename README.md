@@ -1,4 +1,4 @@
-# Poryg'AI — registre des applications IA
+# Poryg'AI : registre des applications IA
 
 Plateforme interne permettant de **lister les applications qui utilisent de l'IA**, de collecter
 leurs informations (domaine métier, sensibilité des données, Process Owner…), de les **évaluer**
@@ -11,7 +11,7 @@ Statuts : Draft → In progress → Conforme / Partiellement conforme / Non conf
 > **État actuel : lots 0 à 5 livrés.** Connexion (SSO Google + mot de passe) et rôles, accueil,
 > inventaire complet, questionnaire d'évaluation v2 avec verdict automatique et plan d'action,
 > rapport FinOps global et par application. Restent les dashboards BI et le durcissement pour la
-> production — voir la [feuille de route](#feuille-de-route).
+> production : voir la [feuille de route](#feuille-de-route).
 >
 > 🤖 **Vous reprenez le projet avec Claude Code ?** Lisez d'abord **[CLAUDE.md](CLAUDE.md)** :
 > conventions, pièges déjà rencontrés et décisions déjà tranchées.
@@ -30,8 +30,8 @@ npm run dev          # API sur http://127.0.0.1:3000 + front sur http://localhos
 
 Puis ouvrir <http://localhost:5173>.
 
-Au démarrage, l'API crée `data/poryg.db` si besoin, applique les migrations et — **en développement
-seulement, et si la base ne contient aucune application** — insère le jeu de démo : 5 comptes et
+Au démarrage, l'API crée `data/poryg.db` si besoin, applique les migrations et : **en développement
+seulement, et si la base ne contient aucune application** : insère le jeu de démo : 5 comptes et
 8 applications. Sans lui, les comptes proposés sur la page de connexion n'existeraient pas et la
 connexion par mot de passe échouerait. `npm run db:seed` fait la même chose à la main.
 
@@ -49,7 +49,7 @@ Nécessite d'activer le SSO, voir la section suivante.
 Ces comptes n'ont **pas** de mot de passe : ils passent obligatoirement par Google.
 Pour changer un rôle : `UPDATE users SET role = 'auditor' WHERE email = '…';`
 
-**2. Comptes de démonstration, par mot de passe** — proposés en un clic sur la page de connexion
+**2. Comptes de démonstration, par mot de passe** : proposés en un clic sur la page de connexion
 (en développement uniquement). Mot de passe commun : `Poryg2026!`
 
 | Compte                      | Rôle                 | Ce qu'il voit / peut faire                                   |
@@ -62,7 +62,7 @@ Pour changer un rôle : `UPDATE users SET role = 'auditor' WHERE email = '…';`
 
 ### Activer la connexion Google
 
-Sans configuration, seule la connexion par mot de passe est proposée — l'application fonctionne
+Sans configuration, seule la connexion par mot de passe est proposée : l'application fonctionne
 normalement. Pour activer le SSO :
 
 1. Aller sur <https://console.cloud.google.com/apis/credentials> et créer (ou choisir) un projet.
@@ -123,7 +123,7 @@ poryg-ai/
 │  │  ├─ jobs/             expiration annuelle des conformités
 │  │  ├─ db/               connexion node:sqlite, migrations SQL, seed, CLI
 │  │  └─ lib/              erreurs HTTP, validation, dates
-│  └─ tests/               Vitest — 142 tests
+│  └─ tests/               Vitest : 165 tests
 ├─ client/         Front React + Vite
 │  └─ src/
 │     ├─ App.tsx           routes
@@ -174,7 +174,7 @@ Les alternatives écartées (ORM, NestJS, Next.js, lib de composants, JWT…) so
 | [docs/roles-et-permissions.md](docs/roles-et-permissions.md) | Matrice des rôles, cycle de vie des statuts, règles de gestion |
 | [docs/questionnaire-v2.md](docs/questionnaire-v2.md)       | Conception du questionnaire : arbre de décision, barème, toutes les questions et recommandations |
 | `docs/questionnaire-v2.excalidraw`                        | Schéma logique du questionnaire, éditable sur [excalidraw.com](https://excalidraw.com) (aperçu : le `.svg` à côté) |
-| [docs/charte/](docs/charte/)                             | Charte graphique d'origine (HTML) — source des tokens CSS       |
+| [docs/charte/](docs/charte/)                             | Charte graphique d'origine (HTML) : source des tokens CSS       |
 
 ---
 
@@ -191,7 +191,7 @@ Les alternatives écartées (ORM, NestJS, Next.js, lib de composants, JWT…) so
 - **Accessibilité WCAG 2.2 AA**, vérifiée avec axe : objectif 0 violation sur chaque page.
 
 Les conventions détaillées, les pièges déjà rencontrés et les décisions techniques déjà tranchées
-sont dans **[CLAUDE.md](CLAUDE.md)** — à lire avant de modifier le code, que ce soit à la main ou
+sont dans **[CLAUDE.md](CLAUDE.md)** : à lire avant de modifier le code, que ce soit à la main ou
 avec un assistant.
 
 ---
@@ -209,12 +209,15 @@ avec un assistant.
 | 4   | Plan d'action généré automatiquement, suivi des actions correctives                          | ✅ livré |
 | 5   | FinOps : saisie des coûts, rapport global et rapport par application                         | ✅ livré |
 | 6   | Tableaux de bord BI : historique du parc, thèmes faibles, échéances, activité                | ✅ livré |
+| 6b  | Rapport PDF imprimable, réévaluation déclenchée par une action corrective, formulaire prérempli | ✅ livré |
+| 6c  | FinOps responsable : énergie et carbone à côté du coût, frugalité du parc, leviers d'optimisation | ✅ livré |
+| 6d  | Questionnaire v2.3 : thème « Gouvernance FinOps » (ajustement ±4 pts), taille du modèle et régions détaillées, estimation d'empreinte en fin de formulaire | ✅ livré |
 | 7   | Durcissement : polices auto-hébergées, revue sécurité, mise en production                   | à faire  |
 
 **Prochaines étapes identifiées**
 
 - **Validation juridique** du contenu réglementaire du questionnaire (AI Act, RGPD, lois d'État
-  américaines, mesures chinoises) — rédigé sans conseil et à dater.
+  américaines, mesures chinoises) : rédigé sans conseil et à dater.
 - **Import de coûts** FinOps (CSV, facture cloud) : la colonne `finops_costs.source` est déjà là
   pour ça, la saisie est aujourd'hui unitaire.
 
