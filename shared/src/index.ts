@@ -2,6 +2,7 @@
 // à la fois par le serveur (Fastify) et par le client (React), sans duplication.
 export * from './roles.js';
 export * from './statuses.js';
+export * from './plans.js';
 export * from './referentiels.js';
 export * from './finops.js';
 export * from './questionnaire.js';

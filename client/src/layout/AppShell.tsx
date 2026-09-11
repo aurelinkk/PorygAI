@@ -1,18 +1,18 @@
 /**
- * Gabarit des pages connectées : lien d'évitement, en-tête (logo, navigation
- * selon le rôle, utilisateur), zone principale, pied de page.
- * À chaque changement de page, le focus est replacé sur <main>.
+ * Gabarit des pages connectées : lien d'évitement, en-tête (logo, sélecteur
+ * d'organisation, navigation selon le rôle, utilisateur), zone principale, pied
+ * de page. À chaque changement de page, le focus est replacé sur <main>.
  */
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { can } from '@poryg/shared';
+import { PLAN_LABELS, can } from '@poryg/shared';
 import { useAuth, useUser } from '../auth/AuthContext';
 import { RoleBadge } from '../components/ui/Badges';
 import { Button } from '../components/ui/Button';
 
 export function AppShell() {
   const user = useUser();
-  const { logout } = useAuth();
+  const { logout, organizations, organization, switchOrganization } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const mainRef = useRef<HTMLElement>(null);
@@ -45,44 +45,53 @@ export function AppShell() {
             <span className="brand__name">Poryg'AI</span>
           </Link>
 
-          <nav aria-label="Navigation principale">
-            <ul className="nav">
-              <li>
-                <NavLink to="/" end className="nav__link">
-                  Accueil
-                </NavLink>
-              </li>
-              <li>
-                {/* `end` absent : le lien reste actif sur les fiches et le formulaire. */}
-                <NavLink to="/applications" className="nav__link">
-                  Inventaire
-                </NavLink>
-              </li>
-              <li>
-                <NavLink to="/tableaux-de-bord" className="nav__link">
-                  Tableaux de bord
-                </NavLink>
-              </li>
-              {can(user.role, 'finops:read') && (
+          <OrganizationSwitch />
+
+          {organization && (
+            <nav aria-label="Navigation principale">
+              <ul className="nav">
                 <li>
-                  <NavLink to="/finops" className="nav__link">
-                    FinOps
+                  <NavLink to="/" end className="nav__link">
+                    Accueil
                   </NavLink>
                 </li>
-              )}
-              {can(user.role, 'application:create') && (
                 <li>
-                  <NavLink to="/applications/nouvelle" className="nav__link">
-                    Déclarer une app
+                  {/* `end` absent : le lien reste actif sur les fiches et le formulaire. */}
+                  <NavLink to="/applications" className="nav__link">
+                    Inventaire
                   </NavLink>
                 </li>
-              )}
-            </ul>
-          </nav>
+                <li>
+                  <NavLink to="/tableaux-de-bord" className="nav__link">
+                    Tableaux de bord
+                  </NavLink>
+                </li>
+                {can(user.role, 'finops:read') && (
+                  <li>
+                    <NavLink to="/finops" className="nav__link">
+                      FinOps
+                    </NavLink>
+                  </li>
+                )}
+                {can(user.role, 'application:create') && (
+                  <li>
+                    <NavLink to="/applications/nouvelle" className="nav__link">
+                      Déclarer une app
+                    </NavLink>
+                  </li>
+                )}
+                <li>
+                  <NavLink to="/organisation" className="nav__link">
+                    Organisation
+                  </NavLink>
+                </li>
+              </ul>
+            </nav>
+          )}
 
           <div className="user-menu">
             <span className="user-menu__name">{user.displayName}</span>
-            <RoleBadge role={user.role} />
+            {organization && <RoleBadge role={user.role} />}
             <Button variant="ghost" small onClick={handleLogout}>
               Se déconnecter
             </Button>
@@ -90,7 +99,12 @@ export function AppShell() {
         </div>
       </header>
 
-      <main id="main" ref={mainRef} tabIndex={-1} className="container app-main">
+      {/*
+        `key` : changer d'organisation remonte toute la zone de contenu. Sans
+        cela, une page déjà affichée garderait à l'écran les données de
+        l'organisation précédente (le cache est vidé, mais rien ne redemanderait).
+      */}
+      <main id="main" ref={mainRef} tabIndex={-1} className="container app-main" key={organization?.id ?? 'sans-organisation'}>
         <Outlet />
       </main>
 
@@ -99,4 +113,62 @@ export function AppShell() {
       </footer>
     </>
   );
+
+  /**
+   * Sélecteur d'organisation. Une seule organisation : son nom, sans menu à
+   * ouvrir pour rien. Plusieurs : un `<select>` natif, qui gère seul le clavier,
+   * le tactile et les lecteurs d'écran.
+   */
+  function OrganizationSwitch() {
+    const [switching, setSwitching] = useState(false);
+
+    if (!organization) {
+      return (
+        <p className="org-switch org-switch--empty">
+          <Link to="/organisations">Ajouter mon organisation</Link>
+        </p>
+      );
+    }
+
+    async function handleChange(value: string) {
+      const id = Number(value);
+      if (id === organization!.id) return;
+      setSwitching(true);
+      try {
+        await switchOrganization(id);
+        // On ne reste pas sur une fiche qui appartenait à l'organisation quittée.
+        navigate('/');
+      } finally {
+        setSwitching(false);
+      }
+    }
+
+    return (
+      <div className="org-switch">
+        {organizations.length > 1 ? (
+          <>
+            <label htmlFor="org-switch" className="org-switch__label">
+              Organisation
+            </label>
+            <select
+              id="org-switch"
+              className="org-switch__select"
+              value={organization.id}
+              disabled={switching}
+              onChange={(event) => handleChange(event.target.value)}
+            >
+              {organizations.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.name}
+                </option>
+              ))}
+            </select>
+          </>
+        ) : (
+          <span className="org-switch__single">{organization.name}</span>
+        )}
+        <span className={`plan-badge plan-badge--${organization.plan}`}>{PLAN_LABELS[organization.plan]}</span>
+      </div>
+    );
+  }
 }

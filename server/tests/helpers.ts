@@ -53,7 +53,7 @@ export function validApplication(app: FastifyInstance) {
     name: 'Assistant Juridique',
     description: 'Analyse de contrats.',
     businessDomain: 'juridique',
-    dataSensitivity: 'confidential',
+    dataSensitivities: ['internal', 'confidential'],
     aiType: 'genai',
     processOwnerId: userId(app, ACCOUNTS.appManager),
   };
@@ -74,6 +74,8 @@ export const NEUTRAL_GOVERNANCE: Answers = {
   GF5: 'none',
   GF6: 'low',
   GF7: 'onprem',
+  GF10: 'medium',
+  GF11: 'standard',
 };
 
 /**

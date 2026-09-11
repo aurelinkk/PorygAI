@@ -6,7 +6,7 @@ import { run, type Db } from './db/connection.js';
 
 export interface AuditEntry {
   actorId: number | null;
-  entity: 'application' | 'user' | 'session' | 'finops_cost';
+  entity: 'application' | 'user' | 'session' | 'finops_cost' | 'organization' | 'membership';
   entityId: number | string;
   action: string;
   before?: unknown;

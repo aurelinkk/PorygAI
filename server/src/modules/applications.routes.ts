@@ -27,6 +27,7 @@ import {
   createApplication, getApplication, getApplicationHistory, isVisible, listApplications,
   restoreApplication, softDeleteApplication, submitApplication, updateApplication,
 } from './applications.repo.js';
+import { assertRoom, currentOrganizationId } from './organizations.repo.js';
 
 export function registerApplicationsRoutes(app: FastifyInstance, options: { db: Db }): void {
   const { db } = options;
@@ -44,10 +45,23 @@ export function registerApplicationsRoutes(app: FastifyInstance, options: { db: 
     return application;
   }
 
-  /** Vérifie que le Process Owner désigné existe et est actif. */
-  function assertOwnerExists(processOwnerId: number): void {
-    const owner = one<{ id: number }>(db, 'SELECT id FROM users WHERE id = ? AND is_active = 1', processOwnerId);
-    if (!owner) throw badRequest('Process Owner inconnu', { processOwnerId: 'Utilisateur inconnu ou désactivé' });
+  /**
+   * Vérifie que le Process Owner désigné existe, est actif, et appartient à
+   * l'organisation courante : sans cette dernière condition, on pourrait
+   * désigner responsable quelqu'un d'une autre organisation, qui ne verrait
+   * jamais l'application dont il est censé répondre.
+   */
+  function assertOwnerExists(user: UserDto, processOwnerId: number): void {
+    const owner = one<{ id: number }>(
+      db,
+      `SELECT u.id FROM users u
+         JOIN memberships m ON m.user_id = u.id
+        WHERE u.id = ? AND u.is_active = 1 AND m.organization_id = ? AND m.status = 'active'`,
+      processOwnerId, currentOrganizationId(user),
+    );
+    if (!owner) {
+      throw badRequest('Process Owner inconnu', { processOwnerId: "Cette personne n'appartient pas à votre organisation" });
+    }
   }
 
   // --- Lecture ---------------------------------------------------------------
@@ -90,7 +104,9 @@ export function registerApplicationsRoutes(app: FastifyInstance, options: { db: 
 
   app.post('/api/applications', { preHandler: app.requirePermission('application:create') }, async (request, reply) => {
     const input = validate(createApplicationSchema, request.body);
-    assertOwnerExists(input.processOwnerId);
+    assertOwnerExists(request.user!, input.processOwnerId);
+    // Plafond de la formule d'abonnement : vérifié AVANT l'écriture, côté serveur.
+    assertRoom(db, currentOrganizationId(request.user!), 'applications');
     const application = createApplication(db, input, request.user!, request.ip);
     return reply.code(201).send({ application });
   });
@@ -110,7 +126,7 @@ export function registerApplicationsRoutes(app: FastifyInstance, options: { db: 
       }
 
       const input = validate(updateApplicationSchema, request.body);
-      assertOwnerExists(input.processOwnerId);
+      assertOwnerExists(user, input.processOwnerId);
       const { application, reevaluationTriggered } = updateApplication(db, existing.id, input, user, request.ip);
       return { application, reevaluationTriggered };
     },

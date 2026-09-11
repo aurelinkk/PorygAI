@@ -1,6 +1,10 @@
 /**
  * Routage de l'application.
- *   /login                    page de connexion (publique)
+ *   /login                         page de connexion (publique)
+ *   /organisations                 mes organisations + création (sans organisation active)
+ *   /organisations/nouvelle        créer mon organisation
+ *   /organisation                  fiche de l'organisation active : formule, membres
+ *   /organisation/import           import de comptes (permission organization:members)
  *   /                              accueil (connecté)
  *   /applications                  inventaire filtrable
  *   /applications/nouvelle         déclaration (permission application:create)
@@ -12,7 +16,7 @@
  */
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { AuthProvider } from './auth/AuthContext';
-import { RequireAuth, RequirePermission } from './auth/guards';
+import { RequireAuth, RequireOrganization, RequirePermission } from './auth/guards';
 import { AppShell } from './layout/AppShell';
 import { ApplicationDetailPage } from './pages/ApplicationDetailPage';
 import { ApplicationFinopsPage } from './pages/ApplicationFinopsPage';
@@ -24,6 +28,10 @@ import { EvaluationReportPage } from './pages/EvaluationReportPage';
 import { DashboardsPage } from './pages/DashboardsPage';
 import { FinopsPage } from './pages/FinopsPage';
 import { HomePage } from './pages/HomePage';
+import { CreateOrganizationPage } from './pages/CreateOrganizationPage';
+import { ImportMembersPage } from './pages/ImportMembersPage';
+import { OrganizationPage } from './pages/OrganizationPage';
+import { OrganizationsPage } from './pages/OrganizationsPage';
 import { LoginPage } from './pages/LoginPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 
@@ -37,6 +45,16 @@ const router = createBrowserRouter([
       </RequireAuth>
     ),
     children: [
+      // Hors périmètre d'une organisation : accessibles même sans en avoir,
+      // sans quoi un compte neuf n'aurait aucun moyen d'entrer.
+      { path: 'organisations', element: <OrganizationsPage /> },
+      { path: 'organisations/nouvelle', element: <CreateOrganizationPage /> },
+
+      // Tout le reste appartient à une organisation : sans organisation
+      // active, l'API refuse (403 NO_ORGANIZATION) et il n'y a rien à montrer.
+      {
+        element: <RequireOrganization />,
+        children: [
       { index: true, element: <HomePage /> },
       { path: 'applications', element: <ApplicationsPage /> },
       {
@@ -92,7 +110,18 @@ const router = createBrowserRouter([
           </RequirePermission>
         ),
       },
+      { path: 'organisation', element: <OrganizationPage /> },
+      {
+        path: 'organisation/import',
+        element: (
+          <RequirePermission permission="organization:members">
+            <ImportMembersPage />
+          </RequirePermission>
+        ),
+      },
       { path: '*', element: <NotFoundPage /> },
+        ],
+      },
     ],
   },
 ]);

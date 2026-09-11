@@ -210,9 +210,16 @@ describe('routes SSO Google', () => {
     expect(body.get('client_secret')).toBe(GOOGLE.clientSecret);
   });
 
-  it('refuse une adresse Google inconnue du registre (pas de création automatique)', async () => {
+  /**
+   * Inscription libre : une adresse inconnue crée un compte, **sans
+   * organisation**. La porte d'entrée est ouverte, pas les données des autres :
+   * les tests qui suivent le vérifient jusqu'à l'appel d'API.
+   */
+  it('crée le compte d’une adresse Google inconnue, sans aucune organisation', async () => {
     const { cookie, pending } = await startLogin();
-    respondWithIdToken(validClaims({ nonce: pending.nonce, email: 'inconnu@gmail.com', sub: 'sub-inconnu' }));
+    respondWithIdToken(validClaims({
+      nonce: pending.nonce, email: 'nouvelle@gmail.com', sub: 'sub-nouvelle', name: 'Nouvelle Venue',
+    }));
 
     const response = await app.inject({
       method: 'GET',
@@ -221,10 +228,71 @@ describe('routes SSO Google', () => {
     });
 
     expect(response.statusCode).toBe(302);
-    expect(response.headers.location).toBe('/login?erreur=sso_inconnu');
-    expect(response.cookies.find((c) => c.name === 'poryg_session')).toBeUndefined();
-    expect(all(app.db, "SELECT 1 FROM users WHERE email = 'inconnu@gmail.com'")).toHaveLength(0);
-    expect(all(app.db, "SELECT 1 FROM audit_log WHERE action = 'login_failed_sso_inconnu'")).toHaveLength(1);
+    expect(response.headers.location).toBe('/');
+    expect(response.cookies.find((c) => c.name === 'poryg_session')).toBeDefined();
+
+    const compte = one<{ id: number; display_name: string; password_hash: string | null; external_id: string }>(
+      app.db, 'SELECT id, display_name, password_hash, external_id FROM users WHERE email = ?', 'nouvelle@gmail.com',
+    );
+    expect(compte).toBeDefined();
+    expect(compte!.display_name).toBe('Nouvelle Venue'); // claim `name` de Google
+    expect(compte!.password_hash).toBeNull(); // il entre par Google, pas par mot de passe
+    expect(compte!.external_id).toBe('sub-nouvelle');
+
+    // Aucune appartenance : c'est tout l'intérêt de la règle.
+    expect(all(app.db, 'SELECT 1 FROM memberships WHERE user_id = ?', compte!.id)).toHaveLength(0);
+    // La première entrée est journalisée, distinctement d'une connexion ordinaire.
+    expect(all(app.db, "SELECT 1 FROM audit_log WHERE action = 'signup_sso'")).toHaveLength(1);
+    expect(all(app.db, "SELECT 1 FROM audit_log WHERE action = 'login'")).toHaveLength(1);
+  });
+
+  it('un compte tout neuf ne voit rien du registre, mais peut ajouter son organisation', async () => {
+    const { cookie, pending } = await startLogin();
+    respondWithIdToken(validClaims({ nonce: pending.nonce, email: 'nouvelle@gmail.com', sub: 'sub-nouvelle' }));
+    const callback = await app.inject({
+      method: 'GET',
+      url: `/api/auth/google/callback?code=c&state=${encodeURIComponent(pending.state)}`,
+      headers: { cookie },
+    });
+    const session = callback.cookies.find((c) => c.name === 'poryg_session')!;
+    const entete = `${session.name}=${session.value}`;
+
+    // Le profil dit exactement ce que l'écran d'accueil doit annoncer.
+    const me = (await app.inject({ method: 'GET', url: '/api/auth/me', headers: { cookie: entete } })).json();
+    expect(me.user.organizationId).toBeNull();
+    expect(me.organizations).toEqual([]);
+
+    // Rien du registre, pas même un compteur.
+    for (const url of ['/api/applications', '/api/dashboard/summary', '/api/users']) {
+      const refus = await app.inject({ method: 'GET', url, headers: { cookie: entete } });
+      expect(refus.statusCode, url).toBe(403);
+      expect(refus.json().error.code, url).toBe('NO_ORGANIZATION');
+    }
+
+    // Mais la porte de sortie est ouverte : elle ajoute la sienne et entre.
+    const creation = await app.inject({
+      method: 'POST', url: '/api/organizations', headers: { cookie: entete },
+      payload: { name: 'Studio Nouvelle', plan: 'free' },
+    });
+    expect(creation.statusCode).toBe(201);
+    expect(creation.json().organization.role).toBe('ai_officer');
+    expect((await app.inject({ method: 'GET', url: '/api/applications', headers: { cookie: entete } })).statusCode).toBe(200);
+  });
+
+  it('une seconde connexion retrouve le compte au lieu d’en créer un autre', async () => {
+    for (let fois = 0; fois < 2; fois += 1) {
+      const { cookie, pending } = await startLogin();
+      respondWithIdToken(validClaims({ nonce: pending.nonce, email: 'nouvelle@gmail.com', sub: 'sub-nouvelle' }));
+      await app.inject({
+        method: 'GET',
+        url: `/api/auth/google/callback?code=c&state=${encodeURIComponent(pending.state)}`,
+        headers: { cookie },
+      });
+    }
+
+    expect(all(app.db, "SELECT 1 FROM users WHERE email = 'nouvelle@gmail.com'")).toHaveLength(1);
+    expect(all(app.db, "SELECT 1 FROM audit_log WHERE action = 'signup_sso'")).toHaveLength(1);
+    expect(all(app.db, "SELECT 1 FROM audit_log WHERE action = 'login'")).toHaveLength(2);
   });
 
   it('refuse un state qui ne correspond pas (CSRF sur le retour)', async () => {
@@ -313,10 +381,15 @@ describe('comptes de l’équipe (migration 002)', () => {
     await app.close();
   });
 
+  // Le rôle a quitté `users` pour `memberships` (migration 006) : il se lit
+  // désormais dans l'organisation d'accueil, où la migration a versé l'équipe.
   it('existent avec des rôles distincts et sans mot de passe', () => {
     const rows = all<{ email: string; role: string; password_hash: string | null }>(
       app.db,
-      "SELECT email, role, password_hash FROM users WHERE email LIKE '%@gmail.com' ORDER BY email",
+      `SELECT u.email, m.role, u.password_hash
+         FROM users u JOIN memberships m ON m.user_id = u.id
+        WHERE u.email LIKE '%@gmail.com' AND m.organization_id = 1
+        ORDER BY u.email`,
     );
     expect(rows).toEqual([
       { email: 'aurelien.chiquet44@gmail.com', role: 'app_manager', password_hash: null },

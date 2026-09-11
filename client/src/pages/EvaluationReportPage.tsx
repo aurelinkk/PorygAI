@@ -14,7 +14,7 @@ import { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import {
   AI_TYPES, BUSINESS_DOMAINS, DATA_SENSITIVITIES, STATUS_LABELS, VERDICT_LABELS,
-  getQuestion, labelOf, questionWording,
+  getQuestion, labelOf, labelsOf, questionWording,
   type ActionPlanDto, type AnswerValue, type ApplicationDto, type EvaluationDto,
 } from '@poryg/shared';
 import { useApi } from '../api/useApi';
@@ -114,8 +114,8 @@ function ReportHeader({ app, evaluation }: { app: ApplicationDto; evaluation: Ev
           <dd>{labelOf(BUSINESS_DOMAINS, app.businessDomain)}</dd>
         </div>
         <div>
-          <dt>Sensibilité des données</dt>
-          <dd>{labelOf(DATA_SENSITIVITIES, app.dataSensitivity)}</dd>
+          <dt>Nature des données traitées</dt>
+          <dd>{labelsOf(DATA_SENSITIVITIES, app.dataSensitivities).join(' · ')}</dd>
         </div>
         <div>
           <dt>Type d'IA</dt>

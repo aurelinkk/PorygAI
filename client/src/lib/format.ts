@@ -30,11 +30,18 @@ export const cx = (...classes: (string | false | null | undefined)[]) => classes
 /** Énergie en kWh, ou en MWh au-delà de mille : « 42 000 kWh » se lit mal. */
 export function formatKwh(kwh: number): string {
   if (kwh >= 1000) return `${(kwh / 1000).toLocaleString('fr-FR', { maximumFractionDigits: 1 })} MWh`;
+  if (kwh > 0 && kwh < 1) return '< 1 kWh';
   return `${kwh.toLocaleString('fr-FR', { maximumFractionDigits: 0 })} kWh`;
 }
 
-/** Empreinte carbone, en kg ou en tonnes de CO₂ équivalent. */
+/**
+ * Empreinte carbone, en kg ou en tonnes de CO₂ équivalent.
+ *
+ * Une valeur strictement positive mais inférieure au kilo s'écrit « < 1 kg » et
+ * non « 0 kg » : arrondi à l'unité, une petite application paraîtrait sans impact.
+ */
 export function formatCo2(kg: number): string {
   if (kg >= 1000) return `${(kg / 1000).toLocaleString('fr-FR', { maximumFractionDigits: 1 })} t CO₂`;
+  if (kg > 0 && kg < 1) return '< 1 kg CO₂';
   return `${kg.toLocaleString('fr-FR', { maximumFractionDigits: 0 })} kg CO₂`;
 }

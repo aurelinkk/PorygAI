@@ -3,6 +3,32 @@
 Source de vérité : `shared/src/roles.ts` (matrice) et `shared/src/statuses.ts` (statuts).
 Ce document explique ; le code fait foi.
 
+## Organisations : le rôle appartient à l'appartenance
+
+Le registre est cloisonné par organisation. Une personne peut être membre de plusieurs, **avec un
+rôle différent dans chacune** : le rôle est donc porté par la table `memberships`, pas par `users`,
+qui ne garde que l'identité (adresse, nom, mot de passe ou identifiant Google).
+
+| Table | Contenu |
+| --- | --- |
+| `organizations` | nom, identifiant lisible (`slug`), formule d'abonnement, statut |
+| `memberships` | qui appartient à quelle organisation, avec quel rôle, actif ou retiré |
+| `sessions.organization_id` | l'organisation **active** : c'est elle qui décide du rôle appliqué |
+
+Trois règles de gestion :
+
+1. **Qui crée une organisation en devient l'AI Officer.** C'est le seul rôle qui peut y inviter les
+   autres ; il faut bien quelqu'un pour commencer.
+2. **Une organisation ne peut pas perdre son dernier AI Officer** : ni en le rétrogradant, ni en le
+   retirant. Et personne ne peut retirer ni rétrograder son propre accès (le meilleur moyen de
+   s'enfermer dehors) : il faut passer par un autre AI Officer.
+3. **Retirer quelqu'un ne supprime rien** : son appartenance passe à `disabled`, ce qu'il a déclaré
+   ou évalué reste attribué à son nom. Le réintégrer reconsomme une place dans la formule.
+
+Les **formules d'abonnement** (`shared/src/plans.ts`) ne limitent que le nombre d'applications et de
+personnes : Découverte (gratuite, 4 et 5), Équipe (49 €/mois, 25 et 25), Entreprise (199 €/mois,
+sans plafond). Aucun paiement n'est encaissé par le projet.
+
 ## Les cinq rôles
 
 | Rôle (code)                      | Mission                                                                                      |
@@ -13,13 +39,15 @@ Ce document explique ; le code fait foi.
 | Auditeur (`auditor`)             | Évalue et **décide** Conforme / Non conforme, crée les plans d'action.                        |
 | Utilisateur standard (`standard`) | Consultation de l'inventaire (hors brouillons) et du tableau de bord.                        |
 
-Un utilisateur a **un seul rôle** (`users.role`). Choix de simplicité : si un besoin de cumul apparaît
-(ex. DPO + AI Officer), remplacer la colonne par une table `user_roles` et adapter `can()`.
+Un utilisateur a **un seul rôle par organisation** (`memberships.role`). Choix de simplicité : si un
+besoin de cumul apparaît (ex. DPO + AI Officer dans la même organisation), remplacer la colonne par
+une table de liaison et adapter `can()`.
 
 ### Comptes de l'équipe
 
-Créés par la migration `002_comptes_equipe.sql`, ils se connectent **uniquement** par le SSO Google
-(`password_hash` à NULL) :
+Créés par la migration `002_comptes_equipe.sql` et versés par la migration `006` dans
+l'organisation d'accueil, ils se connectent **uniquement** par le SSO Google (`password_hash` à
+NULL) :
 
 | Adresse Google                 | Nom              | Rôle                |
 | ------------------------------ | ---------------- | ------------------- |
@@ -29,18 +57,28 @@ Créés par la migration `002_comptes_equipe.sql`, ils se connectent **uniquemen
 
 Changer un rôle, ou inscrire une nouvelle personne :
 
+En pratique, cela se fait dans l'interface : **Organisation → Personnes** pour un rôle, et
+**Importer des comptes** pour inscrire quelqu'un. En SQL, le rôle se change sur l'appartenance et
+non sur le compte :
+
 ```sql
-UPDATE users SET role = 'auditor' WHERE email = 'chatet.maelle@gmail.com';
-INSERT INTO users (email, display_name, role) VALUES ('nouveau@gmail.com', 'Prénom Nom', 'standard');
+UPDATE memberships SET role = 'auditor'
+ WHERE organization_id = 1
+   AND user_id = (SELECT id FROM users WHERE email = 'chatet.maelle@gmail.com');
 ```
 
-Une adresse absente de cette table ne peut pas se connecter, même avec un compte Google valide
-(pas de création automatique : voir [securite.md](securite.md#sso-google)).
+Une adresse absente de la table `users` peut tout de même se connecter avec un compte Google : son
+compte est créé à la première connexion, **sans organisation**. Elle ne voit donc rien du registre
+et n'a qu'un chemin, « Ajouter mon organisation » : c'est le cloisonnement qui protège, pas la porte
+d'entrée (voir [securite.md](securite.md#sso-google)).
 
 ## Matrice
 
 | Permission                    | Standard | App Manager | Auditeur | DPO | AI Officer | Utilisée dès le lot |
 | ----------------------------- | :------: | :---------: | :------: | :-: | :--------: | :-----------------: |
+| `organization:read`           | ✅       | ✅          | ✅       | ✅  | ✅         | 7 |
+| `organization:manage`         |          |             |          |     | ✅         | 7 |
+| `organization:members`        |          |             |          |     | ✅         | 7 |
 | `application:read`            | ✅       | ✅          | ✅       | ✅  | ✅         | 1 |
 | `application:read_all_drafts` |          |             |          |     | ✅         | 1 |
 | `application:create`          |          | ✅          |          |     | ✅         | 1 |

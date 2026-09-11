@@ -151,41 +151,89 @@ export const FINOPS_REFERENTIELS = [
  */
 
 /**
- * Nombre de paramètres de référence, en millions. Les énergies de base ci-dessous
- * valent pour un modèle de cette taille ; une taille déclarée les module.
+ * Efficacité énergétique réelle d'un accélérateur en production, en FLOPs par joule.
+ *
+ * **C'est la seule constante calibrée du modèle**, et tout le reste en découle.
+ * Elle est vérifiée sur trois mesures publiées indépendantes :
+ *
+ *  1. *Inférence, Llama 3.1 405B* : médiane publiée 0,39 Wh par requête d'environ
+ *     800 tokens → 2 × 405e9 × 800 ÷ (0,39 × 3600) ≈ 4,6e11 FLOPs/J.
+ *  2. *Inférence, Mixtral 8x22B* (39 Md de paramètres actifs) : 0,06 Wh par
+ *     requête → ≈ 5,2e11 FLOPs/J.
+ *  3. *Entraînement, Llama 2 7B* : 184 320 heures de GPU A100 (400 W) pour
+ *     2 000 Md de tokens → 6 × 7e9 × 2e12 ÷ (184 320 × 3600 × 400) ≈ 3,2e11 FLOPs/J.
+ *
+ * On retient 3,5e11, soit environ 25 % de la puissance de crête d'un H100
+ * (≈ 990 TFLOPS FP16 pour 700 W = 1,4e12 FLOPs/J) : c'est l'ordre du taux
+ * d'utilisation réellement atteint en service, l'inférence étant limitée par la
+ * mémoire bien avant le calcul.
+ *
+ * Conséquence à garder en tête : cette valeur suppose du matériel de génération
+ * A100/H100. Du matériel plus ancien consomme davantage, un accélérateur plus
+ * récent moins ; c'est l'une des raisons de la fourchette affichée.
  */
-const REFERENCE_PARAMS_M = 7000; // 7 milliards, taille courante d'un modèle open-weights
+export const FLOPS_PER_JOULE = 3.5e11;
 
 /**
- * Facteur d'énergie selon la taille du modèle (GF8), à défaut d'une valeur exacte.
- * L'énergie suit approximativement le nombre de paramètres, à architecture
- * comparable : d'où un facteur, et non une valeur absolue.
+ * Tokens d'entraînement par paramètre pour un pré-entraînement compute-optimal.
+ *
+ * C'est le rapport de la loi de Chinchilla (Hoffmann et al., 2022), confirmé par
+ * les réplications ouvertes (Cerebras-GPT). Il a une conséquence importante pour
+ * ce calcul : un **pré-entraînement** voit son volume de données croître avec la
+ * taille du modèle, si bien que son énergie varie comme le **carré** du nombre de
+ * paramètres, là où un ajustement sur un corpus fixe ne varie que linéairement.
+ * Le modèle n'a pas besoin d'une règle spéciale pour cela : il suffit que D
+ * dépende de N dans `6ND`.
  */
-const SIZE_FACTOR: Record<string, number> = {
-  small: 0.3, // moins d'un milliard de paramètres
-  medium: 1, // 1 à 20 milliards : la référence
-  large: 4, // au-delà de 20 milliards
-  unknown: 1, // hypothèse médiane, faute de mieux
+export const CHINCHILLA_TOKENS_PER_PARAM = 20;
+
+/**
+ * Nombre de paramètres **actifs**, en millions, retenu par tranche (GF8).
+ *
+ * « Actifs » et non « totaux » : dans un modèle à mélange d'experts, seule une
+ * fraction des poids participe au calcul de chaque token, et c'est elle qui
+ * consomme. Confondre les deux surestime un modèle frontière d'un facteur 5 à 10.
+ */
+const ACTIVE_PARAMS_M_BY_SIZE: Record<string, number> = {
+  small: 500, // moins d'un milliard : milieu de tranche
+  medium: 7000, // 1 à 20 milliards : modèle open-weights courant
+  large: 70000, // au-delà de 20 milliards : classe Llama 70B
+  unknown: 7000, // hypothèse médiane, faute de mieux
 };
 
-/** Énergie d'une inférence, en Wh, par type d'IA (référentiel `AI_TYPES`). */
-const WH_PER_INFERENCE: Record<string, number> = {
-  genai: 3, // une requête à un grand modèle de langage
-  vision: 1,
-  nlp: 0.3,
-  recommendation: 0.1,
-  ml_predictive: 0.05,
-  other: 0.02, // règles expertes : le coût est celui d'un calcul ordinaire
+/**
+ * Nombre de passes du modèle par traitement, à défaut d'une réponse à GF10.
+ *
+ * Le calcul d'une inférence vaut ≈ 2 × N FLOPs **par passe** : un token pour un
+ * modèle de langage, une position d'image pour un modèle de vision, un seul
+ * passage pour un modèle tabulaire. C'est ce qui permet de garder une formule
+ * unique pour des familles d'IA très différentes.
+ */
+const PASSES_PER_INFERENCE: Record<string, number> = {
+  genai: 800, // remplacé par la réponse à GF10 dès qu'elle existe
+  nlp: 300, // encodeur sur un texte court : lu, pas généré
+  vision: 200, // positions d'une image standard (ViT 224 px ≈ 196 patches)
+  recommendation: 1,
+  ml_predictive: 1,
+  other: 1,
 };
 
-/** Énergie d'un cycle d'entraînement ou de fine-tuning, en kWh, par type d'IA. */
-const KWH_PER_TRAINING: Record<string, number> = {
-  genai: 5000, // fine-tuning, pas un pré-entraînement complet
-  vision: 500,
-  nlp: 200,
-  recommendation: 50,
-  ml_predictive: 20,
-  other: 5,
+/** Tokens produits et lus par requête (GF10). */
+const TOKENS_PER_REQUEST: Record<string, number> = {
+  short: 200,
+  medium: 800,
+  long: 3000,
+  very_long: 12_000,
+};
+
+/**
+ * Volume de données vu par cycle d'entraînement (GF11), en tokens ou échantillons.
+ * `pretrain` est absent : il se calcule, à 20 tokens par paramètre.
+ */
+const TRAINING_TOKENS: Record<string, number> = {
+  light: 1e7, // ajustement léger (LoRA, quelques milliers d'exemples)
+  standard: 1e9, // fine-tuning complet sur un corpus métier
+  heavy: 1e11, // ré-entraînement sur un grand corpus
 };
 
 /** Inférences par an, milieu de la fourchette annoncée (GF6). */
@@ -220,6 +268,43 @@ const HOSTING: Record<string, { pue: number; intensity: number; label: string }>
   unknown: { pue: 1.5, intensity: 0.25, label: 'Hébergement inconnu (hypothèse défavorable)' },
 };
 
+/**
+ * Intensité carbone de l'hébergement déclaré (GF7), en kg CO₂ par kWh.
+ *
+ * À défaut de réponse, on retient l'hypothèse défavorable (celle de la ligne
+ * `unknown`) et non le mix français : pour une empreinte, le cas le moins
+ * renseigné ne doit pas être le plus flatteur.
+ */
+export function hostingIntensity(hosting: string | undefined): number {
+  return (hosting !== undefined ? HOSTING[hosting]?.intensity : undefined) ?? HOSTING.unknown!.intensity;
+}
+
+/**
+ * Largeur de la fourchette affichée, en facteur multiplicatif.
+ *
+ * Les mesures publiées d'énergie par requête s'étalent sur un intervalle
+ * interquartile d'environ 0,5× à 2× la médiane, avant même de tenir compte du
+ * matériel et du taux de charge. Afficher un nombre unique au kilo près
+ * donnerait une précision que ce calcul n'a pas.
+ */
+export const ESTIMATE_UNCERTAINTY = 2;
+
+/**
+ * Énergie d'une inférence, en Wh : `2 × N × passes ÷ rendement`.
+ *
+ * Exposée pour que la calibration soit vérifiable directement (voir
+ * `server/tests/carbone.test.ts`, qui la confronte aux mesures publiées) et non
+ * seulement à travers une projection annuelle.
+ */
+export function inferenceWh(activeParamsM: number, passes: number): number {
+  return (2 * activeParamsM * 1e6 * passes) / FLOPS_PER_JOULE / 3600;
+}
+
+/** Énergie d'un cycle d'entraînement, en kWh : `6 × N × D ÷ rendement`. */
+export function trainingKwh(activeParamsM: number, tokens: number): number {
+  return (6 * activeParamsM * 1e6 * tokens) / FLOPS_PER_JOULE / 3.6e6;
+}
+
 export interface CarbonEstimateInput {
   /** Code du référentiel `AI_TYPES`, pris sur la fiche de l'application. */
   aiType: string;
@@ -232,89 +317,159 @@ export interface CarbonEstimateInput {
   /** Réponse GF8 : tranche de taille du modèle. */
   modelSize?: string;
   /**
-   * Réponse GF9 : taille exacte en **millions** de paramètres, si elle est connue.
-   * Elle remplace la tranche : une valeur mesurée vaut mieux qu'un intervalle.
+   * Réponse GF9 : paramètres **actifs** en millions, si le chiffre est connu.
+   * Il remplace la tranche : une valeur mesurée vaut mieux qu'un intervalle.
    */
   modelParamsM?: number;
+  /** Réponse GF10 : longueur typique d'un échange, en tokens. */
+  requestSize?: string;
+  /** Réponse GF11 : volume de données par cycle d'entraînement. */
+  trainingData?: string;
 }
 
 export interface CarbonEstimate {
-  /** Consommation annuelle estimée, en kWh. */
+  /** Consommation annuelle estimée, en kWh (valeur centrale). */
   energyKwh: number;
-  /** Empreinte annuelle estimée, en kg CO₂ équivalent. */
+  /** Empreinte annuelle estimée, en kg CO₂ équivalent (valeur centrale). */
   co2Kg: number;
+  /** Bornes de la fourchette : la valeur centrale divisée puis multipliée par `ESTIMATE_UNCERTAINTY`. */
+  energyKwhLow: number;
+  energyKwhHigh: number;
+  co2KgLow: number;
+  co2KgHigh: number;
   /** Part de la consommation due à l'entraînement, entre 0 et 1. */
   trainingShare: number;
   /** Intensité carbone retenue, en kg CO₂ par kWh. */
   intensity: number;
-  /** Facteur de taille appliqué aux énergies de base. */
-  sizeFactor: number;
+  /** Paramètres actifs retenus, en millions. */
+  activeParamsM: number;
   /** Toutes les hypothèses du calcul, pour qu'il soit discutable. */
   assumptions: { label: string; value: string }[];
-  /** Faux tant qu'une des trois réponses manque : rien n'est affiché alors. */
+  /** Faux tant qu'une des réponses nécessaires manque : rien n'est affiché alors. */
   complete: boolean;
 }
 
 const VIDE: CarbonEstimate = {
-  energyKwh: 0, co2Kg: 0, trainingShare: 0, intensity: CO2_KG_PER_KWH, sizeFactor: 1,
-  assumptions: [], complete: false,
+  energyKwh: 0, co2Kg: 0, energyKwhLow: 0, energyKwhHigh: 0, co2KgLow: 0, co2KgHigh: 0,
+  trainingShare: 0, intensity: CO2_KG_PER_KWH, activeParamsM: 0, assumptions: [], complete: false,
 };
 
-/**
- * Facteur de taille : la valeur exacte si elle est connue, sinon la tranche.
- *
- * Le rapport est borné à [0,05 ; 30] : au-delà, l'hypothèse de proportionnalité
- * ne tient plus et le chiffre donnerait une fausse précision.
- */
-function sizeFactorOf(size: string | undefined, paramsM: number | undefined): { factor: number; source: string } {
+/** Paramètres actifs retenus : la valeur déclarée si elle existe, sinon la tranche. */
+function activeParamsOf(size: string | undefined, paramsM: number | undefined): { paramsM: number; source: string } {
   if (paramsM !== undefined && Number.isFinite(paramsM) && paramsM > 0) {
-    const brut = paramsM / REFERENCE_PARAMS_M;
-    const factor = Math.min(30, Math.max(0.05, brut));
-    return { factor, source: `${paramsM.toLocaleString('fr-FR')} M de paramètres (valeur déclarée)` };
+    return { paramsM, source: `${paramsM.toLocaleString('fr-FR')} M de paramètres actifs (valeur déclarée)` };
   }
-  const factor = (size === undefined ? undefined : SIZE_FACTOR[size]) ?? SIZE_FACTOR.medium!;
   const libelle: Record<string, string> = {
-    small: 'petit modèle (< 1 Md de paramètres)',
-    medium: 'modèle moyen (1 à 20 Md)',
-    large: 'grand modèle (> 20 Md)',
-    unknown: 'taille inconnue, hypothèse d’un modèle moyen',
+    small: 'petit modèle (< 1 Md), hypothèse de 500 M',
+    medium: 'modèle moyen (1 à 20 Md), hypothèse de 7 Md',
+    large: 'grand modèle (> 20 Md), hypothèse de 70 Md',
+    unknown: 'taille inconnue, hypothèse d’un modèle moyen (7 Md)',
   };
-  return { factor, source: libelle[size ?? 'unknown'] ?? libelle.unknown! };
+  const code = size !== undefined && ACTIVE_PARAMS_M_BY_SIZE[size] !== undefined ? size : 'unknown';
+  return { paramsM: ACTIVE_PARAMS_M_BY_SIZE[code]!, source: libelle[code]! };
 }
 
+/** Arrondi qui garde deux chiffres significatifs : afficher 38 412 kWh serait une fausse précision. */
+function significant(value: number): number {
+  if (value <= 0) return 0;
+  const magnitude = Math.pow(10, Math.floor(Math.log10(value)) - 1);
+  return Math.round(value / magnitude) * magnitude;
+}
+
+/**
+ * Empreinte annuelle estimée d'une application, à partir des réponses de
+ * gouvernance FinOps.
+ *
+ * Le calcul ne repose plus sur des énergies forfaitaires par type d'IA mais sur
+ * les deux formules de référence du domaine, converties en énergie par une seule
+ * constante calibrée (`FLOPS_PER_JOULE`) :
+ *
+ *     inférence     : FLOPs = 2 × N × passes          (N = paramètres actifs)
+ *     entraînement  : FLOPs = 6 × N × D               (D = tokens vus)
+ *     énergie       = FLOPs ÷ FLOPS_PER_JOULE × PUE
+ *     empreinte     = énergie × intensité carbone de la région
+ *
+ * Les deux facteurs 2 et 6 ne sont pas des réglages : ils comptent les
+ * multiplications-additions d'une passe avant (2N par paramètre et par token) et
+ * d'une passe avant + arrière avec la mise à jour des poids (6N). C'est ce qui
+ * rend le résultat discutable sur des bases publiées plutôt que sur un avis.
+ *
+ * **Ce que le calcul ne compte pas**, et qu'il ne faut pas oublier en le lisant :
+ *
+ *  - l'**infrastructure permanente** autour du modèle. On compte l'énergie du
+ *    calcul, pas celle d'un serveur allumé jour et nuit pour l'héberger. Sur une
+ *    petite application peu sollicitée, c'est le serveur qui domine, et
+ *    l'estimation paraîtra ridiculement basse : elle l'est, pour cette raison ;
+ *  - le **carbone incorporé** du matériel (fabrication des accélérateurs), qui
+ *    pèse d'autant plus que l'usage est faible ;
+ *  - le **stockage et le transfert** des données d'entraînement.
+ *
+ * Ces trois termes demanderaient des questions que le questionnaire ne pose pas.
+ * Plutôt que de les remplacer par un forfait inventé, on les nomme.
+ */
 export function estimateCarbonFootprint(input: CarbonEstimateInput): CarbonEstimate {
   const inferences = input.inference ? INFERENCES_PER_YEAR[input.inference] : undefined;
   const trainings = input.training ? TRAININGS_PER_YEAR[input.training] : undefined;
   const hosting = input.hosting ? HOSTING[input.hosting] : undefined;
   if (inferences === undefined || trainings === undefined || !hosting) return VIDE;
 
-  const whPerInference = WH_PER_INFERENCE[input.aiType] ?? WH_PER_INFERENCE.other!;
-  const kwhPerTraining = KWH_PER_TRAINING[input.aiType] ?? KWH_PER_TRAINING.other!;
+  const taille = activeParamsOf(input.modelSize, input.modelParamsM);
+  const n = taille.paramsM * 1e6;
 
-  const taille = sizeFactorOf(input.modelSize, input.modelParamsM);
-  const kwhInference = (inferences * whPerInference * taille.factor) / 1000;
-  const kwhTraining = trainings * kwhPerTraining * taille.factor;
-  const energyKwh = Math.round((kwhInference + kwhTraining) * hosting.pue);
-  const co2Kg = Math.round(energyKwh * hosting.intensity);
+  // --- Inférence ------------------------------------------------------------
+  const defaut = PASSES_PER_INFERENCE[input.aiType] ?? PASSES_PER_INFERENCE.other!;
+  const tokens = input.requestSize ? TOKENS_PER_REQUEST[input.requestSize] : undefined;
+  // La longueur déclarée ne vaut que pour les modèles qui lisent et écrivent du
+  // texte : elle n'a pas de sens pour un modèle de scoring, qui fait une passe.
+  const textuel = input.aiType === 'genai' || input.aiType === 'nlp';
+  const passes = textuel && tokens !== undefined ? tokens : defaut;
+
+  const whPerInference = inferenceWh(taille.paramsM, passes);
+  const kwhInference = (inferences * whPerInference) / 1000;
+
+  // --- Entraînement ---------------------------------------------------------
+  const preentrainement = input.trainingData === 'pretrain';
+  const tokensTraining = preentrainement
+    ? CHINCHILLA_TOKENS_PER_PARAM * n
+    : (input.trainingData ? TRAINING_TOKENS[input.trainingData] : undefined) ?? TRAINING_TOKENS.standard!;
+  const kwhPerTraining = trainingKwh(taille.paramsM, tokensTraining);
+  const kwhTraining = trainings > 0 ? trainings * kwhPerTraining : 0;
+
+  // --- Totaux ---------------------------------------------------------------
   const brut = kwhInference + kwhTraining;
+  const energyKwh = significant(brut * hosting.pue);
+  const co2Kg = significant(energyKwh * hosting.intensity);
+
+  const millions = (value: number) => `${(value / 1e6).toLocaleString('fr-FR', { maximumFractionDigits: 0 })} M`;
 
   return {
     energyKwh,
     co2Kg,
+    energyKwhLow: significant(energyKwh / ESTIMATE_UNCERTAINTY),
+    energyKwhHigh: significant(energyKwh * ESTIMATE_UNCERTAINTY),
+    co2KgLow: significant(co2Kg / ESTIMATE_UNCERTAINTY),
+    co2KgHigh: significant(co2Kg * ESTIMATE_UNCERTAINTY),
     trainingShare: brut > 0 ? kwhTraining / brut : 0,
     intensity: hosting.intensity,
-    sizeFactor: taille.factor,
+    activeParamsM: taille.paramsM,
     complete: true,
     assumptions: [
-      { label: 'Taille du modèle', value: `${taille.source} → ×${round2(taille.factor)}` },
-      { label: 'Énergie par inférence', value: `${round2(whPerInference * taille.factor)} Wh` },
+      { label: 'Paramètres actifs (N)', value: taille.source },
+      {
+        label: 'Calcul par inférence',
+        value: `2 × N × ${passes.toLocaleString('fr-FR')} ${textuel ? 'tokens' : 'passe(s)'}`
+          + ` = ${(2 * n * passes / 1e12).toLocaleString('fr-FR', { maximumFractionDigits: 1 })} TFLOPs`
+          + ` → ${whPerInference.toLocaleString('fr-FR', { maximumFractionDigits: 3 })} Wh`,
+      },
       { label: 'Inférences par an', value: inferences.toLocaleString('fr-FR') },
       {
         label: 'Entraînements par an',
         value: trainings === 0
           ? 'aucun'
-          : `${trainings} × ${Math.round(kwhPerTraining * taille.factor).toLocaleString('fr-FR')} kWh`,
+          : `${trainings} × (6 × N × ${millions(tokensTraining)} ${preentrainement ? 'tokens, soit 20 par paramètre' : 'tokens'})`
+            + ` = ${Math.round(kwhPerTraining).toLocaleString('fr-FR')} kWh par cycle`,
       },
+      { label: 'Rendement énergétique', value: `${(FLOPS_PER_JOULE / 1e9).toFixed(0)} GFLOPs par joule (A100/H100 en service)` },
       { label: 'Hébergement', value: `${hosting.label}, PUE ${hosting.pue}` },
       { label: 'Intensité carbone', value: `${hosting.intensity} kg CO₂/kWh` },
     ],

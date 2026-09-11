@@ -21,6 +21,7 @@ import { registerAuthRoutes } from './modules/auth.routes.js';
 import { registerDashboardRoutes } from './modules/dashboard.routes.js';
 import { registerEvaluationsRoutes } from './modules/evaluations.routes.js';
 import { registerFinopsRoutes } from './modules/finops.routes.js';
+import { registerOrganizationsRoutes } from './modules/organizations.routes.js';
 import { registerUsersRoutes } from './modules/users.routes.js';
 import { registerAuth } from './plugins/auth.js';
 import { registerSecurity } from './plugins/security.js';
@@ -67,6 +68,7 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
     loginRateLimit: options.loginRateLimit ?? config.loginRateLimit,
     google: options.google !== undefined ? options.google : isGoogleEnabled ? config.google : null,
   });
+  registerOrganizationsRoutes(app, { db, ttlHours: config.session.ttlHours });
   registerUsersRoutes(app, { db });
   registerApplicationsRoutes(app, { db });
   registerEvaluationsRoutes(app, { db });

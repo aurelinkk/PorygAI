@@ -40,7 +40,7 @@ export function DeclareAppPage() {
             description: '',
             businessDomain: '',
             aiType: '',
-            dataSensitivity: '',
+            dataSensitivities: [],
             // Par défaut, la personne qui déclare est aussi Process Owner.
             processOwnerId: String(user.id),
           }}

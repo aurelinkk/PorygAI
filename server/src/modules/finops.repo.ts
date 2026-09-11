@@ -26,6 +26,7 @@ import {
   BUSINESS_DOMAINS, STATUS_LABELS, labelOf, monthKey, shiftMonth,
   type ApplicationCostDto, type ApplicationFinopsDto, type AppStatus, type FinopsBreakdownRow,
   estimateCo2,
+  hostingIntensity,
   type FinopsImpactDto, type FinopsLeverDto, type FinopsReportDto, type FinopsTotals,
   type SaveCostInput, type SectionScore, type UserDto,
 } from '@poryg/shared';
@@ -589,8 +590,9 @@ export function estimateFinopsImpact(db: Db, applicationId: number, months = 12)
   );
 
   const vide: FinopsTotals = { amountEur: 0, energyKwh: 0, co2Kg: 0 };
+  const intensity = hostingIntensity(declaredHosting(db, applicationId));
   if (rows.length === 0) {
-    return { monthsObserved: 0, monthly: vide, yearly: vide, co2Derived: false };
+    return { monthsObserved: 0, monthly: vide, yearly: vide, co2Derived: false, co2Intensity: intensity };
   }
 
   const somme = rows.reduce(
@@ -602,9 +604,12 @@ export function estimateFinopsImpact(db: Db, applicationId: number, months = 12)
     { ...vide },
   );
 
-  // Empreinte non déclarée mais consommation connue : on la calcule, et on le dit.
+  // Empreinte non déclarée mais consommation connue : on la calcule, on le dit,
+  // et on le fait avec l'intensité de la région DÉCLARÉE au questionnaire. Le
+  // mix français appliqué partout aurait divisé par quatre l'empreinte d'une
+  // application hébergée en Irlande, sans que rien ne le signale.
   const co2Derived = somme.co2Kg === 0 && somme.energyKwh > 0;
-  const co2Total = co2Derived ? estimateCo2(somme.energyKwh) : somme.co2Kg;
+  const co2Total = co2Derived ? somme.energyKwh * intensity : somme.co2Kg;
 
   const monthly: FinopsTotals = {
     amountEur: round2(somme.amountEur / rows.length),
@@ -621,5 +626,31 @@ export function estimateFinopsImpact(db: Db, applicationId: number, months = 12)
       co2Kg: round2(monthly.co2Kg * 12),
     },
     co2Derived,
+    co2Intensity: intensity,
   };
+}
+
+/**
+ * Hébergement (GF7) de la dernière évaluation soumise, s'il y en a une.
+ * `undefined` si l'application n'a jamais été évaluée : l'appelant retombe alors
+ * sur l'hypothèse défavorable.
+ */
+function declaredHosting(db: Db, applicationId: number): string | undefined {
+  const row = one<{ value: string }>(
+    db,
+    `SELECT ans.value_json AS value
+       FROM evaluation_answers ans
+       JOIN evaluations e ON e.id = ans.evaluation_id
+      WHERE e.application_id = ? AND e.status = 'submitted' AND ans.question_code = 'GF7'
+      ORDER BY e.id DESC
+      LIMIT 1`,
+    applicationId,
+  );
+  if (!row) return undefined;
+  try {
+    const parsed = JSON.parse(row.value) as unknown;
+    return typeof parsed === 'string' ? parsed : undefined;
+  } catch {
+    return undefined;
+  }
 }

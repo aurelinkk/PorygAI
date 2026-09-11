@@ -9,7 +9,7 @@ import { useEffect, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
   AI_TYPES, AUDIT_ACTION_LABELS, BUSINESS_DOMAINS, DATA_SENSITIVITIES, DECIDED_STATUSES, can,
-  STATUS_DESCRIPTIONS, STATUS_LABELS, labelOf,
+  STATUS_DESCRIPTIONS, STATUS_LABELS, labelOf, labelsOf,
   type ApplicationDto, type AppStatus, type AuditEntryDto,
 } from '@poryg/shared';
 import { api, ApiError } from '../api/client';
@@ -194,8 +194,13 @@ export function ApplicationDetailPage() {
               </Definition>
               <Definition label="Domaine métier">{labelOf(BUSINESS_DOMAINS, application.businessDomain)}</Definition>
               <Definition label="Type d'IA">{labelOf(AI_TYPES, application.aiType)}</Definition>
-              <Definition label="Sensibilité des données">
-                {labelOf(DATA_SENSITIVITIES, application.dataSensitivity)}
+              <Definition label="Nature des données traitées">
+                {labelsOf(DATA_SENSITIVITIES, application.dataSensitivities).join(' · ')}
+                {application.dataSensitivities.length > 1 && (
+                  <span className="definitions__note">
+                    Niveau retenu pour les obligations : {labelOf(DATA_SENSITIVITIES, application.dataSensitivity)}.
+                  </span>
+                )}
               </Definition>
               <Definition label="Process Owner">{application.processOwner.displayName}</Definition>
               {application.complianceValidUntil && (
@@ -463,6 +468,8 @@ function display(field: string, value: unknown): string {
       return labelOf(AI_TYPES, text);
     case 'dataSensitivity':
       return labelOf(DATA_SENSITIVITIES, text);
+    case 'dataSensitivities':
+      return Array.isArray(value) ? labelsOf(DATA_SENSITIVITIES, value as string[]).join(' · ') : text;
     case 'complianceValidUntil':
       return formatDate(text);
     default:

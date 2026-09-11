@@ -1,4 +1,5 @@
 /** Types des objets échangés entre l'API et le client (DTO). */
+import type { Plan } from './plans.js';
 import type { AnswerValue, SectionScore, Verdict } from './questionnaire.js';
 import type { Role } from './roles.js';
 import type { AppStatus } from './statuses.js';
@@ -19,8 +20,87 @@ export interface UserDto {
   id: number;
   email: string;
   displayName: string;
+  /**
+   * Rôle **dans l'organisation active**, et non un attribut du compte : la même
+   * personne peut être AI Officer ici et utilisatrice standard ailleurs.
+   * Sans organisation active, c'est le rôle le moins doté (`standard`) qui
+   * s'applique, et aucune donnée métier n'est accessible.
+   */
   role: Role;
+  /** Organisation active de la session. `null` : la personne n'appartient à aucune. */
+  organizationId: number | null;
 }
+
+/**
+ * Une organisation : le cloisonnement du registre. Chaque application, chaque
+ * évaluation, chaque coût appartient à une organisation et une seule.
+ */
+export interface OrganizationDto {
+  id: number;
+  name: string;
+  /** Identifiant lisible, dérivé du nom (« Atelier Nova » → « atelier-nova »). */
+  slug: string;
+  plan: Plan;
+  createdAt: string;
+  /** Rôle de l'utilisateur courant DANS cette organisation. */
+  role: Role;
+  /** Nombre de personnes actives et d'applications non supprimées. */
+  usage: OrganizationUsageDto;
+}
+
+/** Consommation d'une organisation face aux plafonds de sa formule. */
+export interface OrganizationUsageDto {
+  applications: number;
+  members: number;
+  /** Plafonds recopiés de la formule : `null` = illimité. */
+  maxApplications: number | null;
+  maxMembers: number | null;
+}
+
+/** Une personne dans une organisation (jointure users × memberships). */
+export interface MemberDto {
+  /** Identifiant du compte (users.id), pas de l'appartenance. */
+  id: number;
+  email: string;
+  displayName: string;
+  role: Role;
+  /** `disabled` : retirée de l'organisation, sans perdre ce qu'elle y a fait. */
+  status: 'active' | 'disabled';
+  joinedAt: string;
+  /** Le compte n'a jamais ouvert de session : invitation en attente. */
+  neverConnected: boolean;
+}
+
+/** Résultat, ligne à ligne, d'un import de comptes. */
+export type ImportOutcome = 'created' | 'added' | 'already' | 'rejected';
+
+export interface ImportLineDto {
+  /** Numéro de ligne dans le texte fourni, pour que l'utilisateur la retrouve. */
+  line: number;
+  email: string;
+  displayName: string;
+  role: Role | null;
+  outcome: ImportOutcome;
+  /** Ce qui s'est passé, en clair (« compte créé », « adresse invalide »…). */
+  message: string;
+}
+
+export interface ImportReportDto {
+  /** `true` : simple aperçu, rien n'a été écrit en base. */
+  dryRun: boolean;
+  lines: ImportLineDto[];
+  created: number;
+  added: number;
+  already: number;
+  rejected: number;
+}
+
+export const IMPORT_OUTCOME_LABELS: Record<ImportOutcome, string> = {
+  created: 'Compte créé et rattaché',
+  added: 'Compte existant rattaché',
+  already: 'Déjà membre',
+  rejected: 'Ligne rejetée',
+};
 
 /** Référence légère vers un utilisateur (auteur, propriétaire…). */
 export interface UserRef {
@@ -34,7 +114,15 @@ export interface ApplicationDto {
   name: string;
   description: string;
   businessDomain: string;
+  /**
+   * **Dérivé** : le niveau le plus élevé de `dataSensitivities`. Jamais saisi à
+   * la main. C'est lui que lisent les répartitions, la règle « avis DPO » et les
+   * filtres d'inventaire ; le garder permet à tous les agrégats de rester des
+   * comptages simples où chaque application pèse pour une.
+   */
   dataSensitivity: string;
+  /** Tout ce que l'application traite : une application en croise souvent plusieurs. */
+  dataSensitivities: string[];
   aiType: string;
   processOwner: UserRef;
   status: AppStatus;
@@ -165,6 +253,13 @@ export interface FinopsImpactDto {
    * été déclarée ? Le dire évite de faire passer un calcul pour une mesure.
    */
   co2Derived: boolean;
+  /**
+   * Intensité carbone retenue pour ce calcul, en kg CO₂/kWh : celle de
+   * l'hébergement déclaré au questionnaire (GF7). Affichée quand `co2Derived`
+   * est vrai, pour que la même application ne se voie pas appliquer une
+   * intensité ici et une autre à l'estimation.
+   */
+  co2Intensity: number;
 }
 
 /**
@@ -289,6 +384,12 @@ export const AUDIT_ACTION_LABELS: Record<string, string> = {
   evaluation_submitted: 'Évaluation soumise',
   action_plan_done: "Action corrective terminée",
   reevaluation_required: 'Retour en audit pour réévaluation',
+  organization_created: 'Organisation créée',
+  organization_updated: 'Organisation modifiée',
+  member_added: "Personne rattachée à l'organisation",
+  member_updated: 'Rôle ou présence modifiés',
+  user_created: 'Compte créé',
+  signup_sso: 'Première connexion (compte créé via Google)',
 };
 
 /** Format d'erreur unique renvoyé par l'API. */

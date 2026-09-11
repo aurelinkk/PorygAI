@@ -5,7 +5,10 @@
  *  - Le serveur l'applique (refus 403) via `requirePermission()` : c'est la sécurité.
  *  - Le client l'utilise pour masquer les actions interdites : c'est du confort.
  *
- * Un utilisateur a exactement UN rôle (décision de simplicité, voir docs/roles-et-permissions.md).
+ * Un utilisateur a exactement UN rôle **par organisation** : le rôle est porté
+ * par l'appartenance (table `memberships`), pas par le compte. La même personne
+ * peut donc être AI Officer chez elle et simple utilisatrice ailleurs ; c'est
+ * l'organisation active de sa session qui décide du rôle appliqué.
  */
 
 export const ROLES = ['ai_officer', 'app_manager', 'dpo', 'auditor', 'standard'] as const;
@@ -17,6 +20,15 @@ export const ROLE_LABELS: Record<Role, string> = {
   dpo: 'DPO',
   auditor: 'Auditeur',
   standard: 'Utilisateur standard',
+};
+
+/** Une phrase par rôle : affichée là où l'on en attribue un (import, membres). */
+export const ROLE_HINTS: Record<Role, string> = {
+  ai_officer: "Pilote le registre : voit tout, décide, gère l'organisation et ses membres.",
+  app_manager: 'Déclare et met à jour ses propres applications, exécute les plans d’action.',
+  dpo: 'Consulte tout, rend un avis sur les traitements de données personnelles.',
+  auditor: 'Consulte tout et rend les verdicts de conformité.',
+  standard: 'Consulte le registre, sans rien pouvoir modifier.',
 };
 
 const ALL: readonly Role[] = ROLES;
@@ -48,6 +60,11 @@ export const PERMISSIONS = {
   'finops:read': ['ai_officer', 'app_manager', 'dpo', 'auditor'],
   'finops:write': ['ai_officer', 'app_manager'], // + règle « propriétaire » pour l'Application Manager
   'dashboard:read': ALL,
+
+  // Organisation (voir shared/src/plans.ts pour les formules d'abonnement)
+  'organization:read': ALL, // voir la fiche de son organisation et ses membres
+  'organization:manage': ['ai_officer'], // renommer, changer de formule
+  'organization:members': ['ai_officer'], // importer, changer un rôle, désactiver
 
   // Administration
   'admin:referentiels': ['ai_officer'],

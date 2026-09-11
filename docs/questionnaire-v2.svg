@@ -30,6 +30,7 @@
 <rect x="866" y="1082" width="372" height="75" rx="12" fill="#ffffff" stroke="#1a1526" stroke-width="2"/>
 <rect x="866" y="1168" width="372" height="102" rx="12" fill="#ffffff" stroke="#6b6280" stroke-width="2"/>
 <rect x="866" y="1280" width="372" height="75" rx="12" fill="#ffffff" stroke="#1a1526" stroke-width="2"/>
+<rect x="866" y="1365" width="372" height="116" rx="12" fill="#ffffff" stroke="#6b6280" stroke-width="2"/>
 <rect x="1254" y="894" width="372" height="50" rx="12" fill="#d9f1fb" stroke="#1a1526" stroke-width="3"/>
 <rect x="1254" y="956" width="372" height="75" rx="12" fill="#ffe3ec" stroke="#1a1526" stroke-width="3"/>
 <rect x="1254" y="1041" width="372" height="116" rx="12" fill="#ffffff" stroke="#6b6280" stroke-width="2"/>
@@ -57,8 +58,10 @@
 <rect x="2806" y="956" width="372" height="75" rx="12" fill="#ffffff" stroke="#1a1526" stroke-width="2"/>
 <rect x="2806" y="1041" width="372" height="75" rx="12" fill="#ffffff" stroke="#1a1526" stroke-width="2"/>
 <rect x="2806" y="1126" width="372" height="61" rx="12" fill="#ffffff" stroke="#1a1526" stroke-width="2"/>
-<rect x="2806" y="1198" width="372" height="89" rx="12" fill="#ffffff" stroke="#1a1526" stroke-width="2"/>
-<rect x="2806" y="1296" width="372" height="75" rx="12" fill="#ffffff" stroke="#1a1526" stroke-width="2"/>
+<rect x="2806" y="1198" width="372" height="75" rx="12" fill="#ffffff" stroke="#1a1526" stroke-width="2"/>
+<rect x="2806" y="1282" width="372" height="75" rx="12" fill="#ffffff" stroke="#1a1526" stroke-width="2"/>
+<rect x="2806" y="1368" width="372" height="116" rx="12" fill="#ffffff" stroke="#6b6280" stroke-width="2"/>
+<rect x="2806" y="1494" width="372" height="116" rx="12" fill="#ffffff" stroke="#6b6280" stroke-width="2"/>
 <rect x="3194" y="894" width="372" height="50" rx="12" fill="#d9f1fb" stroke="#1a1526" stroke-width="3"/>
 <rect x="3194" y="956" width="372" height="75" rx="12" fill="#ffffff" stroke="#1a1526" stroke-width="2"/>
 <rect x="3194" y="1041" width="372" height="61" rx="12" fill="#ffffff" stroke="#1a1526" stroke-width="2"/>
@@ -69,6 +72,8 @@
 <rect x="3194" y="1425" width="372" height="61" rx="12" fill="#ffffff" stroke="#1a1526" stroke-width="2"/>
 <rect x="3194" y="1496" width="372" height="61" rx="12" fill="#ffffff" stroke="#1a1526" stroke-width="2"/>
 <rect x="3194" y="1568" width="372" height="75" rx="12" fill="#ffffff" stroke="#1a1526" stroke-width="2"/>
+<rect x="3194" y="1652" width="372" height="102" rx="12" fill="#ffffff" stroke="#6b6280" stroke-width="2"/>
+<rect x="3194" y="1765" width="372" height="102" rx="12" fill="#ffffff" stroke="#6b6280" stroke-width="2"/>
 <rect x="60" y="864" width="3536" height="1050" rx="12" fill="#d9f1fb" stroke="#6b6280" stroke-width="1" stroke-dasharray="9 7"/>
 <rect x="90" y="2014" width="372" height="50" rx="12" fill="#ffe3ec" stroke="#1a1526" stroke-width="3"/>
 <rect x="90" y="2076" width="372" height="171" rx="12" fill="#ffe0e0" stroke="#e5384f" stroke-width="2"/>
@@ -110,12 +115,12 @@
 <line x1="400" y1="3381" x2="276" y2="3489" stroke="#1a1526" stroke-width="2" marker-end="url(#fleche)"/>
 <line x1="400" y1="3381" x2="664" y2="3489" stroke="#1a1526" stroke-width="2" marker-end="url(#fleche)"/>
 <line x1="400" y1="3381" x2="1052" y2="3489" stroke="#1a1526" stroke-width="2" marker-end="url(#fleche)"/>
-<text x="60" y="34.9" font-size="34" fill="#1a1526" text-anchor="start" font-weight="700">Questionnaire d'évaluation Poryg'AI : arbre complet</text>
+<text x="60" y="34.9" font-size="34" fill="#1a1526" text-anchor="start" font-weight="700">Questionnaire d'évaluation Poryg'AI — arbre complet</text>
 <text x="60" y="66.3" font-size="14" fill="#6b6280" text-anchor="start" font-weight="400">Toutes les questions du formulaire, dans leur formulation exacte (source : shared/src/questionnaire.ts).</text>
 <text x="60" y="83.8" font-size="14" fill="#6b6280" text-anchor="start" font-weight="400">●  question critique : un « Non » plafonne le score à 60          ⛔  question bloquante : l'évaluation est refusée</text>
 <text x="60" y="101.3" font-size="14" fill="#6b6280" text-anchor="start" font-weight="400">Un encadré gris clair n'est posé que si sa condition est remplie ; une question non posée ne compte pas dans le score.</text>
 <text x="260" y="184.0" font-size="15" fill="#1a1526" text-anchor="middle" font-weight="400">ÉVALUATION D'UNE APPLICATION</text>
-<text x="78" y="269.5" font-size="19" fill="#1a1526" text-anchor="start" font-weight="700">①  CADRAGE : 6 questions posées à tout le monde, non notées : elles décident de la suite</text>
+<text x="78" y="269.5" font-size="19" fill="#1a1526" text-anchor="start" font-weight="700">①  CADRAGE — 6 questions posées à tout le monde, non notées : elles décident de la suite</text>
 <text x="100" y="358.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">C1</text>
 <text x="100" y="372.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
 <text x="100" y="386.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">Dans quels pays ou zones l'application sera-t-elle</text>
@@ -257,7 +262,7 @@
 <text x="488" y="1622.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
 <text x="488" y="1636.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">→ posée si : données personnelles</text>
 <text x="1052" y="916.1" font-size="13" fill="#1a1526" text-anchor="middle" font-weight="400">③ Transparence et explicabilité</text>
-<text x="1052" y="932.3" font-size="13" fill="#1a1526" text-anchor="middle" font-weight="400">T   ·   9 pts</text>
+<text x="1052" y="932.3" font-size="13" fill="#1a1526" text-anchor="middle" font-weight="400">T   ·   11 pts</text>
 <text x="876" y="977.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">T1  ●   ·   4 pts</text>
 <text x="876" y="991.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
 <text x="876" y="1005.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">Les utilisateurs finaux sont-ils informés qu'ils</text>
@@ -279,6 +284,13 @@
 <text x="876" y="1315.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
 <text x="876" y="1328.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">Une documentation technique existe-t-elle (fiche modèle,</text>
 <text x="876" y="1342.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">performances mesurées, limites connues) ?</text>
+<text x="876" y="1386.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">T5   ·   2 pts</text>
+<text x="876" y="1400.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="876" y="1413.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">L'interface par laquelle les personnes utilisent l'IA ou</text>
+<text x="876" y="1427.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">en reçoivent les résultats est-elle conforme au RGAA</text>
+<text x="876" y="1441.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">(accessibilité numérique) ?</text>
+<text x="876" y="1455.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="876" y="1468.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">→ posée si : génère du contenu ou interagit</text>
 <text x="1440" y="916.1" font-size="13" fill="#1a1526" text-anchor="middle" font-weight="400">④ Supervision humaine et robustesse</text>
 <text x="1440" y="932.3" font-size="13" fill="#1a1526" text-anchor="middle" font-weight="400">S   ·   12 pts</text>
 <text x="1264" y="977.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">S1  ●   ·   4 pts</text>
@@ -396,7 +408,7 @@
 <text x="2428" y="1257.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
 <text x="2428" y="1271.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">→ posée si : modèle : API d'un fournisseur</text>
 <text x="2992" y="916.1" font-size="13" fill="#1a1526" text-anchor="middle" font-weight="400">⑧ Frugalité et FinOps</text>
-<text x="2992" y="932.3" font-size="13" fill="#1a1526" text-anchor="middle" font-weight="400">F   ·   8 pts</text>
+<text x="2992" y="932.3" font-size="13" fill="#1a1526" text-anchor="middle" font-weight="400">F   ·   10 pts</text>
 <text x="2816" y="977.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">F1   ·   2 pts</text>
 <text x="2816" y="991.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
 <text x="2816" y="1005.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">Les coûts d'utilisation (licences, requêtes API,</text>
@@ -410,13 +422,26 @@
 <text x="2816" y="1175.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">Où tourne l'IA ?</text>
 <text x="2816" y="1218.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">F4   ·   1 pt</text>
 <text x="2816" y="1232.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
-<text x="2816" y="1246.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">Des optimisations réduisent-elles la consommation (cache</text>
-<text x="2816" y="1260.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">des réponses, traitement par lots, modèle distillé ou</text>
-<text x="2816" y="1273.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">quantifié) ?</text>
-<text x="2816" y="1317.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">F5   ·   1 pt</text>
-<text x="2816" y="1331.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
-<text x="2816" y="1345.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">Le volume d'appels est-il maîtrisé (pas d'appels</text>
-<text x="2816" y="1358.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">redondants ou inutiles) ?</text>
+<text x="2816" y="1246.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">Des optimisations d'exécution réduisent-elles la</text>
+<text x="2816" y="1260.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">consommation (cache des réponses, traitement par lots) ?</text>
+<text x="2816" y="1303.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">F5   ·   1 pt</text>
+<text x="2816" y="1317.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="2816" y="1331.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">Le volume d'appels est-il maîtrisé (pas d'appels</text>
+<text x="2816" y="1345.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">redondants ou inutiles) ?</text>
+<text x="2816" y="1388.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">F6   ·   1 pt</text>
+<text x="2816" y="1402.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="2816" y="1416.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">Le modèle est-il déployé en précision réduite</text>
+<text x="2816" y="1430.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">(quantification en 8 bits ou moins) quand la qualité</text>
+<text x="2816" y="1443.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">mesurée le permet ?</text>
+<text x="2816" y="1457.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="2816" y="1471.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">→ posée si : modèle ≠ API d'un fournisseur</text>
+<text x="2816" y="1515.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">F7   ·   1 pt</text>
+<text x="2816" y="1528.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="2816" y="1542.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">A-t-on cherché à alléger le modèle lui-même</text>
+<text x="2816" y="1556.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">(élagage/pruning, distillation) plutôt que de déployer</text>
+<text x="2816" y="1570.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">le modèle d’origine ?</text>
+<text x="2816" y="1583.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="2816" y="1597.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">→ posée si : modèle ≠ API d'un fournisseur</text>
 <text x="3380" y="916.1" font-size="13" fill="#1a1526" text-anchor="middle" font-weight="400">⑨ Gouvernance FinOps</text>
 <text x="3380" y="932.3" font-size="13" fill="#1a1526" text-anchor="middle" font-weight="400">GF   ·   0 pts</text>
 <text x="3204" y="977.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">GF1</text>
@@ -450,8 +475,20 @@
 <text x="3204" y="1602.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
 <text x="3204" y="1616.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">Si vous la connaissez, indiquez la taille exacte du</text>
 <text x="3204" y="1630.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">modèle.</text>
-<text x="78" y="853.2" font-size="19" fill="#1a1526" text-anchor="start" font-weight="700">②  QUESTIONS NOTÉES : 9 thèmes, toujours parcourus (certaines questions restent masquées)</text>
-<text x="276" y="2036.1" font-size="13" fill="#1a1526" text-anchor="middle" font-weight="400">Union européenne</text>
+<text x="3204" y="1673.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">GF10</text>
+<text x="3204" y="1687.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="3204" y="1701.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">Quelle est la longueur typique d'un échange avec le</text>
+<text x="3204" y="1715.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">modèle ?</text>
+<text x="3204" y="1728.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="3204" y="1742.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">→ posée si : génère du contenu ou interagit</text>
+<text x="3204" y="1786.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">GF11</text>
+<text x="3204" y="1800.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="3204" y="1813.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">Quel volume de données chaque cycle d’entraînement</text>
+<text x="3204" y="1827.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">traite-t-il ?</text>
+<text x="3204" y="1841.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
+<text x="3204" y="1855.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">→ posée si : GF5 = none</text>
+<text x="78" y="853.2" font-size="19" fill="#1a1526" text-anchor="start" font-weight="700">②  QUESTIONS NOTÉES — 9 thèmes, toujours parcourus (certaines questions restent masquées)</text>
+<text x="276" y="2036.1" font-size="13" fill="#1a1526" text-anchor="middle" font-weight="400">Réglementation : union européenne</text>
 <text x="276" y="2052.3" font-size="13" fill="#1a1526" text-anchor="middle" font-weight="400">si UE coché en C1   ·   14 pts</text>
 <text x="100" y="2097.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">UE1  ⛔</text>
 <text x="100" y="2111.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
@@ -513,7 +550,7 @@
 <text x="100" y="3091.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">une formation adaptée (maîtrise de l'IA, art. 4) ?</text>
 <text x="100" y="3105.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
 <text x="100" y="3118.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">→ posée si : déployé en UE</text>
-<text x="664" y="2036.1" font-size="13" fill="#1a1526" text-anchor="middle" font-weight="400">États-unis</text>
+<text x="664" y="2036.1" font-size="13" fill="#1a1526" text-anchor="middle" font-weight="400">Réglementation : états-unis</text>
 <text x="664" y="2052.3" font-size="13" fill="#1a1526" text-anchor="middle" font-weight="400">si US coché en C1   ·   20 pts</text>
 <text x="488" y="2097.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">US1  ●   ·   4 pts</text>
 <text x="488" y="2111.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
@@ -565,7 +602,7 @@
 <text x="488" y="2923.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
 <text x="488" y="2937.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">→ posée si : déployé en États-Unis ET données</text>
 <text x="488" y="2951.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">personnelles</text>
-<text x="1052" y="2036.1" font-size="13" fill="#1a1526" text-anchor="middle" font-weight="400">Chine</text>
+<text x="1052" y="2036.1" font-size="13" fill="#1a1526" text-anchor="middle" font-weight="400">Réglementation : chine</text>
 <text x="1052" y="2052.3" font-size="13" fill="#1a1526" text-anchor="middle" font-weight="400">si Chine coché en C1   ·   18 pts</text>
 <text x="876" y="2097.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">CN1  ●   ·   4 pts</text>
 <text x="876" y="2111.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
@@ -615,7 +652,7 @@
 <text x="876" y="2896.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">propriété intellectuelle documentés ?</text>
 <text x="876" y="2910.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
 <text x="876" y="2923.8" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">→ posée si : déployé en Chine</text>
-<text x="1440" y="2036.1" font-size="13" fill="#1a1526" text-anchor="middle" font-weight="400">Autres pays</text>
+<text x="1440" y="2036.1" font-size="13" fill="#1a1526" text-anchor="middle" font-weight="400">Réglementation : autres pays</text>
 <text x="1440" y="2052.3" font-size="13" fill="#1a1526" text-anchor="middle" font-weight="400">si « Autre » coché en C1   ·   2 pts</text>
 <text x="1264" y="2097.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">AU1   ·   2 pts</text>
 <text x="1264" y="2111.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
@@ -624,7 +661,7 @@
 <text x="1264" y="2152.5" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">concerné ?</text>
 <text x="1264" y="2166.3" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400"></text>
 <text x="1264" y="2180.0" font-size="11" fill="#1a1526" text-anchor="start" font-weight="400">→ posée si : déployé en autre pays</text>
-<text x="78" y="1973.2" font-size="19" fill="#1a1526" text-anchor="start" font-weight="700">③  RÉGLEMENTATION : un bloc par pays coché en C1, chacun avec sa propre barre d'avancement</text>
+<text x="78" y="1973.2" font-size="19" fill="#1a1526" text-anchor="start" font-weight="700">③  RÉGLEMENTATION — un bloc par pays coché en C1, chacun avec sa propre barre d'avancement</text>
 <text x="100" y="3267.6" font-size="13" fill="#1a1526" text-anchor="start" font-weight="400">④   SCORE  =  100  ×  points obtenus  ÷  points applicables</text>
 <text x="100" y="3283.8" font-size="13" fill="#1a1526" text-anchor="start" font-weight="400"></text>
 <text x="100" y="3300.1" font-size="13" fill="#1a1526" text-anchor="start" font-weight="400">Une question non posée ne compte ni au numérateur, ni au dénominateur : le score reste comparable</text>

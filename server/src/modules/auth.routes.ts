@@ -2,14 +2,15 @@
  * Routes d'authentification.
  *
  *   Mot de passe (comptes locaux / de démo)
- *     POST /api/auth/login             { email, password } → { user } + cookie de session
+ *     POST /api/auth/login             { email, password } → { user, organizations } + cookie
  *     POST /api/auth/logout                                → 204      + cookie supprimé
- *     GET  /api/auth/me                                    → { user } (null si pas de session)
+ *     GET  /api/auth/me                                    → { user, organizations } (user null hors session)
  *     GET  /api/auth/providers                             → { google: bool }
  *
  *   SSO Google (voir auth/google-sso.ts)
  *     GET  /api/auth/google/start      → redirige vers Google
- *     GET  /api/auth/google/callback   → crée la session puis redirige vers /
+ *     GET  /api/auth/google/callback   → crée le compte s'il est inconnu, ouvre la
+ *                                        session, puis redirige vers /
  */
 import type { FastifyInstance, FastifyReply } from 'fastify';
 import { loginSchema, type UserDto } from '@poryg/shared';
@@ -18,10 +19,11 @@ import {
   safeEquals, validateIdTokenClaims, GoogleAuthError, type GoogleConfig, type PendingLogin,
 } from '../auth/google-sso.js';
 import type { AuthProvider, Identity } from '../auth/provider.js';
-import { createSession, deleteSession } from '../auth/session.js';
+import { createSession, deleteSession, resolveSession } from '../auth/session.js';
 import { recordAudit } from '../audit.js';
-import { one, run, type Db } from '../db/connection.js';
+import { one, run, transaction, type Db } from '../db/connection.js';
 import { HttpError, notFound } from '../lib/http-errors.js';
+import { listUserOrganizations } from './organizations.repo.js';
 import { validate } from '../lib/validate.js';
 
 export interface AuthRoutesOptions {
@@ -39,7 +41,6 @@ interface UserRow {
   id: number;
   email: string;
   display_name: string;
-  role: UserDto['role'];
   is_active: number;
   external_id: string | null;
 }
@@ -59,12 +60,18 @@ export function registerAuthRoutes(app: FastifyInstance, options: AuthRoutesOpti
     maxAge: options.ttlHours * 3600,
   };
 
-  /** Ouvre la session applicative et pose le cookie. Commun au mot de passe et au SSO. */
+  /**
+   * Ouvre la session applicative et pose le cookie. Commun au mot de passe et au SSO.
+   *
+   * Le profil renvoyé est relu par `resolveSession` plutôt que recomposé ici :
+   * c'est lui qui choisit l'organisation active et le rôle qui en découle, et
+   * deux façons de construire un `UserDto` finiraient par diverger.
+   */
   function openSession(reply: FastifyReply, row: UserRow, ip: string, userAgent?: string): UserDto {
     const sessionId = createSession(db, row.id, options.ttlHours, { ip, userAgent });
     recordAudit(db, { actorId: row.id, entity: 'user', entityId: row.id, action: 'login', ip });
     reply.setCookie(options.cookieName, sessionId, sessionCookieOptions);
-    return { id: row.id, email: row.email, displayName: row.display_name, role: row.role };
+    return resolveSession(db, sessionId, options.ttlHours)!;
   }
 
   // --- Connexion par mot de passe -------------------------------------------
@@ -88,7 +95,9 @@ export function registerAuthRoutes(app: FastifyInstance, options: AuthRoutesOpti
       if (!row) throw new HttpError(401, 'INVALID_CREDENTIALS', 'E-mail ou mot de passe incorrect');
 
       const user = openSession(reply, row, request.ip, request.headers['user-agent']);
-      return reply.send({ user });
+      // Mêmes données que /api/auth/me : le client n'a pas à enchaîner un
+      // second appel juste pour connaître les organisations de la personne.
+      return reply.send({ user, organizations: listUserOrganizations(db, user.id) });
     },
   );
 
@@ -101,7 +110,12 @@ export function registerAuthRoutes(app: FastifyInstance, options: AuthRoutesOpti
   });
 
   // Pas de 401 ici : le client l'appelle au chargement pour savoir s'il y a une session.
-  app.get('/api/auth/me', async (request) => ({ user: request.user }));
+  // Les organisations partent avec le profil : l'en-tête affiche le sélecteur sur
+  // toutes les pages, une requête séparée serait un aller-retour de plus au démarrage.
+  app.get('/api/auth/me', async (request) => ({
+    user: request.user,
+    organizations: request.user ? listUserOrganizations(db, request.user.id) : [],
+  }));
 
   // Indique au front s'il doit afficher le bouton « Continuer avec Google ».
   app.get('/api/auth/providers', async () => ({ google: options.google !== null }));
@@ -158,16 +172,13 @@ export function registerAuthRoutes(app: FastifyInstance, options: AuthRoutesOpti
           nonce: pending.nonce,
         });
 
-        const row = findUserForIdentity(db, identity);
-        if (!row) {
-          // Pas de création automatique de compte : le registre ne s'ouvre pas à
-          // n'importe quel compte Google. C'est l'AI Officer qui inscrit les personnes.
-          recordAudit(db, {
-            actorId: null, entity: 'user', entityId: identity.email,
-            action: 'login_failed_sso_inconnu', ip: request.ip,
-          });
-          return fail('sso_inconnu');
-        }
+        // Première connexion d'une personne inconnue : le compte est créé ici,
+        // **sans aucune organisation**. Elle n'accède donc à rien du registre
+        // (403 NO_ORGANIZATION partout) tant qu'elle n'a pas créé la sienne ou
+        // rejoint une organisation existante : l'inscription libre ouvre la
+        // porte d'entrée, pas les données des autres.
+        const row = findUserForIdentity(db, identity) ?? createAccountFromSso(db, identity, request.ip);
+
         if (!row.is_active) {
           recordAudit(db, {
             actorId: null, entity: 'user', entityId: row.id, action: 'login_failed_desactive', ip: request.ip,
@@ -196,10 +207,37 @@ export function registerAuthRoutes(app: FastifyInstance, options: AuthRoutesOpti
 
 // --- Aides ------------------------------------------------------------------
 
-const USER_COLUMNS = 'id, email, display_name, role, is_active, external_id';
+const USER_COLUMNS = 'id, email, display_name, is_active, external_id';
 
 function findUserByEmail(db: Db, email: string): UserRow | undefined {
   return one<UserRow>(db, `SELECT ${USER_COLUMNS} FROM users WHERE email = ?`, email);
+}
+
+/**
+ * Crée le compte d'une personne qui se connecte pour la première fois.
+ *
+ * Le compte n'a **pas de mot de passe** (le fournisseur local refuse tout compte
+ * sans empreinte) et **pas d'organisation** : c'est l'écran « Mes organisations »
+ * qui l'accueille, avec un seul chemin possible, créer la sienne.
+ *
+ * Le nom affiché vient du claim `name` de Google, faute de quoi l'adresse ; la
+ * personne ne le choisit pas ici, mais rien de ce qui compte (rôle, périmètre)
+ * ne vient de Google : cela reste une réponse à « qui est cette personne ? ».
+ */
+function createAccountFromSso(db: Db, identity: Identity, ip?: string): UserRow {
+  return transaction(db, () => {
+    const result = run(
+      db,
+      'INSERT INTO users (email, display_name, password_hash, external_id) VALUES (?, ?, NULL, ?)',
+      identity.email, identity.displayName, identity.externalId ?? null,
+    );
+    const id = Number(result.lastInsertRowid);
+    recordAudit(db, {
+      actorId: id, entity: 'user', entityId: id, action: 'signup_sso',
+      after: { email: identity.email, displayName: identity.displayName, provider: 'google' }, ip,
+    });
+    return one<UserRow>(db, `SELECT ${USER_COLUMNS} FROM users WHERE id = ?`, id)!;
+  });
 }
 
 /**

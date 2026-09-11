@@ -9,7 +9,7 @@ import { biQuerySchema, type ApplicationDto, type DashboardSummaryDto, type User
 import { all, one, type Db } from '../db/connection.js';
 import { currentMonth } from '../lib/time.js';
 import { validate } from '../lib/validate.js';
-import { listApplications } from './applications.repo.js';
+import { listApplications, visibilityClause } from './applications.repo.js';
 import { buildBiReport } from './dashboard.repo.js';
 
 interface StatusCount {
@@ -35,6 +35,9 @@ function myEvaluations(user: UserDto, applications: ApplicationDto[]): Dashboard
         if (app.status === 'in_progress') push(app, 'À auditer');
         break;
       case 'dpo':
+        // Le niveau dérivé suffit ici : « personnelles » et « sensibles » sont les
+        // deux plus hauts du référentiel, donc une application qui en traite les
+        // a forcément pour maximum. Pas besoin de parcourir toute la liste.
         if (app.status === 'in_progress' && ['personal', 'sensitive'].includes(app.dataSensitivity)) {
           push(app, 'Avis DPO attendu');
         }
@@ -58,8 +61,15 @@ export function registerDashboardRoutes(app: FastifyInstance, options: { db: Db 
     const user = request.user!;
     const applications = listApplications(db, user);
 
+    // Même clause de visibilité que l'inventaire : un compteur ne doit pas
+    // révéler ce qu'une liste cache (brouillon d'autrui, autre organisation).
+    const scope = visibilityClause(user);
     const counts = new Map(
-      all<StatusCount>(db, 'SELECT status, COUNT(*) AS n FROM applications GROUP BY status').map((r) => [r.status, r.n]),
+      all<StatusCount>(
+        db,
+        `SELECT a.status, COUNT(*) AS n FROM applications a WHERE ${scope.sql} GROUP BY a.status`,
+        ...scope.params,
+      ).map((r) => [r.status, r.n]),
     );
     const count = (status: string) => counts.get(status) ?? 0;
     const total = [...counts.entries()].filter(([status]) => status !== 'deleted').reduce((sum, [, n]) => sum + n, 0);
@@ -69,8 +79,8 @@ export function registerDashboardRoutes(app: FastifyInstance, options: { db: Db 
       db,
       `SELECT SUM(c.amount_eur) AS total
          FROM finops_costs c JOIN applications a ON a.id = c.application_id
-        WHERE c.period_month = ? AND a.status <> 'deleted'`,
-      month,
+        WHERE ${scope.sql} AND c.period_month = ? AND a.status <> 'deleted'`,
+      ...scope.params, month,
     );
 
     const summary: DashboardSummaryDto = {

@@ -3,13 +3,17 @@
  *
  *  - Sur chaque requête : lit le cookie, résout la session → `request.user` (ou null).
  *  - `app.requireAuth`            : preHandler, 401 si non connecté.
- *  - `app.requirePermission(p)`   : preHandler, 401 si non connecté, 403 si le rôle
- *                                   n'a pas la permission (matrice de @poryg/shared).
+ *  - `app.requirePermission(p)`   : preHandler, 401 si non connecté, 403 s'il n'y a
+ *                                   pas d'organisation active, 403 si le rôle n'a
+ *                                   pas la permission (matrice de @poryg/shared).
+ *
+ * Le rôle porté par `request.user` est celui de l'ORGANISATION ACTIVE : la même
+ * personne peut être AI Officer ici et utilisatrice standard ailleurs.
  */
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { can, type Permission, type UserDto } from '@poryg/shared';
 import type { Db } from '../db/connection.js';
-import { forbidden, unauthenticated } from '../lib/http-errors.js';
+import { forbidden, noOrganization, unauthenticated } from '../lib/http-errors.js';
 import { resolveSession } from '../auth/session.js';
 
 type PreHandler = (request: FastifyRequest, reply: FastifyReply) => Promise<void>;
@@ -51,8 +55,13 @@ export function registerAuth(app: FastifyInstance, options: AuthOptions): void {
     if (!request.user) throw unauthenticated();
   });
 
+  // Toutes les permissions de la matrice portent sur des données d'organisation :
+  // sans organisation active, on refuse avant même de regarder le rôle. C'est le
+  // comportement le plus fermé, et il évite qu'un compte sans organisation
+  // atteigne une requête dont le périmètre serait vide (ou pire, non filtré).
   app.decorate('requirePermission', (permission: Permission) => async (request: FastifyRequest) => {
     if (!request.user) throw unauthenticated();
+    if (request.user.organizationId === null) throw noOrganization();
     if (!can(request.user.role, permission)) throw forbidden();
   });
 

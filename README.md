@@ -5,13 +5,17 @@ leurs informations (domaine métier, sensibilité des données, Process Owner…
 avec un questionnaire d'IA éthique et responsable, de leur donner un **statut de conformité**,
 et de suivre leur **usage et leurs coûts** (FinOps, dashboards).
 
+Le registre est **multi-organisation** : chaque organisation a son propre inventaire, ses propres
+membres et sa propre formule d'abonnement, et une même personne peut appartenir à plusieurs
+organisations (avec un rôle différent dans chacune).
+
 Rôles : AI Officer · Application Manager · DPO · Auditeur · Utilisateur standard.
 Statuts : Draft → In progress → Conforme / Partiellement conforme / Non conforme (+ Deleted, suppression logique).
 
-> **État actuel : lots 0 à 5 livrés.** Connexion (SSO Google + mot de passe) et rôles, accueil,
-> inventaire complet, questionnaire d'évaluation v2 avec verdict automatique et plan d'action,
-> rapport FinOps global et par application. Restent les dashboards BI et le durcissement pour la
-> production : voir la [feuille de route](#feuille-de-route).
+> **État actuel : lots 0 à 7 livrés.** Connexion (SSO Google + mot de passe) et rôles, accueil,
+> inventaire complet, questionnaire d'évaluation v2.5 avec verdict automatique et plan d'action,
+> rapport FinOps responsable, tableaux de bord BI, organisations et abonnements. Reste le
+> durcissement pour la production : voir la [feuille de route](#feuille-de-route).
 >
 > 🤖 **Vous reprenez le projet avec Claude Code ?** Lisez d'abord **[CLAUDE.md](CLAUDE.md)** :
 > conventions, pièges déjà rencontrés et décisions déjà tranchées.
@@ -46,8 +50,17 @@ Nécessite d'activer le SSO, voir la section suivante.
 | aurelien.chiquet44@gmail.com   | Application Manager |
 | chatet.maelle@gmail.com        | DPO                 |
 
-Ces comptes n'ont **pas** de mot de passe : ils passent obligatoirement par Google.
-Pour changer un rôle : `UPDATE users SET role = 'auditor' WHERE email = '…';`
+Ces comptes n'ont **pas** de mot de passe : ils passent obligatoirement par Google. Ils sont
+membres de l'organisation d'accueil créée par la migration 006.
+
+Le rôle n'est plus porté par le compte mais par son **appartenance** à une organisation. En
+pratique, il se change dans l'interface (« Organisation » → Personnes) ; en SQL :
+
+```sql
+UPDATE memberships SET role = 'auditor'
+ WHERE organization_id = 1
+   AND user_id = (SELECT id FROM users WHERE email = 'chatet.maelle@gmail.com');
+```
 
 **2. Comptes de démonstration, par mot de passe** : proposés en un clic sur la page de connexion
 (en développement uniquement). Mot de passe commun : `Poryg2026!`
@@ -59,6 +72,11 @@ Pour changer un rôle : `UPDATE users SET role = 'auditor' WHERE email = '…';`
 | david.nguyen@poryg.local    | DPO                  | Avis sur les applications à données personnelles / sensibles |
 | emma.bernard@poryg.local    | Auditeur             | Décide Conforme / Non conforme                               |
 | lucas.petit@poryg.local     | Utilisateur standard | Consultation seule                                           |
+
+Le jeu de démonstration contient **deux organisations** : « Poryg Industries » (8 applications,
+8 personnes, formule Entreprise) et « Atelier Nova » (vide, formule Découverte). Alice et Camille
+appartiennent aux deux : connectez-vous avec l'une d'elles pour voir le sélecteur d'organisation
+dans l'en-tête, et constater que l'inventaire change entièrement d'une organisation à l'autre.
 
 ### Activer la connexion Google
 
@@ -81,8 +99,10 @@ GOOGLE_CLIENT_SECRET=votre-secret
 
 6. Relancer `npm run dev`. Le bouton « Continuer avec Google » apparaît.
 
-> Une adresse Google **doit déjà exister** dans la table `users` pour pouvoir se connecter : il n'y a
-> pas de création automatique de compte. Le rôle vient de notre base, jamais de Google.
+> **L'inscription est libre** : une personne inconnue qui se connecte avec Google voit son compte
+> créé à la première connexion. Elle arrive **sans organisation** et n'accède donc à rien du
+> registre tant qu'elle n'a pas ajouté la sienne ou été invitée dans une autre. Le rôle, lui, vient
+> toujours de notre base : jamais de Google.
 
 ### Scripts
 
@@ -109,7 +129,8 @@ Configuration : copier `.env.example` en `.env` si besoin (ports, chemin de la b
 poryg-ai/
 ├─ CLAUDE.md       Instructions pour Claude Code (conventions, pièges, décisions)
 ├─ shared/         Code partagé front/back (TypeScript pur, importé tel quel)
-│  └─ src/         roles · statuses · referentiels · questionnaire · schemas (Zod) · types (DTO)
+│  └─ src/         roles · statuses · plans (abonnements) · referentiels · finops ·
+│                  questionnaire · schemas (Zod) · types (DTO)
 ├─ server/         API Fastify
 │  ├─ src/
 │  │  ├─ app.ts            assemblage de l'application (utilisé par server.ts et les tests)
@@ -118,22 +139,24 @@ poryg-ai/
 │  │  ├─ audit.ts          journal d'audit
 │  │  ├─ auth/             mots de passe (scrypt), sessions, SSO Google (google-sso.ts)
 │  │  ├─ plugins/          security.ts (helmet, rate-limit, CSRF) · auth.ts (session, RBAC)
-│  │  ├─ modules/          applications · evaluations · finops · auth · users · dashboard
+│  │  ├─ modules/          applications · evaluations · finops · organizations · auth ·
+│  │  │                    users · dashboard
 │  │  │                    (une paire `.routes.ts` + `.repo.ts` par domaine)
 │  │  ├─ jobs/             expiration annuelle des conformités
 │  │  ├─ db/               connexion node:sqlite, migrations SQL, seed, CLI
 │  │  └─ lib/              erreurs HTTP, validation, dates
-│  └─ tests/               Vitest : 165 tests
+│  └─ tests/               Vitest : 212 tests
 ├─ client/         Front React + Vite
 │  └─ src/
 │     ├─ App.tsx           routes
 │     ├─ api/              client fetch · cache mémoire · hook useApi
 │     ├─ auth/             AuthContext, gardes de routes
 │     ├─ components/       ApplicationForm · ApplicationsTable · QuestionCard · CostEntry ·
-│     │  └─ ui/            EvaluationSummary · BreakdownBars · MonthlyBars    + briques UI
+│     │  └─ ui/            EvaluationSummary · BreakdownBars · MonthlyBars · Plans + briques UI
 │     ├─ layout/           AppShell (en-tête, navigation, main)
 │     ├─ pages/            Login · Home · Applications (liste/fiche/déclaration/édition) ·
-│     │                    Evaluation · Finops · ApplicationFinops · 403 · 404
+│     │                    Evaluation · Finops · ApplicationFinops · Dashboards ·
+│     │                    Organizations (mes organisations / création / fiche / import) · 403 · 404
 │     ├─ styles/           tokens.css (charte) · base.css · components.css
 │     └─ lib/              formatage, aides formulaires
 ├─ docs/           Documentation (voir ci-dessous) + charte graphique d'origine
@@ -212,7 +235,10 @@ avec un assistant.
 | 6b  | Rapport PDF imprimable, réévaluation déclenchée par une action corrective, formulaire prérempli | ✅ livré |
 | 6c  | FinOps responsable : énergie et carbone à côté du coût, frugalité du parc, leviers d'optimisation | ✅ livré |
 | 6d  | Questionnaire v2.3 : thème « Gouvernance FinOps » (ajustement ±4 pts), taille du modèle et régions détaillées, estimation d'empreinte en fin de formulaire | ✅ livré |
-| 7   | Durcissement : polices auto-hébergées, revue sécurité, mise en production                   | à faire  |
+| 7   | Organisations, formules d'abonnement, import de comptes, choix de l'organisation active     | ✅ livré |
+| 7b  | Natures de données multiples par application ; questionnaire v2.4 : accessibilité (RGAA), quantification et élagage du modèle | ✅ livré |
+| 7c  | Empreinte carbone recalculée sur la physique (2N en inférence, 6ND en entraînement), calibrée sur des mesures publiées et affichée en fourchette | ✅ livré |
+| 8   | Durcissement : polices auto-hébergées, revue sécurité, mise en production                   | à faire  |
 
 **Prochaines étapes identifiées**
 
@@ -220,6 +246,11 @@ avec un assistant.
   américaines, mesures chinoises) : rédigé sans conseil et à dater.
 - **Import de coûts** FinOps (CSV, facture cloud) : la colonne `finops_costs.source` est déjà là
   pour ça, la saisie est aujourd'hui unitaire.
+- **Facturation réelle** : les formules d'abonnement n'encaissent rien (voir `shared/src/plans.ts`).
+  Brancher un prestataire de paiement supposerait aussi de décider ce qui se passe quand une
+  organisation cesse de payer alors qu'elle dépasse les plafonds gratuits.
+- **Invitations par e-mail** : l'import rattache des adresses, mais personne n'est prévenu : il faut
+  aujourd'hui le dire de vive voix. Aucun envoi d'e-mail n'existe dans le projet.
 
 Déjà en place pour les lots suivants : le schéma `finops_costs`, le job d'expiration annuelle des
 conformités, le journal d'audit, la matrice de permissions complète (évaluation, plans d'action,

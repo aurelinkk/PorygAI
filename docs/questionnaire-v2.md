@@ -12,6 +12,20 @@
 > Il ne compte pas dans le score sur 100 : il produit un **ajustement** de −4 à +4 points, et
 > alimente l'**estimation d'empreinte** affichée à l'étape « Résultat ». Il remplace le F6 de la
 > v2.2, qui traitait le même sujet de façon moins précise.
+>
+> **v2.5 (2026-09-11)** : deux questions de gouvernance ajoutées pour rendre l'estimation
+> d'empreinte calculable plutôt que forfaitaire : **GF10** (longueur typique d'un échange, en
+> tokens) et **GF11** (volume de données par cycle d'entraînement). GF8 et GF9 demandent désormais
+> les paramètres **actifs** et non le total : dans un modèle à mélange d'experts, seule une fraction
+> des poids travaille à chaque token. La justification de GF5 a été corrigée : elle affirmait que
+> l'entraînement pesait plus que l'inférence, ce que les mesures récentes contredisent pour un
+> modèle réellement déployé. Aucune question n'est notée dans ce thème : il reste hors score.
+>
+> **v2.4 (2026-09-11)** : trois questions notées ajoutées, aucun code existant renommé.
+> **T5** porte sur l'accessibilité numérique (RGAA) de l'interface ; **F6** et **F7** sur
+> l'allègement du modèle lui-même (quantification, élagage, distillation). **F4** est recentrée
+> sur les optimisations d'exécution : elle mentionnait « modèle distillé ou quantifié », ce qui
+> recouvrait désormais F6 et F7 et rendait la réponse ambiguë.
 
 ## 1. Principes
 
@@ -148,6 +162,13 @@ Légende : **●** critique (4 pts, plafond 60 si Non) · ○ standard (2 pts) �
 | T2 | ○ | Le Process Owner peut-il expliquer globalement comment l'IA produit ses résultats ? `← B2` | Obtenir une note d'explicabilité de l'éditeur (type de modèle, données, limites) et former le Process Owner. |
 | T3 | ○ | `[si C5 génère]` Les contenus générés sont-ils marqués (filigrane, métadonnées, mention) ? | Activer le marquage natif du fournisseur ou ajouter une mention systématique. |
 | T4 | · | Une documentation technique existe-t-elle (fiche modèle, performances mesurées, limites connues) ? | Rédiger une fiche modèle d'une page, mise à jour à chaque version. |
+| T5 | ○ | `[si C5 ≠ Ni l'un ni l'autre]` L'interface par laquelle les personnes utilisent l'IA ou en reçoivent les résultats est-elle conforme au **RGAA** (accessibilité numérique) ? | Faire auditer les écrans selon le RGAA, corriger au minimum les critères de niveau A et AA, puis publier la déclaration d'accessibilité. |
+
+T5 est posée sous la même condition que T1 : s'il n'y a ni interaction ni contenu généré, il n'y a
+pas d'écran par lequel l'IA atteint quelqu'un. Elle est placée dans « Transparence » et non dans
+« Équité » parce qu'elle porte sur l'accès à l'information produite, pas sur la façon dont le modèle
+traite les personnes : une réponse qu'un lecteur d'écran ne restitue pas n'est une réponse pour
+personne, quelle que soit la qualité du modèle.
 
 ### Thème 4 : Supervision humaine et robustesse
 
@@ -222,8 +243,17 @@ détection**. Deux familles de biais, traitées ensemble parce qu'elles se nourr
 | F1 | ○ | Les coûts (licences, requêtes API, compute) sont-ils monitorés et plafonnés ? `← D1` | Suivi mensuel et plafond avec alerte, remontés dans le rapport FinOps. |
 | F2 | ○ | L'empreinte carbone (entraînement + inférence) a-t-elle été estimée ? | Estimer avec un outil (CodeCarbon, calculateur du fournisseur) et suivre l'évolution. |
 | F3 | ○ | Où tourne l'IA ? *On-premise ou cloud en région bas-carbone / Cloud sans critère carbone / Inconnu* | Choisir une région à faible intensité carbone ; documenter le choix. |
-| F4 | · | Des optimisations réduisent-elles la consommation (cache des réponses, traitement par lots, modèle distillé ou quantifié) ? | Mettre en place un cache et évaluer un modèle plus petit sur les cas simples. |
+| F4 | · | Des optimisations **d'exécution** réduisent-elles la consommation (cache des réponses, traitement par lots) ? | Mettre en place un cache des réponses fréquentes et regrouper les appels en lots. |
 | F5 | · | Le volume d'appels est-il maîtrisé (pas d'appels redondants ou inutiles) ? | Auditer les appels sur une semaine et supprimer les redondances. |
+| F6 | · | `[si C6 ≠ API d'un fournisseur]` Le modèle est-il déployé en **précision réduite** (quantification en 8 bits ou moins) quand la qualité mesurée le permet ? | Mesurer la qualité du modèle quantifié (int8) sur un jeu de test représentatif et déployer la version réduite si l'écart reste acceptable. |
+| F7 | · | `[si C6 ≠ API d'un fournisseur]` A-t-on cherché à **alléger le modèle lui-même** (élagage/pruning, distillation) plutôt que de déployer le modèle d'origine ? | Comparer le modèle d'origine à une version élaguée ou distillée sur le cas d'usage réel, et retenir la plus petite qui tienne la qualité attendue. |
+
+F4 et F5 portent sur la façon d'**appeler** le modèle, F6 et F7 sur le modèle **lui-même**. La
+distinction n'est pas cosmétique : un cache ne réduit que les appels répétés, là où un modèle
+quantifié ou élagué réduit le coût de *chaque* inférence : c'est l'économie qui tient quand l'usage
+augmente. Les deux dernières ne s'affichent que si le modèle tourne chez nous (C6) : derrière l'API
+d'un fournisseur, on ne choisit ni les poids ni le format d'exécution, et poser la question
+n'apporterait qu'un « Non » qui ne veut rien dire.
 ### Thème 9 : Gouvernance FinOps *(hors score)*
 
 Ce thème **ne compte pas dans le score sur 100**. Les quatre premières questions produisent un

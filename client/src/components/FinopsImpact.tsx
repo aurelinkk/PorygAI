@@ -16,7 +16,7 @@
  */
 import { Link } from 'react-router-dom';
 import {
-  AI_TYPES, CO2_KG_PER_KWH, carKmEquivalent, estimateCarbonFootprint, labelOf,
+  AI_TYPES, carKmEquivalent, estimateCarbonFootprint, labelOf,
   type Answers, type FinopsAdjustment, type FinopsImpactDto,
 } from '@poryg/shared';
 import { formatCo2, formatEur, formatKwh } from '../lib/format';
@@ -43,6 +43,8 @@ export function FinopsImpact({ impact, answers, aiType, applicationId, adjustmen
     hosting: texte('GF7'),
     modelSize: texte('GF8'),
     modelParamsM: Number.isFinite(parametres) && parametres > 0 ? parametres : undefined,
+    requestSize: texte('GF10'),
+    trainingData: texte('GF11'),
   });
   const releve = impact && impact.monthsObserved > 0 ? impact : null;
 
@@ -61,18 +63,23 @@ export function FinopsImpact({ impact, answers, aiType, applicationId, adjustmen
         <section className="impact__block">
           <h3 className="subsection-title">Estimation, avant toute mesure</h3>
           <p className="muted">
-            Ordre de grandeur calculé pour une IA de type « {labelOf(AI_TYPES, aiType)} », d'après la taille
-            du modèle, la fréquence d'usage et la région d'hébergement déclarées.
+            Calculée pour une IA de type « {labelOf(AI_TYPES, aiType)} » à partir du calcul qu'elle demande :
+            environ 2 × N opérations par token en inférence, 6 × N par token vu en entraînement, converties en
+            énergie puis en carbone selon la région d'hébergement déclarée.
           </p>
 
           <ul className="impact__figures">
             <li className="impact__figure">
               <span className="impact__value">{formatKwh(estimate.energyKwh)}</span>
-              <span className="impact__label">consommés par an</span>
+              <span className="impact__label">
+                consommés par an, entre {formatKwh(estimate.energyKwhLow)} et {formatKwh(estimate.energyKwhHigh)}
+              </span>
             </li>
             <li className="impact__figure impact__figure--accent">
               <span className="impact__value">{formatCo2(estimate.co2Kg)}</span>
-              <span className="impact__label">émis par an</span>
+              <span className="impact__label">
+                émis par an, entre {formatCo2(estimate.co2KgLow)} et {formatCo2(estimate.co2KgHigh)}
+              </span>
             </li>
             <li className="impact__figure">
               <span className="impact__value">{Math.round(estimate.trainingShare * 100)} %</span>
@@ -99,8 +106,19 @@ export function FinopsImpact({ impact, answers, aiType, applicationId, adjustmen
               ))}
             </dl>
             <p className="muted">
-              Ces coefficients sont des ordres de grandeur, pas des relevés faits sur nos applications. Ils
-              servent à situer une solution et à comparer deux options ; un relevé réel les remplace.
+              Le calcul suit deux formules de référence du domaine : <span className="mono">2 × N</span>{' '}
+              opérations par token en inférence, <span className="mono">6 × N × D</span> pour un entraînement
+              sur D tokens. La seule constante ajustée est le rendement énergétique, calé sur des mesures
+              publiées (Llama 3.1 405B et Mixtral 8x22B en inférence, Llama 2 7B en entraînement) ; le
+              questionnaire fournit tout le reste. La fourchette reflète la dispersion réelle de ces mesures,
+              d'environ un facteur deux de part et d'autre : c'est un ordre de grandeur, pas un relevé. Dès
+              qu'une mesure existe sur cette application, c'est elle qui fait foi.
+            </p>
+            <p className="muted">
+              Trois postes ne sont <strong>pas</strong> comptés, faute de données pour les estimer sans les
+              inventer : le serveur qui tourne en permanence autour du modèle (sur une application peu
+              sollicitée, c'est lui qui domine, et le chiffre ci-dessus paraîtra très bas), le carbone de
+              fabrication du matériel, et le stockage des données d'entraînement.
             </p>
           </details>
         </section>
@@ -146,7 +164,9 @@ export function FinopsImpact({ impact, answers, aiType, applicationId, adjustmen
           {releve.co2Derived && (
             <p className="notice notice--info">
               L'empreinte relevée n'a pas été déclarée : elle est <strong>calculée</strong> depuis la
-              consommation, avec le facteur du mix français ({CO2_KG_PER_KWH} kg CO₂/kWh).
+              consommation, avec l'intensité de la région d'hébergement renseignée au questionnaire
+              ({releve.co2Intensity} kg CO₂/kWh). Sans réponse sur l'hébergement, c'est l'hypothèse
+              défavorable qui s'applique : déclarez l'empreinte, ou répondez à la question GF7.
             </p>
           )}
         </section>

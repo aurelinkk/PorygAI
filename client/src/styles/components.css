@@ -2234,3 +2234,362 @@ legend.field__label {
 .timeline--nested .timeline__item {
   font-size: 13px;
 }
+
+/* ==========================================================================
+   Organisations, formules d'abonnement et import de comptes
+   ========================================================================== */
+
+/* --- Sélecteur d'organisation, dans l'en-tête ---------------------------- */
+.org-switch {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.org-switch__label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--texte-2);
+}
+.org-switch__select {
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--encre);
+  background: var(--blanc);
+  border: var(--border-thin);
+  border-radius: var(--radius-field);
+  padding: 6px 10px;
+  max-width: 220px;
+}
+.org-switch__select:disabled {
+  opacity: 0.6;
+}
+.org-switch__single {
+  font-weight: 700;
+}
+.org-switch--empty {
+  margin: 0;
+}
+
+/* --- Pastille de formule -------------------------------------------------- */
+.plan-badge {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 3px 10px;
+  border: var(--border-thin);
+  border-radius: var(--radius-badge);
+  white-space: nowrap;
+}
+/* Encre sur fond pastel, comme les badges de rôle : c'est le fond qui porte
+   l'identité de la formule, jamais la couleur du texte. Le rose foncé sur rose
+   pastel tombait à 4,4:1, sous le seuil AA pour du 11 px. */
+.plan-badge--free {
+  background: var(--gris-fond);
+  color: var(--encre);
+}
+.plan-badge--team {
+  background: var(--bleu-pastel);
+  color: var(--encre);
+}
+.plan-badge--business {
+  background: var(--rose-pastel);
+  color: var(--encre);
+}
+
+/* --- Liste de mes organisations ------------------------------------------ */
+.org-grid {
+  display: grid;
+  /* minmax(0, …) : sans lui, une carte au contenu large pousserait la grille
+     au-delà de l'écran (piège documenté dans CLAUDE.md). */
+  grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr));
+  gap: var(--gutter);
+}
+.org-card--active {
+  border-color: var(--rose-dark);
+  box-shadow: var(--shadow-md);
+}
+.org-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 12px;
+  font-size: 13px;
+}
+.org-card__badge {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--vert-dark);
+  align-self: center;
+}
+
+/* --- Jauges de consommation ---------------------------------------------- */
+.quotas {
+  display: grid;
+  gap: 12px;
+  margin: 16px 0;
+}
+.quotas--wide {
+  grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr));
+  gap: 16px var(--gutter);
+}
+.quota__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  margin: 0 0 6px;
+  font-size: 14px;
+}
+.quota__label {
+  font-weight: 600;
+}
+.quota__value {
+  font-size: 13px;
+  color: var(--texte-3);
+}
+.quota__track {
+  height: 12px;
+  background: var(--gris-fond);
+  border: var(--border-thin);
+  border-radius: var(--radius-badge);
+  overflow: hidden;
+}
+.quota__fill {
+  height: 100%;
+  background: var(--bleu);
+  border-right: 2px solid var(--encre);
+}
+.quota--full .quota__fill {
+  background: var(--rose);
+}
+.quota--full .quota__value {
+  color: var(--rose-lien);
+  font-weight: 700;
+}
+.quota__warning {
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: var(--rose-lien);
+}
+
+/* --- Choix d'une formule -------------------------------------------------- */
+.plans {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr));
+  gap: 16px;
+  margin-top: 12px;
+}
+.plan {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+  background: var(--blanc);
+  border: var(--border-thin);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+}
+.plan--selected {
+  border-color: var(--rose-dark);
+  background: var(--rose-pastel);
+  box-shadow: var(--shadow-md);
+}
+.plan--disabled {
+  cursor: not-allowed;
+  background: var(--gris-fond);
+  box-shadow: none;
+}
+/* L'anneau de focus se pose sur la carte entière : le radio est petit, la
+   cible cliquable ne l'est pas. */
+.plan:has(input:focus-visible) {
+  outline: var(--focus-ring);
+  outline-offset: 3px;
+}
+.plan__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.plan__name {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 700;
+}
+.plan__current {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 2px 8px;
+  background: var(--vert-pastel);
+  color: var(--vert-dark);
+  border: 2px solid var(--vert-dark);
+  border-radius: var(--radius-badge);
+}
+.plan__price {
+  font-family: var(--font-mono);
+  font-size: 22px;
+  font-weight: 700;
+}
+.plan__period {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--texte-2);
+}
+.plan__detail {
+  display: block;
+  font-size: 14px;
+}
+.plan__tagline {
+  display: block;
+  color: var(--texte-3);
+  margin-bottom: 8px;
+}
+.plan__features {
+  display: block;
+}
+.plan__feature {
+  display: block;
+  padding-left: 18px;
+  margin-bottom: 4px;
+  position: relative;
+}
+.plan__feature::before {
+  content: '·';
+  position: absolute;
+  left: 4px;
+  font-weight: 700;
+}
+.plan__blocked {
+  display: block;
+  margin-top: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--rouge-dark);
+}
+
+/* --- Membres de l'organisation ------------------------------------------- */
+/* `.table` impose une largeur minimale pensée pour l'inventaire (5 colonnes) :
+   ces tableaux-ci en ont 4 et n'en ont pas besoin (piège documenté). */
+.members-table,
+.table--import {
+  min-width: 520px;
+}
+.input--inline {
+  width: auto;
+  min-width: 180px;
+  margin-bottom: 4px;
+}
+.tag {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  margin-top: 6px;
+  border: var(--border-thin);
+  border-radius: var(--radius-badge);
+}
+.tag--waiting {
+  background: var(--bleu-pastel);
+  color: var(--bleu-text);
+}
+.retires {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 2px solid var(--gris-ligne);
+}
+.retires > summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+.retires__list {
+  list-style: none;
+  padding: 0;
+  margin: 12px 0 0;
+}
+.retires__list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 2px solid var(--gris-ligne);
+}
+
+/* --- Import de comptes ---------------------------------------------------- */
+.import-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: var(--gutter);
+}
+@media (max-width: 900px) {
+  .import-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.outcome {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 2px 8px;
+  border: var(--border-thin);
+  border-radius: var(--radius-badge);
+}
+.outcome--created {
+  background: var(--vert-pastel);
+  color: var(--vert-dark);
+}
+.outcome--added {
+  background: var(--bleu-pastel);
+  color: var(--bleu-text);
+}
+.outcome--already {
+  background: var(--gris-fond);
+  color: var(--texte-3);
+}
+.outcome--rejected {
+  background: var(--rouge-pastel);
+  color: var(--rouge-dark);
+}
+.table .is-rejected th,
+.table .is-rejected td {
+  background: color-mix(in srgb, var(--rouge-pastel) 35%, transparent);
+}
+
+/* --- Liste à puces dans une carte ---------------------------------------- */
+.bullets {
+  margin: 12px 0;
+  padding-left: 22px;
+}
+.bullets li {
+  margin-bottom: 10px;
+}
+
+/* Accueil d'un compte sans organisation : c'est le premier écran d'une
+   personne qui vient de s'inscrire, il porte donc le message principal. */
+.org-empty {
+  max-width: 68ch;
+}
+.org-empty__lead {
+  font-size: 17px;
+  line-height: 1.6;
+}
+.org-empty .detail-actions {
+  margin: 20px 0 24px;
+}

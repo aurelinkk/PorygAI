@@ -31,8 +31,8 @@ IA, sensibilité des données, non-conformités, coûts). Menaces considérées 
 | `nonce` anti-rejeu | Lie l'ID token à cette demande précise ; un token réutilisé est refusé | `validateIdTokenClaims` |
 | Cookie d'état signé | `httpOnly`, `SameSite=Lax` (obligatoire pour un retour inter-site), chemin `/api/auth/google`, 10 min | `modules/auth.routes.ts` |
 | Claims validés | émetteur, destinataire (`aud`), expiration, `nonce`, `email_verified` | `validateIdTokenClaims` |
-| Pas d'auto-provisioning | Une adresse Google inconnue est refusée et journalisée : le registre ne s'ouvre pas à tout compte Google | `modules/auth.routes.ts` |
-| Rôle non délégué | Le rôle vient de `users.role`, jamais d'un claim Google | `modules/auth.routes.ts` |
+| Inscription libre, périmètre vide | Une adresse Google inconnue crée son compte (journalisé `signup_sso`) mais **sans organisation** : elle n'accède à rien (403 `NO_ORGANIZATION`) tant qu'elle n'a pas ajouté la sienne | `modules/auth.routes.ts` |
+| Rôle non délégué | Le rôle vient de `memberships` (organisation active), jamais d'un claim Google | `auth/session.ts` |
 | Secret côté serveur | `client_secret` uniquement dans `.env` (ignoré par git), jamais exposé au navigateur | `config.ts`, `.gitignore` |
 
 Sur la non-vérification de la signature du JWT : voir l'explication dans
@@ -69,10 +69,29 @@ En développement, Vite relaie `/api` sans `changeOrigin` pour que `Host` reste 
 - Règle de visibilité des brouillons appliquée **dans le SQL** (`applications.repo.ts › visibilityClause`),
   pas seulement dans l'UI. Un brouillon d'autrui renvoie **404** (rien n'est révélé), y compris sur
   son historique.
+- **Cloisonnement par organisation.** Le filtre est dans la même clause SQL que les brouillons
+  (`visibilityClause`), traversée par l'inventaire, les tableaux de bord et les rapports FinOps :
+  un compteur ne peut donc pas révéler ce qu'une liste cache. L'organisation active est lue dans la
+  **session** (`sessions.organization_id`), jamais dans la requête : un client ne peut pas se
+  désigner une organisation dont il n'est pas membre. Activer une organisation dont on n'est pas
+  membre renvoie **404**, comme un brouillon d'autrui.
+- **La porte d'entrée n'est pas le périmètre.** Depuis le lot 7, n'importe quel compte Google peut
+  entrer : ce n'est plus l'authentification qui protège le registre, c'est le cloisonnement. Un
+  compte neuf n'a aucune organisation, donc aucune donnée : il ne peut que créer la sienne, dans
+  laquelle il est seul. Corollaire à ne pas oublier : **ne jamais rattacher un compte neuf à une
+  organisation par défaut**.
+- **Sans organisation active, rien.** `requirePermission` refuse avant même de regarder le rôle
+  (403 `NO_ORGANIZATION`) : le cas le plus fermé. Seule la création d'une organisation reste
+  ouverte à toute personne connectée, sans quoi un compte neuf n'aurait aucun moyen d'entrer ;
+  elle est plafonnée à `MAX_ORGANIZATIONS_PER_USER` (10) pour ne pas laisser un endpoint de
+  création sans limite.
+- **Le rôle est celui de l'organisation active**, relu à chaque requête depuis `memberships` :
+  retirer quelqu'un d'une organisation lui coupe l'accès sans attendre l'expiration de sa session.
 - Le champ `permissions` renvoyé par la fiche est calculé côté serveur : le client ne décide rien.
 - Le **coût du mois** porté par chaque application n'est calculé en SQL que si l'utilisateur a
   `finops:read` ; sinon la colonne vaut `NULL` et la donnée ne quitte jamais le serveur.
-- Tests : `tests/permissions.test.ts`, `tests/applications.test.ts`, `tests/inventory.test.ts`.
+- Tests : `tests/permissions.test.ts`, `tests/applications.test.ts`, `tests/inventory.test.ts`,
+  `tests/organizations.test.ts` (cloisonnement, rôle par organisation, plafonds, import).
 
 ### Validation et injection
 
@@ -97,7 +116,9 @@ autorisées explicitement), `frame-ancestors 'none'`, `X-Content-Type-Options: n
 ### Intégrité des données
 
 - **Pas de suppression physique** : triggers `BEFORE DELETE` sur `users`, `applications`, `finops_costs`,
-  `audit_log` (`db/migrations/001_init.sql`). Le statut `deleted` porte `deleted_by` et `deleted_at`.
+  `audit_log` (`db/migrations/001_init.sql`), `organizations` et `memberships` (migration 006).
+  Le statut `deleted` porte `deleted_by` et `deleted_at` ; retirer quelqu'un d'une organisation
+  passe son appartenance à `disabled`, ce qui conserve la trace de son passage.
 - **Audit immuable** : triggers `BEFORE UPDATE/DELETE` sur `audit_log`.
 - Contraintes `CHECK` sur les statuts, rôles, formats de mois ; clés étrangères activées.
 - Tests : `tests/compliance.test.ts`.
@@ -110,7 +131,7 @@ autorisées explicitement), `frame-ancestors 'none'`, `X-Content-Type-Options: n
 ## Vérifier
 
 ```bash
-npm test          # 165 tests : auth, SSO, CSRF, RBAC, propriété, filtres, scoring, triggers
+npm test          # 212 tests : auth, SSO, CSRF, RBAC, cloisonnement, filtres, scoring, triggers
 npm audit         # vulnérabilités connues des dépendances
 ```
 
@@ -127,12 +148,20 @@ Contrôle manuel rapide : se connecter en `lucas.petit@poryg.local` (standard), 
 `/applications/nouvelle` → page 403 ; puis `curl -X POST http://127.0.0.1:3000/api/applications`
 avec son cookie → `403 FORBIDDEN`.
 
-## Reste à faire (lot 7)
+## Reste à faire (lot 8)
 
 - HTTPS via reverse proxy + `trustProxy: true` ; HSTS.
 - Fixer `COOKIE_SECRET` en production (sinon il est régénéré à chaque redémarrage).
 - Mettre à jour `GOOGLE_REDIRECT_URI` et l'URI autorisée dans la console Google avec le domaine réel.
 - Polices auto-hébergées (supprime `fonts.googleapis.com` de la CSP et la fuite d'IP vers Google).
+- **Import de comptes** : il crée des comptes à partir d'adresses saisies par un AI Officer, sans
+  qu'aucun e-mail ne soit envoyé ni aucune confirmation demandée à la personne concernée. Acceptable
+  pour un registre interne ; à revoir si le produit s'ouvre au-delà.
+- **Inscription libre et volume** : l'inscription par Google est ouverte, donc la table `users` peut
+  grossir sans contrôle. Aujourd'hui les seuls garde-fous sont le rate-limit global (300 req/min/IP)
+  et `MAX_ORGANIZATIONS_PER_USER` (10). Si le produit était exposé publiquement, il faudrait au
+  minimum limiter les inscriptions par IP et prévoir la purge des comptes restés sans organisation.
+  Une variante moins ouverte est déjà prête à écrire : n'accepter que certains domaines d'e-mail.
 - Supprimer les comptes de démonstration par mot de passe une fois le SSO en place.
 - Journal des **lectures** sensibles (qui a consulté quelle fiche) si le DPO le demande.
 - Sauvegardes chiffrées de `data/poryg.db`.

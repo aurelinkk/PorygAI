@@ -28,7 +28,7 @@
  * sans en renommer aucune. Un brouillon commencé en v2 garde donc ses réponses
  * (voir `getOrCreateDraft`) ; seul un changement de famille les invalide.
  */
-export const QUESTIONNAIRE_VERSION = 'v2.3';
+export const QUESTIONNAIRE_VERSION = 'v2.5';
 
 // ---------------------------------------------------------------------------
 // Modèle
@@ -146,6 +146,14 @@ const generatesContent: Condition = { q: 'C5', anyOf: ['generate', 'both'] };
 const usesThirdPartyApi: Condition = { q: 'C6', anyOf: ['api'] };
 /** Le modèle est entraîné ou ajusté par nous : ses données d'apprentissage sont sous notre main. */
 const trainedByUs: Condition = { q: 'C6', noneOf: ['api'] };
+/**
+ * Le modèle tourne sur notre infrastructure : sa taille et sa précision sont
+ * entre nos mains. Derrière l'API d'un fournisseur, quantifier ou élaguer ne
+ * veut rien dire : on ne choisit ni les poids ni le format d'exécution.
+ * (Même condition que `trainedByUs` aujourd'hui, mais elle répond à une autre
+ * question et n'a pas de raison de la suivre si C6 gagne une option.)
+ */
+const hostedByUs: Condition = { q: 'C6', noneOf: ['api'] };
 const deployedIn = (country: string): Condition => ({ q: 'C1', anyOf: [country] });
 
 export const SCALE_OPTIONS: Option[] = [
@@ -458,6 +466,24 @@ export const QUESTIONS: Question[] = [
     options: SCALE_OPTIONS,
     remediation: "Rédiger une fiche modèle d'une page, mise à jour à chaque version.",
   },
+  {
+    code: 'T5',
+    section: 'T',
+    kind: 'scale',
+    weight: 2,
+    showIf: generatesOrInteracts,
+    wording:
+      "L'interface par laquelle les personnes utilisent l'IA ou en reçoivent les résultats est-elle conforme au RGAA (accessibilité numérique) ?",
+    why:
+      "Une IA dont l'interface exclut les personnes handicapées crée une inégalité d'accès, quelle que soit la "
+      + 'qualité du modèle : une réponse que l’on ne peut pas lire au lecteur d’écran n’est une réponse pour '
+      + 'personne. Le RGAA est la déclinaison française des WCAG niveau AA ; il s’impose au secteur public et, '
+      + 'en France, aux grandes entreprises.',
+    options: SCALE_OPTIONS,
+    remediation:
+      'Faire auditer selon le RGAA les écrans par lesquels passe l’IA, corriger au minimum les critères de '
+      + 'niveau A et AA, puis publier la déclaration d’accessibilité.',
+  },
 
   // --- 4. Supervision humaine et robustesse ---------------------------------------
   {
@@ -728,9 +754,10 @@ export const QUESTIONS: Question[] = [
     section: 'F',
     kind: 'scale',
     weight: 1,
-    wording: 'Des optimisations réduisent-elles la consommation (cache des réponses, traitement par lots, modèle distillé ou quantifié) ?',
+    wording: "Des optimisations d'exécution réduisent-elles la consommation (cache des réponses, traitement par lots) ?",
+    why: "Ces optimisations portent sur la façon d'appeler le modèle. L'alléger lui-même est l'objet de F6 et F7.",
     options: SCALE_OPTIONS,
-    remediation: 'Mettre en place un cache et évaluer un modèle plus petit sur les cas simples.',
+    remediation: 'Mettre en place un cache des réponses fréquentes et regrouper les appels en lots.',
   },
   {
     code: 'F5',
@@ -740,6 +767,40 @@ export const QUESTIONS: Question[] = [
     wording: "Le volume d'appels est-il maîtrisé (pas d'appels redondants ou inutiles) ?",
     options: SCALE_OPTIONS,
     remediation: 'Auditer les appels sur une semaine et supprimer les redondances.',
+  },
+  {
+    code: 'F6',
+    section: 'F',
+    kind: 'scale',
+    weight: 1,
+    showIf: hostedByUs,
+    wording:
+      'Le modèle est-il déployé en précision réduite (quantification en 8 bits ou moins) quand la qualité mesurée le permet ?',
+    why:
+      'Passer de 16 à 8 bits divise à peu près par deux la mémoire et l’énergie de chaque inférence, souvent sans '
+      + 'écart mesurable sur les tâches courantes. Le point de la question est le « mesuré » : quantifier sans '
+      + 'vérifier la qualité revient à échanger de la justesse contre des euros, sans le savoir.',
+    options: SCALE_OPTIONS,
+    remediation:
+      'Mesurer la qualité du modèle quantifié (int8) sur un jeu de test représentatif, comparer à la pleine '
+      + 'précision, et déployer la version réduite si l’écart reste acceptable.',
+  },
+  {
+    code: 'F7',
+    section: 'F',
+    kind: 'scale',
+    weight: 1,
+    showIf: hostedByUs,
+    wording:
+      'A-t-on cherché à alléger le modèle lui-même (élagage/pruning, distillation) plutôt que de déployer le modèle d’origine ?',
+    why:
+      'L’élagage retire les poids qui ne servent pas ; la distillation entraîne un petit modèle à imiter un grand. '
+      + 'Les deux réduisent le coût de CHAQUE inférence, là où un cache ne réduit que les appels répétés : c’est '
+      + 'l’économie qui tient quand l’usage augmente.',
+    options: SCALE_OPTIONS,
+    remediation:
+      'Comparer le modèle d’origine à une version élaguée ou distillée sur le cas d’usage réel, et retenir la plus '
+      + 'petite qui tienne la qualité attendue.',
   },
   // --- 9. Gouvernance FinOps ---------------------------------------------------------
   // Bloc à part, qui ne compte PAS dans le score sur 100 : il produit un
@@ -816,7 +877,10 @@ export const QUESTIONS: Question[] = [
     kind: 'single',
     required: true,
     wording: "À quelle fréquence le modèle est-il entraîné ou réentraîné ?",
-    why: "L'entraînement concentre l'essentiel de l'empreinte d'un modèle : une passe d'apprentissage pèse souvent plus que des mois d'inférence.",
+    why:
+      "Un cycle d'entraînement coûte beaucoup plus cher qu'une inférence, mais l'inférence tourne tous les "
+      + "jours : sur un modèle réellement déployé et très sollicité, c'est elle qui finit par peser le plus. "
+      + "Le rapport entre les deux dépend entièrement du trafic, et l'estimation le calcule plutôt que de le supposer.",
     options: [
       { value: 'none', label: "Jamais : le modèle est utilisé tel quel (API ou modèle pré-entraîné)" },
       { value: 'once', label: 'Une fois : entraînement ou fine-tuning initial' },
@@ -886,21 +950,24 @@ export const QUESTIONS: Question[] = [
     required: true,
     wording: 'Quelle est la taille du modèle utilisé ?',
     why:
-      "L'énergie d'une inférence comme d'un entraînement suit à peu près le nombre de paramètres : c'est le premier levier de frugalité, avant même l'hébergement.",
+      "Le calcul d'une inférence vaut environ 2 × N opérations par token, celui d'un entraînement 6 × N par "
+      + "token vu : le nombre de paramètres N est le premier levier de frugalité, avant même l'hébergement. "
+      + "Pour un modèle à mélange d'experts (MoE), comptez les paramètres **actifs** par token et non le "
+      + "total : les confondre surestime un grand modèle d'un facteur cinq à dix.",
     options: [
       {
         value: 'small',
-        label: 'Petit : moins d’un milliard de paramètres',
+        label: 'Petit : moins d’un milliard de paramètres actifs',
         hint: 'Modèles spécialisés, distillés ou quantifiés ; modèles de scoring et de classification classiques.',
       },
       {
         value: 'medium',
-        label: 'Moyen : de 1 à 20 milliards de paramètres',
+        label: 'Moyen : de 1 à 20 milliards de paramètres actifs',
         hint: 'Modèles open-weights courants (7 B, 13 B), modèles de vision usuels.',
       },
       {
         value: 'large',
-        label: 'Grand : plus de 20 milliards de paramètres',
+        label: 'Grand : plus de 20 milliards de paramètres actifs',
         hint: 'Grands modèles de langage propriétaires ou open-weights de dernière génération.',
       },
       {
@@ -916,10 +983,84 @@ export const QUESTIONS: Question[] = [
     code: 'GF9',
     section: 'GF',
     kind: 'number',
-    unit: 'millions de paramètres',
+    unit: 'millions de paramètres actifs',
     wording: 'Si vous la connaissez, indiquez la taille exacte du modèle.',
     why:
-      "Facultatif : une valeur précise remplace la tranche de GF8 dans le calcul d'empreinte. En millions de paramètres : 7 milliards s'écrivent 7000.",
+      "Facultatif : une valeur précise remplace la tranche de GF8 dans le calcul d'empreinte. En millions de "
+      + "paramètres actifs : 7 milliards s'écrivent 7000. Pour un modèle à mélange d'experts, indiquez les "
+      + 'paramètres activés par token, pas le total du modèle.',
+  },
+  {
+    code: 'GF10',
+    section: 'GF',
+    kind: 'single',
+    required: true,
+    showIf: generatesOrInteracts,
+    wording: "Quelle est la longueur typique d'un échange avec le modèle ?",
+    why:
+      "L'énergie d'une inférence est proportionnelle au nombre de tokens lus et produits : une réponse de "
+      + "trois lignes et la synthèse d'un document de trente pages ne coûtent pas la même chose, à modèle "
+      + "identique. C'est le facteur qui manque le plus souvent aux estimations d'empreinte, et il porte "
+      + 'facilement un rapport de vingt.',
+    options: [
+      {
+        value: 'short',
+        label: 'Courte : question brève, réponse de quelques lignes',
+        hint: 'Environ 200 tokens lus et produits au total.',
+      },
+      {
+        value: 'medium',
+        label: 'Moyenne : échange de conversation ordinaire',
+        hint: 'Environ 800 tokens. C’est l’hypothèse retenue à défaut de réponse.',
+      },
+      {
+        value: 'long',
+        label: 'Longue : document résumé, réponse détaillée',
+        hint: 'Environ 3 000 tokens.',
+      },
+      {
+        value: 'very_long',
+        label: 'Très longue : long document ou contexte étendu',
+        hint: 'Environ 12 000 tokens.',
+      },
+    ],
+  },
+  {
+    code: 'GF11',
+    section: 'GF',
+    kind: 'single',
+    required: true,
+    showIf: { q: 'GF5', noneOf: ['none'] },
+    wording: 'Quel volume de données chaque cycle d’entraînement traite-t-il ?',
+    why:
+      "L'énergie d'un entraînement vaut 6 × paramètres × tokens vus. Sans ce second terme, un ajustement sur "
+      + 'mille exemples et un ré-entraînement sur un corpus entier recevraient le même chiffre. C’est aussi ce '
+      + 'qui sépare un ajustement (données fixes : l’énergie suit la taille du modèle) d’un pré-entraînement '
+      + '(données proportionnelles à la taille : l’énergie suit son carré).',
+    options: [
+      {
+        value: 'light',
+        label: 'Ajustement léger : LoRA, quelques milliers d’exemples',
+        hint: 'Environ 10 millions de tokens vus par cycle.',
+      },
+      {
+        value: 'standard',
+        label: 'Fine-tuning complet sur un corpus métier',
+        hint: 'Environ 1 milliard de tokens vus par cycle.',
+      },
+      {
+        value: 'heavy',
+        label: 'Ré-entraînement sur un grand corpus',
+        hint: 'Environ 100 milliards de tokens vus par cycle.',
+      },
+      {
+        value: 'pretrain',
+        label: 'Pré-entraînement complet du modèle, depuis zéro',
+        hint:
+          'Volume calculé à 20 tokens par paramètre (loi de Chinchilla) : l’énergie croît alors comme le '
+          + 'carré de la taille du modèle, et non proportionnellement.',
+      },
+    ],
   },
 
   // --- 9. Réglementation : Union européenne --------------------------------------------

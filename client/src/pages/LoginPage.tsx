@@ -26,8 +26,6 @@ const SSO_ERRORS: Record<string, string> = {
   sso_annule: 'Connexion Google annulée.',
   sso_expire: 'La demande de connexion a expiré. Merci de réessayer.',
   sso_etat: "La demande de connexion n'était pas valide. Merci de réessayer.",
-  sso_inconnu:
-    "Cette adresse Google n'est pas enregistrée dans Poryg'AI. Demandez à l'AI Officer de créer votre compte.",
   compte_desactive: 'Votre compte a été désactivé. Contactez l’AI Officer.',
   sso_email: "Votre adresse Google n'est pas vérifiée. Vérifiez-la puis réessayez.",
   sso_indisponible: 'Google est injoignable pour le moment. Réessayez dans un instant.',

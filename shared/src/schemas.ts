@@ -3,8 +3,10 @@
  * (feedback immédiat), le serveur revalide TOUJOURS à l'entrée (sécurité).
  */
 import { z } from 'zod';
+import { PLANS } from './plans.js';
 import { BUSINESS_CRITICALITIES } from './questionnaire.js';
 import { AI_TYPES, BUSINESS_DOMAINS, DATA_SENSITIVITIES } from './referentiels.js';
+import { ROLES } from './roles.js';
 import { APP_STATUSES } from './statuses.js';
 
 /** Transforme un référentiel en tuple de codes utilisable par z.enum(). */
@@ -17,13 +19,63 @@ export const loginSchema = z.object({
 });
 export type LoginInput = z.infer<typeof loginSchema>;
 
+// --- Organisations -----------------------------------------------------------
+
+export const createOrganizationSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(2, "Le nom de l'organisation doit faire au moins 2 caractères")
+    .max(80, '80 caractères maximum'),
+  plan: z.enum(PLANS, { errorMap: () => ({ message: 'Choisir une formule' }) }),
+});
+export type CreateOrganizationInput = z.infer<typeof createOrganizationSchema>;
+
+/** Réglages de l'organisation : mêmes champs, modifiables séparément ou ensemble. */
+export const updateOrganizationSchema = createOrganizationSchema;
+export type UpdateOrganizationInput = z.infer<typeof updateOrganizationSchema>;
+
+/**
+ * Import de comptes : un texte collé, une personne par ligne.
+ * Le format est volontairement tolérant (voir `parseMemberLine` côté serveur) ;
+ * c'est le serveur qui analyse, et `dryRun` demande l'aperçu du même traitement
+ * plutôt qu'une seconde implémentation côté client qui pourrait en diverger.
+ */
+export const importMembersSchema = z.object({
+  text: z.string().min(1, 'Collez au moins une ligne').max(100_000, 'Fichier trop volumineux'),
+  dryRun: z.boolean().default(false),
+});
+export type ImportMembersInput = z.infer<typeof importMembersSchema>;
+
+/** Modification d'une personne dans l'organisation : son rôle, sa présence. */
+export const updateMemberSchema = z.object({
+  role: z.enum(ROLES, { errorMap: () => ({ message: 'Choisir un rôle' }) }),
+  status: z.enum(['active', 'disabled']).default('active'),
+});
+export type UpdateMemberInput = z.infer<typeof updateMemberSchema>;
+
+// --- Applications ------------------------------------------------------------
+
 export const createApplicationSchema = z.object({
   name: z.string().trim().min(2, 'Le nom doit faire au moins 2 caractères').max(120, '120 caractères maximum'),
   description: z.string().trim().max(2000, '2000 caractères maximum').default(''),
   businessDomain: z.enum(codes(BUSINESS_DOMAINS), { errorMap: () => ({ message: 'Choisir un domaine métier' }) }),
-  dataSensitivity: z.enum(codes(DATA_SENSITIVITIES), {
-    errorMap: () => ({ message: 'Indiquer la sensibilité des données' }),
-  }),
+  /**
+   * Une application croise souvent plusieurs natures de données (des données
+   * internes ET des données personnelles). On les saisit toutes ; le serveur en
+   * dérive le niveau le plus élevé (`highestSensitivity`) pour tout ce qui a
+   * besoin d'une seule valeur.
+   */
+  dataSensitivities: z
+    .array(z.enum(codes(DATA_SENSITIVITIES)))
+    .min(1, 'Indiquer au moins une nature de données traitées')
+    .max(DATA_SENSITIVITIES.length)
+    // Rangée dans l'ordre du référentiel et dédoublonnée ici, donc des deux
+    // côtés : l'affichage est stable et deux sélections identiques saisies dans
+    // un ordre différent ne passent pas pour un changement.
+    .transform((selection) =>
+      DATA_SENSITIVITIES.filter((item) => selection.includes(item.code)).map((item) => item.code),
+    ),
   aiType: z.enum(codes(AI_TYPES), { errorMap: () => ({ message: "Choisir un type d'IA" }) }),
   processOwnerId: z.coerce.number({ invalid_type_error: 'Désigner un Process Owner' }).int().positive('Désigner un Process Owner'),
 });
@@ -40,8 +92,12 @@ export type UpdateApplicationInput = z.infer<typeof updateApplicationSchema>;
  * Champs dont la modification remet une application conforme (ou non conforme)
  * en cours d'audit : ils changent ce qui a été évalué. Un changement de nom, de
  * description ou de Process Owner ne déclenche pas de réévaluation.
+ *
+ * C'est bien la LISTE des sensibilités qui compte, pas le niveau le plus élevé :
+ * ajouter « données personnelles » à une application qui traitait déjà des
+ * données de santé ne change pas le maximum, mais change ce qui a été audité.
  */
-export const REEVALUATION_FIELDS = ['businessDomain', 'dataSensitivity', 'aiType'] as const;
+export const REEVALUATION_FIELDS = ['businessDomain', 'dataSensitivities', 'aiType'] as const;
 
 /** Une chaîne de requête vide (`?status=`) doit valoir « non filtré ». */
 const optional = <T extends z.ZodTypeAny>(schema: T) =>

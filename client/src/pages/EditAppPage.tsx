@@ -90,7 +90,7 @@ export function EditAppPage() {
             description: application.description,
             businessDomain: application.businessDomain,
             aiType: application.aiType,
-            dataSensitivity: application.dataSensitivity,
+            dataSensitivities: application.dataSensitivities,
             processOwnerId: String(application.processOwner.id),
           }}
           submitLabel="Enregistrer les modifications"

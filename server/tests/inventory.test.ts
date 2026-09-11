@@ -90,7 +90,7 @@ describe('inventaire : modification', () => {
     name: 'Chatbot Support',
     description: 'Description mise à jour.',
     businessDomain: 'client',
-    dataSensitivity: 'personal',
+    dataSensitivities: ['internal', 'personal'],
     aiType: 'genai',
     ...overrides,
   });
@@ -150,7 +150,7 @@ describe('inventaire : modification', () => {
       method: 'PUT', url: `/api/applications/${id}`, headers: { cookie },
       payload: {
         name: 'Assistant Recrutement', description: 'idem', businessDomain: 'rh',
-        dataSensitivity: 'sensitive', // ← champ évalué modifié
+        dataSensitivities: ['internal', 'personal', 'sensitive'], // ← champ évalué modifié
         aiType: 'genai', processOwnerId: userId(app, ACCOUNTS.appManager),
       },
     });
@@ -172,7 +172,7 @@ describe('inventaire : modification', () => {
       method: 'PUT', url: `/api/applications/${id}`, headers: { cookie },
       payload: {
         name: 'Assistant Recrutement v2', description: 'Nouvelle description.', businessDomain: 'rh',
-        dataSensitivity: 'personal', aiType: 'genai', processOwnerId: userId(app, ACCOUNTS.appManager),
+        dataSensitivities: ['internal', 'personal'], aiType: 'genai', processOwnerId: userId(app, ACCOUNTS.appManager),
       },
     });
 
@@ -187,7 +187,7 @@ describe('inventaire : modification', () => {
 
     const invalid = await app.inject({
       method: 'PUT', url: `/api/applications/${id}`, headers: { cookie },
-      payload: { name: 'A', businessDomain: 'nope', dataSensitivity: '', aiType: 'genai', processOwnerId: 1 },
+      payload: { name: 'A', businessDomain: 'nope', dataSensitivities: [], aiType: 'genai', processOwnerId: 1 },
     });
     expect(invalid.statusCode).toBe(400);
 
@@ -197,6 +197,90 @@ describe('inventaire : modification', () => {
     });
     expect(unknownOwner.statusCode).toBe(400);
     expect(unknownOwner.json().error.fields.processOwnerId).toBeDefined();
+  });
+});
+
+describe('inventaire : natures de données multiples', () => {
+  let app: FastifyInstance;
+  beforeEach(async () => {
+    app = await createTestApp();
+  });
+  afterEach(async () => {
+    await app.close();
+  });
+
+  it('enregistre toute la sélection et en dérive le niveau le plus élevé', async () => {
+    const cookie = await loginAs(app, ACCOUNTS.appManager);
+    const response = await app.inject({
+      method: 'POST', url: '/api/applications', headers: { cookie },
+      payload: { ...validApplication(app), dataSensitivities: ['personal', 'public', 'internal'] },
+    });
+    expect(response.statusCode).toBe(201);
+
+    const creee: ApplicationDto = response.json().application;
+    // Rangée dans l'ordre du référentiel, quel que soit l'ordre de saisie.
+    expect(creee.dataSensitivities).toEqual(['public', 'internal', 'personal']);
+    // Le niveau est calculé, jamais reçu du client.
+    expect(creee.dataSensitivity).toBe('personal');
+  });
+
+  it('refuse une sélection vide', async () => {
+    const cookie = await loginAs(app, ACCOUNTS.appManager);
+    const response = await app.inject({
+      method: 'POST', url: '/api/applications', headers: { cookie },
+      payload: { ...validApplication(app), dataSensitivities: [] },
+    });
+    expect(response.statusCode).toBe(400);
+    expect(response.json().error.fields.dataSensitivities).toContain('au moins une');
+  });
+
+  it('le filtre trouve une nature de données même quand ce n’est pas la plus élevée', async () => {
+    const cookie = await loginAs(app, ACCOUNTS.aiOfficer);
+
+    // « Tri automatique des CV » traite de l'interne, du personnel et du sensible.
+    const internes = await list(app, cookie, '?sensitivity=internal');
+    expect(internes.map((a) => a.name)).toContain('Tri automatique des CV');
+
+    // La même application reste trouvable par son niveau le plus élevé.
+    const sensibles = await list(app, cookie, '?sensitivity=sensitive');
+    expect(sensibles.map((a) => a.name)).toEqual(['Tri automatique des CV']);
+  });
+
+  it('changer la liste sans changer le maximum déclenche quand même une réévaluation', async () => {
+    const cookie = await loginAs(app, ACCOUNTS.aiOfficer);
+    const id = appId(app, 'Assistant Recrutement'); // conforme, ['internal', 'personal']
+
+    const response = await app.inject({
+      method: 'PUT', url: `/api/applications/${id}`, headers: { cookie },
+      payload: {
+        name: 'Assistant Recrutement', description: 'idem', businessDomain: 'rh', aiType: 'genai',
+        // On ajoute « confidentielles » : le maximum reste « personnelles »…
+        dataSensitivities: ['internal', 'confidential', 'personal'],
+        processOwnerId: userId(app, ACCOUNTS.appManager),
+      },
+    });
+
+    expect(response.json().application.dataSensitivity).toBe('personal');
+    // …mais ce qui a été audité a changé : retour en audit.
+    expect(response.json().reevaluationTriggered).toBe(true);
+    expect(response.json().application.status).toBe('in_progress');
+  });
+
+  it('réordonner la même sélection ne déclenche rien', async () => {
+    const cookie = await loginAs(app, ACCOUNTS.aiOfficer);
+    const id = appId(app, 'Assistant Recrutement');
+
+    const response = await app.inject({
+      method: 'PUT', url: `/api/applications/${id}`, headers: { cookie },
+      payload: {
+        name: 'Assistant Recrutement', description: 'idem', businessDomain: 'rh', aiType: 'genai',
+        dataSensitivities: ['personal', 'internal'], // même contenu, autre ordre
+        processOwnerId: userId(app, ACCOUNTS.appManager),
+      },
+    });
+
+    expect(response.json().reevaluationTriggered).toBe(false);
+    expect(response.json().application.status).toBe('compliant');
   });
 });
 
@@ -251,7 +335,7 @@ describe('inventaire : cycle de vie', () => {
     const response = await app.inject({
       method: 'PUT', url: `/api/applications/${id}`, headers: { cookie },
       payload: {
-        name: 'Tentative', description: '', businessDomain: 'supply', dataSensitivity: 'internal',
+        name: 'Tentative', description: '', businessDomain: 'supply', dataSensitivities: ['internal'],
         aiType: 'ml_predictive', processOwnerId: userId(app, ACCOUNTS.appManager),
       },
     });
@@ -327,7 +411,7 @@ describe('inventaire : fiche et historique', () => {
       method: 'PUT', url: `/api/applications/${id}`, headers: { cookie },
       payload: {
         name: 'Chatbot Support', description: 'Nouvelle description.', businessDomain: 'client',
-        dataSensitivity: 'confidential', aiType: 'genai', processOwnerId: userId(app, ACCOUNTS.aiOfficer),
+        dataSensitivities: ['confidential'], aiType: 'genai', processOwnerId: userId(app, ACCOUNTS.aiOfficer),
       },
     });
 
@@ -339,7 +423,11 @@ describe('inventaire : fiche et historique', () => {
     expect(history[0]!.actor?.displayName).toBe('Alice Martin');
 
     const changed = Object.fromEntries(history[0]!.changes.map((c) => [c.field, c]));
+    // Le niveau dérivé bouge, et la liste saisie aussi : l'historique montre les deux.
     expect(changed.dataSensitivity).toMatchObject({ before: 'personal', after: 'confidential' });
+    expect(changed.dataSensitivities).toMatchObject({
+      before: ['internal', 'personal'], after: ['confidential'],
+    });
     expect(changed.description!.after).toBe('Nouvelle description.');
     expect(changed.processOwner).toMatchObject({ before: 'Camille Roux', after: 'Alice Martin' });
     // Un champ inchangé n'apparaît pas.

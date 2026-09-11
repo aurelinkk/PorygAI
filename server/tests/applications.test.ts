@@ -49,11 +49,11 @@ describe('applications', () => {
     const cookie = await loginAs(app, ACCOUNTS.appManager);
     const response = await app.inject({
       method: 'POST', url: '/api/applications', headers: { cookie },
-      payload: { name: 'A', businessDomain: 'inconnu', dataSensitivity: '', aiType: 'genai', processOwnerId: 'x' },
+      payload: { name: 'A', businessDomain: 'inconnu', dataSensitivities: [], aiType: 'genai', processOwnerId: 'x' },
     });
     expect(response.statusCode).toBe(400);
     const { fields } = response.json().error;
-    expect(Object.keys(fields).sort()).toEqual(['businessDomain', 'dataSensitivity', 'name', 'processOwnerId']);
+    expect(Object.keys(fields).sort()).toEqual(['businessDomain', 'dataSensitivities', 'name', 'processOwnerId']);
   });
 
   it('refuse un Process Owner inconnu', async () => {

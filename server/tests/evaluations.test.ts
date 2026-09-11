@@ -117,6 +117,41 @@ describe('questionnaire v2 : définition', () => {
 
 // --- Calcul du score -----------------------------------------------------------
 
+describe('questionnaire v2.4 : accessibilité et allègement du modèle', () => {
+  const socle = { C1: ['eu'], C2: 'no', C3: ['none'], C4: 'no' };
+
+  it("l'accessibilité (RGAA) n'est posée que s'il y a une interface", () => {
+    const sansInterface = applicableQuestions({ ...socle, C5: 'none', C6: 'internal' }).map((q) => q.code);
+    expect(sansInterface).not.toContain('T5');
+
+    const avecInterface = applicableQuestions({ ...socle, C5: 'interact', C6: 'internal' }).map((q) => q.code);
+    expect(avecInterface).toContain('T5');
+  });
+
+  it("quantification et élagage ne sont posés que si le modèle tourne chez nous", () => {
+    const viaApi = applicableQuestions({ ...socle, C5: 'none', C6: 'api' }).map((q) => q.code);
+    // Derrière l'API d'un fournisseur, on ne choisit ni les poids ni la précision.
+    expect(viaApi).not.toContain('F6');
+    expect(viaApi).not.toContain('F7');
+
+    for (const origine of ['internal', 'finetuned', 'openweights']) {
+      const codes = applicableQuestions({ ...socle, C5: 'none', C6: origine }).map((q) => q.code);
+      expect(codes, origine).toContain('F6');
+      expect(codes, origine).toContain('F7');
+    }
+  });
+
+  it('les trois nouvelles questions sont notées et portent une action corrective', () => {
+    for (const code of ['T5', 'F6', 'F7']) {
+      const question = QUESTIONS.find((q) => q.code === code)!;
+      expect(question, code).toBeDefined();
+      expect(question.weight, code).toBeGreaterThan(0);
+      expect(question.remediation, code).toBeTruthy();
+      expect(question.why, code).toBeTruthy();
+    }
+  });
+});
+
 describe('questionnaire v2 : scoring', () => {
   it('tout « Oui » → 100, conforme, aucune recommandation', () => {
     const result = scoreEvaluation(answerAll(FRAMING));
@@ -394,7 +429,7 @@ describe('évaluation v2 : parcours', () => {
       method: 'PUT', url: `/api/applications/${target}`, headers: { cookie: officer },
       payload: {
         name: 'Chatbot Support', description: 'idem', businessDomain: 'client',
-        dataSensitivity: 'sensitive', aiType: 'genai',
+        dataSensitivities: ['internal', 'personal', 'sensitive'], aiType: 'genai',
         processOwnerId: one<{ id: number }>(app.db, 'SELECT id FROM users WHERE email = ?', ACCOUNTS.appManager)!.id,
       },
     });

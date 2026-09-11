@@ -36,6 +36,34 @@ export const AI_TYPES = [
 ] as const;
 export type AiType = (typeof AI_TYPES)[number]['code'];
 
+/**
+ * Niveau le plus élevé d'une sélection de sensibilités.
+ *
+ * `DATA_SENSITIVITIES` est rangé du moins au plus sensible : le maximum est donc
+ * simplement celui qui apparaît le plus loin dans la liste. Cette valeur dérivée
+ * est ce que manipulent les agrégats (répartition par sensibilité), la règle
+ * « avis DPO attendu » et le questionnaire : une application qui traite des
+ * données publiques ET des données de santé doit être traitée comme une
+ * application de santé.
+ *
+ * Renvoie `'public'` pour une liste vide : le cas le moins contraignant n'est
+ * jamais le bon défaut pour une décision, mais la liste ne peut pas être vide
+ * (le schéma Zod l'exige) et il faut bien une valeur de repli.
+ */
+export function highestSensitivity(codes: readonly string[]): string {
+  let rang = -1;
+  for (const code of codes) {
+    const position = DATA_SENSITIVITIES.findIndex((item) => item.code === code);
+    if (position > rang) rang = position;
+  }
+  return (DATA_SENSITIVITIES[rang] ?? DATA_SENSITIVITIES[0]).code;
+}
+
+/** Libellés d'une liste de codes, dans l'ordre du référentiel. */
+export function labelsOf(list: readonly { code: string; label: string }[], codes: readonly string[]): string[] {
+  return list.filter((item) => codes.includes(item.code)).map((item) => item.label);
+}
+
 /** Helper générique : code → libellé, avec repli sur le code inconnu. */
 export function labelOf(list: readonly { code: string; label: string }[], code: string): string {
   return list.find((item) => item.code === code)?.label ?? code;

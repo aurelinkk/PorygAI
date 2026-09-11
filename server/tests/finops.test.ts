@@ -8,7 +8,7 @@ import type { FastifyInstance } from 'fastify';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
   CO2_KG_PER_KWH, CRITICAL_CAP, FINOPS_LEVERS, PARTIAL_MIN, applicableQuestions, estimateCarbonFootprint,
-  estimateCo2, getQuestion, monthKey, scoreEvaluation, shiftMonth,
+  estimateCo2, hostingIntensity, getQuestion, monthKey, scoreEvaluation, shiftMonth,
   type Answers, type ApplicationFinopsDto, type FinopsReportDto,
 } from '@poryg/shared';
 import { all, one } from '../src/db/connection.js';
@@ -527,7 +527,7 @@ describe('FinOps responsable', () => {
         toolVendor: 'Copilot : Microsoft',
         purpose: 'Support client.',
         businessCriticality: 'medium',
-        answers: answerAll(FRAMING, '2', { F1: '0', F2: '0', F3: '0', F4: '0', F5: '0', F6: '0' }),
+        answers: answerAll(FRAMING, '2', { F1: '0', F2: '0', F3: '0', F4: '0', F5: '0', F6: '0', F7: '0' }),
         comments: {},
       },
     });
@@ -581,7 +581,9 @@ describe('FinOps responsable', () => {
   });
 
   it('la taille du modèle pèse sur l’estimation, la valeur exacte prime sur la tranche', () => {
-    const base = { aiType: 'genai', training: 'periodic', inference: 'high', hosting: 'cloud' } as const;
+    const base = {
+      aiType: 'genai', training: 'periodic', inference: 'high', hosting: 'cloud', trainingData: 'standard',
+    } as const;
 
     const petit = estimateCarbonFootprint({ ...base, modelSize: 'small' });
     const moyen = estimateCarbonFootprint({ ...base, modelSize: 'medium' });
@@ -589,19 +591,43 @@ describe('FinOps responsable', () => {
 
     expect(petit.energyKwh).toBeLessThan(moyen.energyKwh);
     expect(grand.energyKwh).toBeGreaterThan(moyen.energyKwh);
-    expect(moyen.sizeFactor).toBe(1); // la tranche moyenne est la référence
+    expect(moyen.activeParamsM).toBe(7_000); // 7 Md : hypothèse de la tranche moyenne
 
-    // Une taille exacte remplace la tranche : 70 Md de paramètres pèsent dix fois
-    // la référence de 7 Md, même si la tranche « grand » plafonnait à ×4.
-    const exact = estimateCarbonFootprint({ ...base, modelSize: 'large', modelParamsM: 70_000 });
-    expect(exact.sizeFactor).toBeCloseTo(10, 2);
-    expect(exact.energyKwh).toBeGreaterThan(grand.energyKwh);
+    // L'énergie suit le nombre de paramètres : dix fois plus de paramètres, dix
+    // fois plus d'énergie (à volume de données d'entraînement constant).
+    expect(grand.energyKwh / moyen.energyKwh).toBeCloseTo(10, 1);
+
+    // Une taille exacte remplace la tranche, y compris quand elle la contredit.
+    const exact = estimateCarbonFootprint({ ...base, modelSize: 'small', modelParamsM: 70_000 });
+    expect(exact.activeParamsM).toBe(70_000);
+    expect(exact.energyKwh).toBeGreaterThan(petit.energyKwh);
     expect(exact.assumptions.some((a) => a.value.includes('valeur déclarée'))).toBe(true);
 
     // Taille inconnue : hypothèse médiane, jamais un blocage.
     const inconnue = estimateCarbonFootprint({ ...base, modelSize: 'unknown' });
-    expect(inconnue.sizeFactor).toBe(1);
+    expect(inconnue.activeParamsM).toBe(7_000);
     expect(inconnue.complete).toBe(true);
+  });
+
+  it('un pré-entraînement fait décrocher l’empreinte, un ajustement non', () => {
+    const base = {
+      aiType: 'genai', training: 'once', inference: 'low', hosting: 'cloud', requestSize: 'medium',
+    } as const;
+
+    // Ajustement : le volume de données ne dépend pas de la taille du modèle,
+    // donc multiplier la taille par dix multiplie l'énergie par dix.
+    const ajusteMoyen = estimateCarbonFootprint({ ...base, modelSize: 'medium', trainingData: 'standard' });
+    const ajusteGrand = estimateCarbonFootprint({ ...base, modelSize: 'large', trainingData: 'standard' });
+    expect(ajusteGrand.energyKwh / ajusteMoyen.energyKwh).toBeCloseTo(10, 1);
+
+    // Pré-entraînement : le volume de données suit la taille (20 tokens par
+    // paramètre), donc l'énergie suit son carré : ×100 et non ×10.
+    const preMoyen = estimateCarbonFootprint({ ...base, modelSize: 'medium', trainingData: 'pretrain' });
+    const preGrand = estimateCarbonFootprint({ ...base, modelSize: 'large', trainingData: 'pretrain' });
+    expect(preGrand.energyKwh / preMoyen.energyKwh).toBeCloseTo(100, 0);
+
+    // Et un pré-entraînement pèse beaucoup plus lourd qu'un simple ajustement.
+    expect(preMoyen.energyKwh).toBeGreaterThan(ajusteMoyen.energyKwh * 50);
   });
 
   it("l'hébergement retenu correspond aux régions annoncées à l'utilisateur", () => {
@@ -707,13 +733,43 @@ describe("impact FinOps annoncé à la fin du questionnaire", () => {
 
     const projection = await impact();
     expect(projection.co2Derived).toBe(true);
-    expect(projection.monthly.co2Kg).toBeCloseTo(estimateCo2(1000), 2);
+    // Sans évaluation soumise portant GF7, l'hypothèse est défavorable et non le
+    // mix français : pour une empreinte, le cas le moins renseigné ne doit pas
+    // être le plus flatteur.
+    expect(projection.co2Intensity).toBe(hostingIntensity(undefined));
+    expect(projection.monthly.co2Kg).toBeCloseTo(1000 * projection.co2Intensity, 2);
 
     // Dès qu'une empreinte est déclarée, elle est reprise telle quelle.
     app.db.prepare('UPDATE finops_costs SET co2_kg = 500 WHERE application_id = ?').run(cible);
     const declaree = await impact();
     expect(declaree.co2Derived).toBe(false);
     expect(declaree.monthly.co2Kg).toBeCloseTo(500, 2);
+  });
+
+  it("l'empreinte déduite suit la région déclarée au questionnaire", async () => {
+    app.db.prepare('UPDATE finops_costs SET co2_kg = 0, energy_kwh = 1000 WHERE application_id = ?').run(cible);
+
+    // Avant toute évaluation : hypothèse défavorable.
+    expect((await impact()).co2Intensity).toBe(hostingIntensity(undefined));
+
+    // On soumet une évaluation qui déclare un hébergement bas carbone.
+    const soumission = await app.inject({
+      method: 'POST', url: `/api/applications/${cible}/evaluation/submit`, headers: { cookie },
+      payload: {
+        toolVendor: 'Copilot : Microsoft',
+        purpose: "Support client de premier niveau.",
+        businessCriticality: 'medium',
+        answers: answerAll(FRAMING, '2', { GF7: 'cloud_low_carbon' }),
+        comments: {},
+      },
+    });
+    expect(soumission.statusCode).toBe(200);
+
+    const projection = await impact();
+    expect(projection.co2Intensity).toBe(hostingIntensity('cloud_low_carbon'));
+    expect(projection.monthly.co2Kg).toBeCloseTo(1000 * hostingIntensity('cloud_low_carbon'), 2);
+    // La même application ne doit pas se voir appliquer deux intensités selon l'écran.
+    expect(projection.co2Intensity).toBeLessThan(hostingIntensity(undefined));
   });
 
   it("n'est pas calculé pour un rôle sans accès au FinOps", async () => {

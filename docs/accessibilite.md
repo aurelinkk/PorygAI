@@ -1,6 +1,8 @@
 # Accessibilité
 
-Référentiel visé : **WCAG 2.2 niveau AA** (équivalent RGAA 4.1). L'accessibilité est traitée dans
+Référentiel visé : **WCAG 2.2 niveau AA** (équivalent RGAA 4.1). Poryg'AI pose la même exigence aux
+applications qu'il inscrit : la question **T5** du questionnaire demande si l'interface par laquelle
+l'IA atteint les personnes est conforme au RGAA. L'accessibilité est traitée dans
 le code, pas en surcouche : éléments natifs, relations explicites, focus géré.
 
 ## Règles appliquées
@@ -88,6 +90,19 @@ tracé, et se cale sur le bord aux extrémités pour ne pas déborder de la cart
 - Grille fluide : 3 → 2 → 1 colonnes ; les tableaux défilent horizontalement dans leur conteneur,
   jamais la page. Zoom 200 % sans perte de contenu.
 - Tailles en px conformes à la charte mais le texte reste zoomable (aucun `user-scalable=no`).
+
+### Cartes de formule et sélecteur d'organisation
+
+- Le choix d'une formule est un vrai groupe de **boutons radio** (`fieldset` + `legend`) : chaque
+  carte est un `<label>`. Comme ce label contient tout le détail de la formule, le nom accessible
+  du bouton serait interminable : il est donc réduit au couple **nom + prix**
+  (`aria-labelledby`), et le reste passe en `aria-describedby`. L'anneau de focus se pose sur la
+  carte entière (`:has(input:focus-visible)`), pas sur le petit rond.
+- Le changement d'organisation est un `<select>` natif, avec un `<label>` visible : il gère seul le
+  clavier, le tactile et les lecteurs d'écran, là où un menu maison aurait tout à réimplémenter.
+- Les **jauges de quota** portent leur valeur en texte (« 7 / 25 ») ; la barre est décorative
+  (`aria-hidden`). Rien n'est confié à la seule couleur, y compris l'état « plafond atteint », qui
+  est écrit en toutes lettres.
 
 ## Écarts assumés par rapport à la charte
 

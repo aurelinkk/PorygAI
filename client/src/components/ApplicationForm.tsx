@@ -15,7 +15,7 @@ import { ApiError } from '../api/client';
 import { useApi } from '../api/useApi';
 import { Alert, FormErrorSummary } from './ui/Alert';
 import { Button, ButtonLink } from './ui/Button';
-import { RadioGroupField, SelectField, TextField, TextareaField } from './ui/Fields';
+import { CheckboxGroupField, SelectField, TextField, TextareaField } from './ui/Fields';
 import { focusField, zodFieldErrors, type FieldErrors } from '../lib/forms';
 
 export const FIELD_LABELS: Record<string, string> = {
@@ -24,6 +24,7 @@ export const FIELD_LABELS: Record<string, string> = {
   businessDomain: 'Domaine métier',
   aiType: "Type d'IA",
   dataSensitivity: 'Sensibilité des données',
+  dataSensitivities: 'Nature des données traitées',
   processOwnerId: 'Process Owner',
   processOwner: 'Process Owner',
   status: 'Statut',
@@ -35,7 +36,7 @@ export interface ApplicationFormValues {
   description: string;
   businessDomain: string;
   aiType: string;
-  dataSensitivity: string;
+  dataSensitivities: string[];
   processOwnerId: string;
 }
 
@@ -97,7 +98,7 @@ export function ApplicationForm({
     }
   }
 
-  const needsDpo = values.dataSensitivity === 'personal' || values.dataSensitivity === 'sensitive';
+  const needsDpo = values.dataSensitivities.some((code) => code === 'personal' || code === 'sensitive');
   const ownerOptions = (directory.data?.users ?? []).map((user) => ({
     value: String(user.id),
     label: `${user.displayName} : ${ROLE_LABELS[user.role]}`,
@@ -160,15 +161,15 @@ export function ApplicationForm({
           />
 
           <div className="form-grid__full">
-            <RadioGroupField
-              id="dataSensitivity"
-              label={FIELD_LABELS.dataSensitivity!}
+            <CheckboxGroupField
+              id="dataSensitivities"
+              label={FIELD_LABELS.dataSensitivities!}
               required
-              hint="Niveau le plus élevé parmi les données traitées."
+              hint="Cochez tout ce que l'application traite : une même application croise souvent plusieurs natures de données. Les obligations retenues seront celles de la plus contraignante."
               options={DATA_SENSITIVITIES.map((item) => ({ value: item.code, label: item.label, hint: item.hint }))}
-              value={values.dataSensitivity}
-              onChange={set('dataSensitivity')}
-              error={errors.dataSensitivity}
+              values={values.dataSensitivities}
+              onChange={(next) => setValues((previous) => ({ ...previous, dataSensitivities: next }))}
+              error={errors.dataSensitivities}
             />
             {needsDpo && (
               <p className="notice notice--warning" role="status">

@@ -1,11 +1,17 @@
 /**
  * Accès aux applications IA. Toute écriture passe par ici et journalise dans audit_log.
  *
- * Règle de visibilité : un brouillon (draft) n'est visible que par son Process Owner,
- * son créateur, et les rôles ayant `application:read_all_drafts` (AI Officer).
+ * Deux règles de visibilité, dans cet ordre :
+ *  1. **L'organisation active** : une application n'est visible que depuis
+ *     l'organisation à laquelle elle appartient. C'est le cloisonnement, et il
+ *     tient dans `visibilityClause`, que TOUS les agrégats du produit
+ *     (inventaire, tableaux de bord, FinOps) traversent.
+ *  2. Un brouillon (draft) n'est visible que par son Process Owner, son créateur,
+ *     et les rôles ayant `application:read_all_drafts` (AI Officer).
  */
 import {
-  can, AUDIT_ACTION_LABELS, COMPLIANCE_VALIDITY_MONTHS, DECIDED_STATUSES, REEVALUATION_FIELDS,
+  can, highestSensitivity,
+  AUDIT_ACTION_LABELS, COMPLIANCE_VALIDITY_MONTHS, DECIDED_STATUSES, REEVALUATION_FIELDS,
   type ApplicationFilters, type AppStatus, type ApplicationDto, type AuditEntryDto,
   type CreateApplicationInput, type UpdateApplicationInput, type UserDto,
 } from '@poryg/shared';
@@ -13,14 +19,17 @@ import type { SQLInputValue } from 'node:sqlite';
 import { recordAudit } from '../audit.js';
 import { all, one, run, transaction, type Db } from '../db/connection.js';
 import { nowIso } from '../lib/time.js';
+import { currentOrganizationId } from './organizations.repo.js';
 
 export interface ApplicationRow {
   id: number;
+  organization_id: number;
   code: string;
   name: string;
   description: string;
   business_domain: string;
   data_sensitivity: string;
+  data_sensitivities_json: string;
   ai_type: string;
   process_owner_id: number;
   owner_name: string;
@@ -75,6 +84,7 @@ export function toDto(row: ApplicationRow): ApplicationDto {
     description: row.description,
     businessDomain: row.business_domain,
     dataSensitivity: row.data_sensitivity,
+    dataSensitivities: JSON.parse(row.data_sensitivities_json) as string[],
     aiType: row.ai_type,
     processOwner: { id: row.process_owner_id, displayName: row.owner_name },
     status: row.status,
@@ -88,12 +98,25 @@ export function toDto(row: ApplicationRow): ApplicationDto {
   };
 }
 
-/** Clause SQL de visibilité pour un utilisateur donné (à insérer après WHERE). */
+/**
+ * Clause SQL de visibilité pour un utilisateur donné (à insérer après WHERE).
+ *
+ * **Point de passage unique du cloisonnement.** Inventaire, tableaux de bord et
+ * rapports FinOps la traversent tous : ajouter ici le filtre par organisation
+ * suffit à ce qu'aucun compteur ne laisse fuiter le contenu d'une autre. Une
+ * requête qui ne l'utiliserait pas serait un trou : il n'y en a pas.
+ *
+ * `currentOrganizationId` refuse s'il n'y a pas d'organisation active : le cas
+ * le plus fermé, plutôt qu'une clause qui laisserait tout passer.
+ */
 export function visibilityClause(user: UserDto): { sql: string; params: number[] } {
-  if (can(user.role, 'application:read_all_drafts')) return { sql: '1 = 1', params: [] };
+  const organizationId = currentOrganizationId(user);
+  if (can(user.role, 'application:read_all_drafts')) {
+    return { sql: 'a.organization_id = ?', params: [organizationId] };
+  }
   return {
-    sql: "(a.status <> 'draft' OR a.process_owner_id = ? OR a.created_by = ?)",
-    params: [user.id, user.id],
+    sql: "a.organization_id = ? AND (a.status <> 'draft' OR a.process_owner_id = ? OR a.created_by = ?)",
+    params: [organizationId, user.id, user.id],
   };
 }
 
@@ -129,7 +152,10 @@ export function listApplications(
     params.push(filters.domain);
   }
   if (filters.sensitivity) {
-    conditions.push('a.data_sensitivity = ?');
+    // On cherche les applications qui traitent ce type de données, même si ce
+    // n'est pas leur niveau le plus élevé : filtrer sur « personnelles » doit
+    // ramener une application de santé qui en traite aussi.
+    conditions.push('EXISTS (SELECT 1 FROM json_each(a.data_sensitivities_json) WHERE value = ?)');
     params.push(filters.sensitivity);
   }
 
@@ -160,21 +186,37 @@ export function isVisible(db: Db, user: UserDto, id: number): boolean {
   );
 }
 
-/** Crée une application en statut `draft`, avec un code séquentiel APP-NNNN. */
+/**
+ * Crée une application en statut `draft`, dans l'organisation active, avec un
+ * code séquentiel APP-NNNN **propre à cette organisation** (chaque registre
+ * commence à APP-0001).
+ *
+ * Le numéro est repris du plus grand code existant et non d'un compteur de
+ * lignes : une application supprimée garde son code, il ne doit pas être réattribué.
+ */
 export function createApplication(
   db: Db, input: CreateApplicationInput, actor: UserDto, ip?: string,
 ): ApplicationDto {
+  const organizationId = currentOrganizationId(actor);
   return transaction(db, () => {
-    const next = one<{ n: number }>(db, 'SELECT COALESCE(MAX(id), 0) + 1 AS n FROM applications')!.n;
+    const next = one<{ n: number }>(
+      db,
+      `SELECT COALESCE(MAX(CAST(substr(code, 5) AS INTEGER)), 0) + 1 AS n
+         FROM applications WHERE organization_id = ?`,
+      organizationId,
+    )!.n;
     const code = `APP-${String(next).padStart(4, '0')}`;
 
     const result = run(
       db,
       `INSERT INTO applications
-         (code, name, description, business_domain, data_sensitivity, ai_type, process_owner_id, status, created_by, updated_by)
-       VALUES (?, ?, ?, ?, ?, ?, ?, 'draft', ?, ?)`,
-      code, input.name, input.description, input.businessDomain, input.dataSensitivity, input.aiType,
-      input.processOwnerId, actor.id, actor.id,
+         (organization_id, code, name, description, business_domain, data_sensitivity,
+          data_sensitivities_json, ai_type, process_owner_id, status, created_by, updated_by)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'draft', ?, ?)`,
+      organizationId, code, input.name, input.description, input.businessDomain,
+      // Le niveau est calculé, jamais saisi (voir migration 007).
+      highestSensitivity(input.dataSensitivities), JSON.stringify(input.dataSensitivities),
+      input.aiType, input.processOwnerId, actor.id, actor.id,
     );
     const id = Number(result.lastInsertRowid);
     const created = getApplication(db, id)!;
@@ -184,9 +226,21 @@ export function createApplication(
   });
 }
 
-/** Une modification de ces champs invalide l'évaluation en cours (voir REEVALUATION_FIELDS). */
+/** Deux valeurs de champ évalué sont-elles différentes ? (une liste se compare par contenu) */
+function changed(before: unknown, after: unknown): boolean {
+  if (Array.isArray(before) && Array.isArray(after)) {
+    return before.length !== after.length || before.some((value, index) => value !== after[index]);
+  }
+  return before !== after;
+}
+
+/**
+ * Une modification de ces champs invalide l'évaluation en cours (voir
+ * REEVALUATION_FIELDS). Les sensibilités étant une liste normalisée par le
+ * schéma Zod, la comparaison position par position suffit.
+ */
 function requiresReevaluation(before: ApplicationDto, input: UpdateApplicationInput): boolean {
-  return REEVALUATION_FIELDS.some((field) => before[field] !== input[field]);
+  return REEVALUATION_FIELDS.some((field) => changed(before[field], input[field]));
 }
 
 export interface UpdateResult {
@@ -212,12 +266,14 @@ export function updateApplication(
     run(
       db,
       `UPDATE applications
-          SET name = ?, description = ?, business_domain = ?, data_sensitivity = ?, ai_type = ?,
+          SET name = ?, description = ?, business_domain = ?,
+              data_sensitivity = ?, data_sensitivities_json = ?, ai_type = ?,
               process_owner_id = ?, status = ?,
               compliance_valid_until = CASE WHEN ? THEN NULL ELSE compliance_valid_until END,
               updated_by = ?, updated_at = ?
         WHERE id = ?`,
-      input.name, input.description, input.businessDomain, input.dataSensitivity, input.aiType,
+      input.name, input.description, input.businessDomain,
+      highestSensitivity(input.dataSensitivities), JSON.stringify(input.dataSensitivities), input.aiType,
       input.processOwnerId, status, reevaluationTriggered ? 1 : 0, actor.id, nowIso(), id,
     );
 
@@ -304,6 +360,9 @@ const TRACKED_FIELDS = [
   'name', 'description', 'businessDomain', 'dataSensitivity', 'aiType', 'status', 'complianceValidUntil',
 ] as const;
 
+/** Champs de l'historique qui sont des listes : comparés et affichés autrement. */
+const TRACKED_LISTS = ['dataSensitivities'] as const;
+
 /** Historique d'une application, du plus récent au plus ancien. */
 export function getApplicationHistory(db: Db, id: number): AuditEntryDto[] {
   const rows = all<AuditRow>(
@@ -323,6 +382,11 @@ export function getApplicationHistory(db: Db, id: number): AuditEntryDto[] {
     if (before && after) {
       for (const field of TRACKED_FIELDS) {
         if (before[field] !== after[field]) changes.push({ field, before: before[field], after: after[field] });
+      }
+      for (const field of TRACKED_LISTS) {
+        const avant = (before[field] as string[] | undefined) ?? [];
+        const apres = (after[field] as string[] | undefined) ?? [];
+        if (avant.join('|') !== apres.join('|')) changes.push({ field, before: avant, after: apres });
       }
       // Le Process Owner est un objet : on compare son identifiant.
       const beforeOwner = (before.processOwner as { id: number; displayName: string } | undefined) ?? null;

@@ -1,17 +1,41 @@
 /**
- * Jeu de données de démonstration : un utilisateur par rôle et quelques
- * applications couvrant tous les statuts. Idempotent : ne fait rien si des
- * utilisateurs existent déjà.
+ * Jeu de données de démonstration : deux organisations, un utilisateur par rôle
+ * et quelques applications couvrant tous les statuts. Idempotent : ne fait rien
+ * si des applications existent déjà.
+ *
+ * La deuxième organisation (« Atelier Nova », formule Découverte) est là pour
+ * que la démonstration montre ce qui ne se voit pas autrement : le sélecteur
+ * d'organisation, le cloisonnement des données, et une jauge de formule
+ * gratuite. Elle est volontairement vide d'applications : c'est aussi ce que
+ * voit quelqu'un qui vient de créer la sienne.
  *
  * Mot de passe commun à tous les comptes de démo : Poryg2026!
  */
 import { hashPassword } from '../auth/password.js';
 import { recordAudit } from '../audit.js';
-import { estimateCo2 } from '@poryg/shared';
+import { estimateCo2, highestSensitivity } from '@poryg/shared';
 import { addMonths, currentMonth, nowIso } from '../lib/time.js';
 import { one, run, transaction, type Db } from './connection.js';
 
 export const DEMO_PASSWORD = 'Poryg2026!';
+
+/**
+ * L'organisation d'accueil créée par la migration 006 (id 1), renommée ici pour
+ * la démonstration. Le renommage est sans risque : le seed ne s'exécute que sur
+ * une base vide d'applications.
+ */
+export const DEMO_ORGANIZATION = { id: 1, name: 'Poryg Industries', slug: 'poryg-industries' };
+
+/** Deuxième organisation : formule gratuite, deux personnes, aucune application. */
+export const DEMO_SECOND_ORGANIZATION = {
+  name: 'Atelier Nova',
+  slug: 'atelier-nova',
+  plan: 'free',
+  members: [
+    { email: 'alice.martin@poryg.local', role: 'ai_officer' },
+    { email: 'camille.roux@poryg.local', role: 'app_manager' },
+  ],
+} as const;
 
 export const DEMO_USERS = [
   { email: 'alice.martin@poryg.local', displayName: 'Alice Martin', role: 'ai_officer' },
@@ -25,7 +49,8 @@ interface DemoApp {
   name: string;
   description: string;
   domain: string;
-  sensitivity: string;
+  /** Tout ce que l'application traite : le jeu de démo doit montrer des croisements. */
+  sensitivities: string[];
   aiType: string;
   owner: string; // email
   status: string;
@@ -45,7 +70,7 @@ const DEMO_APPS: DemoApp[] = [
   {
     name: 'Assistant Recrutement',
     description: 'Aide à la rédaction des offres et pré-sélection des candidatures.',
-    domain: 'rh', sensitivity: 'personal', aiType: 'genai',
+    domain: 'rh', sensitivities: ['internal', 'personal'], aiType: 'genai',
     owner: 'camille.roux@poryg.local', status: 'compliant', validUntil: '2027-04-12T00:00:00.000Z',
     monthlyCost: 18500,
     monthlyKwh: 42000,
@@ -53,7 +78,7 @@ const DEMO_APPS: DemoApp[] = [
   {
     name: 'Scoring Crédit',
     description: "Notation automatique des demandes de crédit des clients particuliers.",
-    domain: 'finance', sensitivity: 'personal', aiType: 'ml_predictive',
+    domain: 'finance', sensitivities: ['confidential', 'personal'], aiType: 'ml_predictive',
     owner: 'camille.roux@poryg.local', status: 'non_compliant',
     monthlyCost: 9800,
     monthlyKwh: 6500,
@@ -61,7 +86,7 @@ const DEMO_APPS: DemoApp[] = [
   {
     name: 'Chatbot Support',
     description: 'Agent conversationnel de premier niveau pour le support client.',
-    domain: 'client', sensitivity: 'personal', aiType: 'genai',
+    domain: 'client', sensitivities: ['internal', 'personal'], aiType: 'genai',
     owner: 'camille.roux@poryg.local', status: 'in_progress',
     monthlyCost: 14200,
     monthlyKwh: 31000,
@@ -69,7 +94,7 @@ const DEMO_APPS: DemoApp[] = [
   {
     name: 'Prévision Stock v1',
     description: 'Ancien modèle de prévision des stocks, remplacé par la v2.',
-    domain: 'supply', sensitivity: 'internal', aiType: 'ml_predictive',
+    domain: 'supply', sensitivities: ['internal'], aiType: 'ml_predictive',
     owner: 'camille.roux@poryg.local', status: 'deleted',
     deletedBy: 'alice.martin@poryg.local', deletedAt: '2026-06-15T09:12:00.000Z',
     monthlyCost: 0,
@@ -77,7 +102,7 @@ const DEMO_APPS: DemoApp[] = [
   {
     name: 'Détection Fraude',
     description: 'Détection en temps réel des transactions suspectes.',
-    domain: 'finance', sensitivity: 'confidential', aiType: 'ml_predictive',
+    domain: 'finance', sensitivities: ['confidential'], aiType: 'ml_predictive',
     owner: 'alice.martin@poryg.local', status: 'compliant',
     // Volontairement expirée : au démarrage, le job de conformité la repasse "In progress".
     validUntil: '2026-08-01T00:00:00.000Z',
@@ -87,14 +112,14 @@ const DEMO_APPS: DemoApp[] = [
   {
     name: 'Résumé de réunions',
     description: 'Transcription et synthèse automatique des réunions internes.',
-    domain: 'it', sensitivity: 'internal', aiType: 'genai',
+    domain: 'it', sensitivities: ['internal'], aiType: 'genai',
     owner: 'camille.roux@poryg.local', status: 'draft',
     monthlyCost: 1200,
   },
   {
     name: 'Tri automatique des CV',
     description: 'Classement des CV reçus selon leur adéquation au poste.',
-    domain: 'rh', sensitivity: 'sensitive', aiType: 'nlp',
+    domain: 'rh', sensitivities: ['internal', 'personal', 'sensitive'], aiType: 'nlp',
     owner: 'camille.roux@poryg.local', status: 'in_progress',
     monthlyCost: 4600,
     monthlyKwh: 12500,
@@ -102,7 +127,7 @@ const DEMO_APPS: DemoApp[] = [
   {
     name: 'Recommandation produits',
     description: 'Personnalisation des recommandations sur le site e-commerce.',
-    domain: 'marketing', sensitivity: 'personal', aiType: 'recommendation',
+    domain: 'marketing', sensitivities: ['public', 'personal'], aiType: 'recommendation',
     owner: 'alice.martin@poryg.local', status: 'compliant', validUntil: '2027-02-20T00:00:00.000Z',
     monthlyCost: 6400,
   },
@@ -121,17 +146,50 @@ export async function seedDatabase(db: Db, log: (message: string) => void = () =
   const passwordHash = await hashPassword(DEMO_PASSWORD);
 
   transaction(db, () => {
+    // Le compte ne porte plus de rôle : c'est l'appartenance à une organisation
+    // qui le porte (voir migration 006 et modules/organizations.repo.ts).
     const userIds = new Map<string, number>();
     for (const user of DEMO_USERS) {
       const result = run(
         db,
-        'INSERT OR IGNORE INTO users (email, display_name, role, password_hash) VALUES (?, ?, ?, ?)',
-        user.email, user.displayName, user.role, passwordHash,
+        'INSERT OR IGNORE INTO users (email, display_name, password_hash) VALUES (?, ?, ?)',
+        user.email, user.displayName, passwordHash,
       );
       const id = Number(result.lastInsertRowid)
         || one<{ id: number }>(db, 'SELECT id FROM users WHERE email = ?', user.email)!.id;
       userIds.set(user.email, id);
+      run(
+        db,
+        `INSERT OR IGNORE INTO memberships (organization_id, user_id, role) VALUES (?, ?, ?)`,
+        DEMO_ORGANIZATION.id, id, user.role,
+      );
     }
+
+    run(
+      db, 'UPDATE organizations SET name = ?, slug = ? WHERE id = ?',
+      DEMO_ORGANIZATION.name, DEMO_ORGANIZATION.slug, DEMO_ORGANIZATION.id,
+    );
+
+    // Deuxième organisation : Alice appartient aux deux, ce qui donne au
+    // sélecteur d'organisation quelque chose à sélectionner.
+    const second = DEMO_SECOND_ORGANIZATION;
+    const alice = userIds.get(second.members[0].email)!;
+    const secondId = Number(
+      run(
+        db, 'INSERT INTO organizations (name, slug, plan, created_by) VALUES (?, ?, ?, ?)',
+        second.name, second.slug, second.plan, alice,
+      ).lastInsertRowid,
+    );
+    for (const member of second.members) {
+      run(
+        db, 'INSERT INTO memberships (organization_id, user_id, role, invited_by) VALUES (?, ?, ?, ?)',
+        secondId, userIds.get(member.email)!, member.role, alice,
+      );
+    }
+    recordAudit(db, {
+      actorId: alice, entity: 'organization', entityId: secondId, action: 'organization_created',
+      after: { name: second.name, slug: second.slug, plan: second.plan },
+    });
 
     const month = currentMonth();
     const previousMonths = [addMonths(`${month}-01T00:00:00.000Z`, -1), addMonths(`${month}-01T00:00:00.000Z`, -2)]
@@ -147,10 +205,12 @@ export async function seedDatabase(db: Db, log: (message: string) => void = () =
       const result = run(
         db,
         `INSERT INTO applications
-           (code, name, description, business_domain, data_sensitivity, ai_type, process_owner_id,
-            status, compliance_valid_until, created_by, created_at, updated_at, deleted_by, deleted_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        code, app.name, app.description, app.domain, app.sensitivity, app.aiType, ownerId,
+           (organization_id, code, name, description, business_domain, data_sensitivity,
+            data_sensitivities_json, ai_type, process_owner_id, status, compliance_valid_until,
+            created_by, created_at, updated_at, deleted_by, deleted_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        DEMO_ORGANIZATION.id, code, app.name, app.description, app.domain,
+        highestSensitivity(app.sensitivities), JSON.stringify(app.sensitivities), app.aiType, ownerId,
         app.status, app.validUntil ?? null, ownerId, declaredAt, declaredAt, deletedBy, app.deletedAt ?? null,
       );
       const appId = Number(result.lastInsertRowid);
@@ -178,6 +238,9 @@ export async function seedDatabase(db: Db, log: (message: string) => void = () =
     });
   });
 
-  log(`[db] seed : ${DEMO_USERS.length} utilisateurs, ${DEMO_APPS.length} applications (${nowIso()})`);
+  log(
+    `[db] seed : ${DEMO_USERS.length} utilisateurs, 2 organisations, ` +
+    `${DEMO_APPS.length} applications (${nowIso()})`,
+  );
   return true;
 }

@@ -126,6 +126,75 @@ interface RadioGroupFieldProps extends FieldBase {
   onChange: (value: string) => void;
 }
 
+interface CheckboxGroupFieldProps extends FieldBase {
+  options: readonly RadioOption[];
+  values: readonly string[];
+  onChange: (values: string[]) => void;
+}
+
+/**
+ * Groupe de cases à cocher : même structure que le groupe de radios, mais
+ * plusieurs réponses possibles. Le `fieldset` + `legend` porte le nom du groupe,
+ * chaque case porte le sien, et l'ordre renvoyé est celui des options (pas
+ * l'ordre des clics) : deux sélections identiques se comparent alors sans piège.
+ */
+export function CheckboxGroupField({
+  id, label, hint, error, required, options, values, onChange,
+}: CheckboxGroupFieldProps) {
+  function toggle(value: string) {
+    const next = values.includes(value)
+      ? values.filter((item) => item !== value)
+      : [...values, value];
+    onChange(options.map((option) => option.value).filter((option) => next.includes(option)));
+  }
+
+  return (
+    <fieldset id={id} className={cx('field', 'field--group', error && 'field--error')} aria-describedby={describedBy(id, hint, error)}>
+      <legend className="field__label">
+        {label}
+        {required && <span className="field__required"> *</span>}
+      </legend>
+      {hint && (
+        <p id={`${id}-hint`} className="field__hint">
+          {hint}
+        </p>
+      )}
+      <div className="radio-list">
+        {options.map((option) => {
+          const optionId = `${id}-${option.value}`;
+          return (
+            <label key={option.value} htmlFor={optionId} className="radio">
+              <input
+                id={optionId}
+                type="checkbox"
+                name={id}
+                value={option.value}
+                checked={values.includes(option.value)}
+                onChange={() => toggle(option.value)}
+                aria-invalid={error ? true : undefined}
+                aria-describedby={option.hint ? `${optionId}-hint` : undefined}
+              />
+              <span className="radio__text">
+                <span className="radio__label">{option.label}</span>
+                {option.hint && (
+                  <span id={`${optionId}-hint`} className="radio__hint">
+                    {option.hint}
+                  </span>
+                )}
+              </span>
+            </label>
+          );
+        })}
+      </div>
+      {error && (
+        <p id={`${id}-error`} className="field__error">
+          {error}
+        </p>
+      )}
+    </fieldset>
+  );
+}
+
 /** Groupe de boutons radio : fieldset + legend (le label du groupe est lu avec chaque option). */
 export function RadioGroupField({ id, label, hint, error, required, options, value, onChange }: RadioGroupFieldProps) {
   return (
